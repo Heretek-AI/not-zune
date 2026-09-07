@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotZune.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="NotZune.UI.Views.NowPlayingView"
+             x:DataType="vm:NowPlayingViewModel">
+
+  <Grid Margin="0">
+    <!-- Mode 1: Dynamic Artist Canvas -->
+    <Grid IsVisible="{Binding IsArtistCanvasMode}">
+      <!-- Ambient Gradient Backdrop -->
+      <Border Background="#161616" CornerRadius="0">
+        <!-- Subtle linear vignette -->
+        <Border.Background>
+          <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+            <GradientStop Offset="0.0" Color="#1C1C1C" />
+            <GradientStop Offset="0.5" Color="#121212" />
+            <GradientStop Offset="1.0" Color="#0A0A0A" />
+          </LinearGradientBrush>
+        </Border.Background>
+      </Border>
+
+      <!-- Dynamic Artist Watermark -->
+      <TextBlock Text="{Binding ArtistName}" 
+                 FontSize="120" 
+                 FontWeight="Bold" 
+                 Foreground="{DynamicResource ZuneTextWatermarkBrush}"
+                 HorizontalAlignment="Right" 
+                 VerticalAlignment="Bottom" 
+                 Margin="0,0,-40,-40" />
+
+      <!-- Iconic Zune Big Typography Overlay -->
+      <StackPanel VerticalAlignment="Bottom" Margin="60,0,0,100" Spacing="8">
+        <TextBlock Text="{Binding TrackTitle}" Classes="hero" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding ArtistName}" 
+                   FontSize="28" 
+                   FontWeight="Light" 
+                   Foreground="{DynamicResource ZuneAccentBrush}" />
+        <TextBlock Text="{Binding AlbumTitle}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+      </StackPanel>
+    </Grid>
+
+    <!-- Mode 2: Album Art Mosaic Wall -->
+    <Grid IsVisible="{Binding IsMosaicWallMode}" Background="#0E0E0E">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding MosaicWallAlbums}" Margin="24">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Background="{DynamicResource ZuneCardBrush}" 
+                      CornerRadius="0" 
+                      Width="120" 
+                      Height="120" 
+                      Margin="6">
+                <TextBlock Text="♫" 
+                           FontSize="28" 
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center" 
+                           Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Grid>
+
+    <!-- Floating Mode Switch Button (Top Right) -->
+    <Button Command="{Binding ToggleModeCommand}" 
+            HorizontalAlignment="Right" 
+            VerticalAlignment="Top" 
+            Margin="0,24,40,0"
+            Classes="zune-action">
+      <TextBlock Text="SWITCH VIEW (WALL / CANVAS)" Classes="caption" FontWeight="SemiBold" />
+    </Button>
+  </Grid>
+</UserControl>

@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <Authors>Heretek AI / Not-Zune Contributors</Authors>
+    <Company>Not-Zune</Company>
+    <Product>Not-Zune Media Player</Product>
+    <Copyright>Copyright © 2026</Copyright>
+    <RepositoryUrl>https://github.com/Heretek-AI/not-zune</RepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AvaloniaVersion>11.2.0</AvaloniaVersion>
+    <CommunityToolkitMvvmVersion>8.3.2</CommunityToolkitMvvmVersion>
+    <MicrosoftEfCoreVersion>8.0.10</MicrosoftEfCoreVersion>
+  </PropertyGroup>
+</Project>

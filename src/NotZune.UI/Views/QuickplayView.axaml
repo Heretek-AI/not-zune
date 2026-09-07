@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotZune.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="NotZune.UI.Views.QuickplayView"
+             x:DataType="vm:QuickplayViewModel">
+
+  <Grid ColumnDefinitions="360,*" Margin="40,10,40,20">
+    <!-- Left Wing: Smart DJ Mix Seed Panel -->
+    <Border Grid.Column="0" 
+            Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+            CornerRadius="0" 
+            Padding="28" 
+            Margin="0,0,24,0">
+      <StackPanel Spacing="16">
+        <TextBlock Text="smart dj" Classes="hero" Margin="0,0,0,8" />
+        <TextBlock Text="Create dynamic mixes based on your favorite artists, albums, or genres." 
+                   Classes="caption" 
+                   TextWrapping="Wrap" />
+
+        <Border Background="{DynamicResource ZuneCardBrush}" 
+                CornerRadius="0" 
+                Padding="16" 
+                Margin="0,16,0,16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="SEED TRACK OR ARTIST" Classes="caption" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+            <TextBlock Text="{Binding SmartDjSeedText}" Classes="body" />
+          </StackPanel>
+        </Border>
+
+        <Button Classes="zune-action" 
+                Command="{Binding LaunchSmartDjCommand}"
+                HorizontalAlignment="Left">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="▶" Classes="body" Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="START SMART DJ MIX" Classes="section-header" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+
+    <!-- Right Wing: 3-Deck Panorama (PINS, HISTORY, NEW) -->
+    <Grid Grid.Column="1" RowDefinitions="Auto,*">
+      <!-- Deck Sub-pivots -->
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="24" Margin="0,0,0,16">
+        <Button Command="{Binding SelectDeckCommand}" CommandParameter="{x:Static vm:QuickplayDeck.Pins}">
+          <TextBlock Text="pins" Classes="subpivot" Classes.active="{Binding IsPinsActive}" />
+        </Button>
+        <Button Command="{Binding SelectDeckCommand}" CommandParameter="{x:Static vm:QuickplayDeck.History}">
+          <TextBlock Text="history" Classes="subpivot" Classes.active="{Binding IsHistoryActive}" />
+        </Button>
+        <Button Command="{Binding SelectDeckCommand}" CommandParameter="{x:Static vm:QuickplayDeck.New}">
+          <TextBlock Text="new" Classes="subpivot" Classes.active="{Binding IsNewActive}" />
+        </Button>
+      </StackPanel>
+
+      <!-- History Deck Content -->
+      <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding History}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="16" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Button Command="{Binding $parent[UserControl].((vm:QuickplayViewModel)DataContext).PlayHistoryItemCommand}"
+                      CommandParameter="{Binding}"
+                      Padding="0">
+                <Border Background="{DynamicResource ZuneCardBrush}" 
+                        CornerRadius="0" 
+                        Width="180" 
+                        Height="220" 
+                        Padding="12">
+                  <Grid RowDefinitions="*,Auto,Auto">
+                    <!-- Artwork Placeholder -->
+                    <Border Grid.Row="0" Background="#262626" CornerRadius="0">
+                      <TextBlock Text="♫" 
+                                 FontSize="40" 
+                                 HorizontalAlignment="Center" 
+                                 VerticalAlignment="Center" 
+                                 Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                    </Border>
+                    <TextBlock Grid.Row="1" Text="{Binding TrackTitle}" Classes="body" TextTrimming="CharacterEllipsis" Margin="0,8,0,2" />
+                    <TextBlock Grid.Row="2" Text="{Binding ArtistName}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                  </Grid>
+                </Border>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

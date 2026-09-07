@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotZune.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="NotZune.UI.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <ScrollViewer Margin="40,20,40,20">
+    <StackPanel Spacing="32" MaxWidth="700" HorizontalAlignment="Left">
+      <TextBlock Text="settings" Classes="hero" />
+
+      <!-- Section: Accent Color -->
+      <StackPanel Spacing="16">
+        <TextBlock Text="SIGNATURE ACCENT COLOR" Classes="section-header" />
+        <TextBlock Text="Choose an authentic Zune palette accent." Classes="caption" />
+
+        <ItemsControl ItemsSource="{Binding AccentColors}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="16" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Button Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SelectedAccent}"
+                      Padding="0">
+                <StackPanel Spacing="8">
+                  <Border Background="{Binding HexCode}" Width="48" Height="48" CornerRadius="0" />
+                  <TextBlock Text="{Binding Name}" Classes="caption" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- Section: Library Folders -->
+      <StackPanel Spacing="12">
+        <TextBlock Text="MUSIC COLLECTION FOLDER" Classes="section-header" />
+        <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+          <TextBox Grid.Column="0" 
+                   Text="{Binding MusicFolderPath}" 
+                   CornerRadius="0"
+                   Background="{DynamicResource ZuneSurfaceElevatedBrush}"
+                   Foreground="{DynamicResource ZuneTextActiveBrush}"
+                   BorderThickness="0"
+                   Padding="10,8" />
+          <Button Grid.Column="1" 
+                  Classes="zune-action" 
+                  Margin="12,0,0,0"
+                  Command="{Binding SelectFolderCommand}">
+            <TextBlock Text="BROWSE" Classes="caption" FontWeight="SemiBold" />
+          </Button>
+        </Grid>
+      </StackPanel>
+
+      <!-- Section: Platform & Diagnostics -->
+      <StackPanel Spacing="8">
+        <TextBlock Text="SYSTEM &amp; PLATFORM" Classes="section-header" />
+        <TextBlock Text="{Binding PlatformInfo}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+        <TextBlock Text="{Binding VersionInfo}" Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}" />
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

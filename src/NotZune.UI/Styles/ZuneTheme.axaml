@@ -1,0 +1,117 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <!-- Zune Metro Palette -->
+    <Color x:Key="ZuneBackgroundColor">#111111</Color>
+    <Color x:Key="ZuneSurfaceElevatedColor">#181818</Color>
+    <Color x:Key="ZuneCardColor">#202020</Color>
+    <Color x:Key="ZuneCardHoverColor">#282828</Color>
+    <Color x:Key="ZuneBorderColor">#2C2C2C</Color>
+    
+    <!-- Signature Accent Defaults (Pink / Magenta) -->
+    <Color x:Key="ZuneAccentColor">#FA2A55</Color>
+    <Color x:Key="ZuneAccentHoverColor">#FF4D79</Color>
+
+    <!-- Brush Resources -->
+    <SolidColorBrush x:Key="ZuneBackgroundBrush" Color="{StaticResource ZuneBackgroundColor}" />
+    <SolidColorBrush x:Key="ZuneSurfaceElevatedBrush" Color="{StaticResource ZuneSurfaceElevatedColor}" />
+    <SolidColorBrush x:Key="ZuneCardBrush" Color="{StaticResource ZuneCardColor}" />
+    <SolidColorBrush x:Key="ZuneCardHoverBrush" Color="{StaticResource ZuneCardHoverColor}" />
+    <SolidColorBrush x:Key="ZuneBorderBrush" Color="{StaticResource ZuneBorderColor}" />
+    <SolidColorBrush x:Key="ZuneAccentBrush" Color="{StaticResource ZuneAccentColor}" />
+    <SolidColorBrush x:Key="ZuneAccentHoverBrush" Color="{StaticResource ZuneAccentHoverColor}" />
+
+    <!-- Typography Brushes -->
+    <SolidColorBrush x:Key="ZuneTextActiveBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ZuneTextHoverBrush" Color="#DDDDDD" />
+    <SolidColorBrush x:Key="ZuneTextSecondaryBrush" Color="#999999" />
+    <SolidColorBrush x:Key="ZuneTextDimmedBrush" Color="#555555" />
+    <SolidColorBrush x:Key="ZuneTextWatermarkBrush" Color="#222222" />
+
+    <!-- Non-negotiable Zune Metro Invariant: Zero Corner Radius -->
+    <CornerRadius x:Key="ZuneCornerRadius">0</CornerRadius>
+  </Styles.Resources>
+
+  <!-- Typography Hierarchy Classes -->
+  <Style Selector="TextBlock.hero">
+    <Setter Property="FontFamily" Value="Segoe UI, Inter, Selawik, sans-serif" />
+    <Setter Property="FontSize" Value="54" />
+    <Setter Property="FontWeight" Value="Light" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextActiveBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.pivot-header">
+    <Setter Property="FontFamily" Value="Segoe UI, Inter, Selawik, sans-serif" />
+    <Setter Property="FontSize" Value="32" />
+    <Setter Property="FontWeight" Value="Light" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextDimmedBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="TextBlock.pivot-header:pointerover">
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextHoverBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.pivot-header.active">
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextActiveBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.subpivot">
+    <Setter Property="FontFamily" Value="Segoe UI, Inter, Selawik, sans-serif" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="FontWeight" Value="Light" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextDimmedBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="TextBlock.subpivot.active">
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextActiveBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.section-header">
+    <Setter Property="FontFamily" Value="Segoe UI, Inter, Selawik, sans-serif" />
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextActiveBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.body">
+    <Setter Property="FontFamily" Value="Segoe UI, Inter, Selawik, sans-serif" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextActiveBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.caption">
+    <Setter Property="FontFamily" Value="Segoe UI, Inter, Selawik, sans-serif" />
+    <Setter Property="FontSize" Value="9" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextSecondaryBrush}" />
+  </Style>
+
+  <!-- Button Overrides: Zero Corner Radius, Pure Content Before Chrome -->
+  <Style Selector="Button">
+    <Setter Property="CornerRadius" Value="{StaticResource ZuneCornerRadius}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextActiveBrush}" />
+    <Setter Property="Padding" Value="8,4" />
+  </Style>
+
+  <Style Selector="Button.zune-action">
+    <Setter Property="Background" Value="{StaticResource ZuneCardBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource ZuneTextActiveBrush}" />
+    <Setter Property="CornerRadius" Value="{StaticResource ZuneCornerRadius}" />
+    <Setter Property="Padding" Value="14,8" />
+  </Style>
+
+  <Style Selector="Button.zune-action:pointerover">
+    <Setter Property="Background" Value="{StaticResource ZuneCardHoverBrush}" />
+  </Style>
+
+  <Style Selector="Border">
+    <Setter Property="CornerRadius" Value="{StaticResource ZuneCornerRadius}" />
+  </Style>
+
+</Styles>

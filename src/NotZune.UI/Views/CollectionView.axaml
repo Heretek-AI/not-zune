@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotZune.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="NotZune.UI.Views.CollectionView"
+             x:DataType="vm:CollectionViewModel">
+
+  <Grid RowDefinitions="Auto,*" Margin="40,10,40,20">
+    <!-- Sub-pivot Navigation Bar & Search Box -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,24">
+      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="24">
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Albums}">
+          <TextBlock Text="albums" Classes="subpivot" Classes.active="{Binding IsAlbumsActive}" />
+        </Button>
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Artists}">
+          <TextBlock Text="artists" Classes="subpivot" Classes.active="{Binding IsArtistsActive}" />
+        </Button>
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Songs}">
+          <TextBlock Text="songs" Classes="subpivot" Classes.active="{Binding IsSongsActive}" />
+        </Button>
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Genres}">
+          <TextBlock Text="genres" Classes="subpivot" Classes.active="{Binding IsGenresActive}" />
+        </Button>
+      </StackPanel>
+
+      <!-- Minimal Search Box -->
+      <TextBox Grid.Column="2" 
+               Width="220" 
+               Watermark="search collection..." 
+               Text="{Binding SearchQuery}"
+               CornerRadius="0"
+               Background="{DynamicResource ZuneSurfaceElevatedBrush}"
+               Foreground="{DynamicResource ZuneTextActiveBrush}"
+               BorderThickness="0"
+               Padding="8,6" />
+    </Grid>
+
+    <!-- Main Content Area: Song List or Album Grid -->
+    <ScrollViewer Grid.Row="1">
+      <ItemsControl ItemsSource="{Binding Songs}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Button Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PlaySongCommand}"
+                    CommandParameter="{Binding}"
+                    HorizontalAlignment="Stretch"
+                    Padding="0">
+              <Border Background="Transparent" 
+                      BorderBrush="{DynamicResource ZuneBorderBrush}" 
+                      BorderThickness="0,0,0,1" 
+                      CornerRadius="0"
+                      Padding="12,10">
+                <Grid ColumnDefinitions="40,*,*,100">
+                  <TextBlock Grid.Column="0" Text="{Binding TrackNumber}" Classes="caption" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding Title}" Classes="body" VerticalAlignment="Center" FontWeight="SemiBold" />
+                  <TextBlock Grid.Column="2" Text="{Binding ArtistName}" Classes="caption" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="3" Text="{Binding Duration, StringFormat={}{0:m\\:ss}}" Classes="caption" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

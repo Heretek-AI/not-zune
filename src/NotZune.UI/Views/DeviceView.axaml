@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotZune.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="NotZune.UI.Views.DeviceView"
+             x:DataType="vm:DeviceViewModel">
+
+  <Grid Margin="40,20,40,20">
+    <!-- State 1: Device Connected -->
+    <StackPanel IsVisible="{Binding HasDevice}" Spacing="24" MaxWidth="600" HorizontalAlignment="Left">
+      <TextBlock Text="{Binding DeviceName}" Classes="hero" />
+      <TextBlock Text="{Binding StorageText}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+
+      <!-- Storage Breakdown Meter -->
+      <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}" Height="12" CornerRadius="0">
+        <Grid ColumnDefinitions="*,*">
+          <ProgressBar Value="{Binding StorageUsedPercentage}" 
+                       Maximum="1.0" 
+                       Height="12" 
+                       CornerRadius="0"
+                       Foreground="{DynamicResource ZuneAccentBrush}" 
+                       Background="Transparent" />
+        </Grid>
+      </Border>
+
+      <!-- Sync Button & Progress -->
+      <StackPanel Spacing="12">
+        <Button Classes="zune-action" Command="{Binding SyncCommand}" HorizontalAlignment="Left">
+          <TextBlock Text="SYNC TO DEVICE" Classes="section-header" />
+        </Button>
+        <ProgressBar Value="{Binding SyncProgress}" Maximum="1.0" Height="4" CornerRadius="0"
+                     Foreground="{DynamicResource ZuneAccentBrush}" Background="{DynamicResource ZuneSurfaceElevatedBrush}" />
+      </StackPanel>
+    </StackPanel>
+
+    <!-- State 2: No Device Connected -->
+    <StackPanel IsVisible="{Binding !HasDevice}" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="16">
+      <TextBlock Text="connect a zune" Classes="hero" HorizontalAlignment="Center" />
+      <TextBlock Text="Attach your Zune 30, Zune 4/8/16, Zune 80/120, or Zune HD via USB cable." 
+                 Classes="body" 
+                 Foreground="{DynamicResource ZuneTextSecondaryBrush}"
+                 HorizontalAlignment="Center" />
+    </StackPanel>
+  </Grid>
+</UserControl>

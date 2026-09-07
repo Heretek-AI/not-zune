@@ -1,0 +1,124 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotZune.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
+             x:Class="NotZune.UI.Views.MainShellView"
+             x:DataType="vm:MainShellViewModel"
+             Background="{DynamicResource ZuneBackgroundBrush}">
+
+  <Grid RowDefinitions="Auto,*,Auto">
+    <!-- 1. Top Pivot Navigation Header -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="40,24,40,12">
+      <!-- Left: Primary Pivots -->
+      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="28">
+        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Quickplay}">
+          <TextBlock Text="QUICKPLAY" Classes="pivot-header" Classes.active="{Binding IsQuickplayActive}" />
+        </Button>
+        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Collection}">
+          <TextBlock Text="COLLECTION" Classes="pivot-header" Classes.active="{Binding IsCollectionActive}" />
+        </Button>
+        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Device}">
+          <TextBlock Text="DEVICE" Classes="pivot-header" Classes.active="{Binding IsDeviceActive}" />
+        </Button>
+      </StackPanel>
+
+      <!-- Right: Settings & Now Playing Shortcut -->
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+        <Button Command="{Binding ToggleNowPlayingCommand}">
+          <TextBlock Text="NOW PLAYING" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneAccentBrush}" />
+        </Button>
+        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Settings}">
+          <TextBlock Text="SETTINGS" Classes="caption" Classes.active="{Binding IsSettingsActive}" />
+        </Button>
+      </StackPanel>
+    </Grid>
+
+    <!-- 2. Main Content View Area -->
+    <TransitioningContentControl Grid.Row="1" Content="{Binding CurrentView}" />
+
+    <!-- 3. Docked Minimalist Player HUD Bar -->
+    <Border Grid.Row="2" 
+            Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+            Height="68" 
+            CornerRadius="0">
+      <Grid RowDefinitions="Auto,*">
+        <!-- Thin Seek Bar on Top Edge -->
+        <ProgressBar Grid.Row="0" 
+                     Height="2" 
+                     CornerRadius="0"
+                     Value="{Binding ProgressPercentage}" 
+                     Maximum="1.0" 
+                     Foreground="{DynamicResource ZuneAccentBrush}" 
+                     Background="Transparent" />
+
+        <!-- Player Controls Strip -->
+        <Grid Grid.Row="1" ColumnDefinitions="320,*,320" Margin="24,0,24,0" VerticalAlignment="Center">
+          <!-- Left: Track Metadata & Heart Rating -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+            <!-- Thumbnail Box -->
+            <Border Width="40" Height="40" Background="{DynamicResource ZuneCardBrush}" CornerRadius="0">
+              <TextBlock Text="♫" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+            </Border>
+
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+              <TextBlock Text="{Binding CurrentTrack.Title, FallbackValue='Not Playing'}" Classes="body" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+              <TextBlock Text="{Binding CurrentTrack.ArtistName, FallbackValue='Zune'}" Classes="caption" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+            </StackPanel>
+
+            <!-- Zune Tri-State Heart Rating Buttons -->
+            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+              <!-- Favorite Heart Button -->
+              <Button Command="{Binding ToggleFavoriteCommand}" Padding="4">
+                <TextBlock Text="♥" FontSize="18" 
+                           Foreground="{Binding IsFavorite, Converter={x:Null}}" 
+                           Classes.active="{Binding IsFavorite}">
+                  <TextBlock.Styles>
+                    <Style Selector="TextBlock.active">
+                      <Setter Property="Foreground" Value="{DynamicResource ZuneAccentBrush}" />
+                    </Style>
+                  </TextBlock.Styles>
+                </TextBlock>
+              </Button>
+              <!-- Dislike Broken Heart Button -->
+              <Button Command="{Binding ToggleDislikeCommand}" Padding="4">
+                <TextBlock Text="💔" FontSize="14" Opacity="{Binding IsDisliked, Converter={x:Null}}" />
+              </Button>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Center: Transport Buttons -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Command="{Binding PreviousCommand}">
+              <TextBlock Text="⏮" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+            </Button>
+            <Button Command="{Binding PlayPauseCommand}" Padding="8,4">
+              <TextBlock Text="{Binding IsPlaying, Converter={x:Null}, FallbackValue='▶'}" FontSize="20" Foreground="{DynamicResource ZuneAccentBrush}">
+                <!-- Toggle between Play and Pause symbols -->
+              </TextBlock>
+            </Button>
+            <Button Command="{Binding NextCommand}">
+              <TextBlock Text="⏭" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+            </Button>
+          </StackPanel>
+
+          <!-- Right: Timers & Volume -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ElapsedTimeText}" Classes="caption" VerticalAlignment="Center" />
+            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+            <TextBlock Text="{Binding Duration, StringFormat={}{0:m\\:ss}}" Classes="caption" VerticalAlignment="Center" />
+
+            <!-- Volume Slider -->
+            <Slider Width="90" 
+                    Value="{Binding Volume}" 
+                    Minimum="0" 
+                    Maximum="100" 
+                    VerticalAlignment="Center" 
+                    Margin="8,0,0,0" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:NotZune.UI.Views"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
+        x:Class="NotZune.Desktop.MainWindow"
+        Title="Not-Zune"
+        Width="1180" Height="740"
+        MinWidth="900" MinHeight="600"
+        Background="{DynamicResource ZuneBackgroundBrush}">
+
+  <views:MainShellView />
+</Window>
