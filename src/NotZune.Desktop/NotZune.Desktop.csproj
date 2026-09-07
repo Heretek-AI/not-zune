@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\NotZune.UI\NotZune.UI.csproj" />
@@ -15,6 +15,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>xune.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <ItemGroup>
+    <AvaloniaResource Include="xune.ico" />
+  </ItemGroup>
 </Project>

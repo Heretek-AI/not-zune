@@ -6,6 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="780"
         x:Class="NotZune.Desktop.MainWindow"
         Title="Not-Zune"
+        Icon="/xune.ico"
         Width="1240" Height="780"
         MinWidth="734" MinHeight="500"
         ExtendClientAreaToDecorationsHint="True"
