@@ -93,6 +93,14 @@ This repository contains built-in agent customizations and tools:
 
 ---
 
+## 💖 Special Thanks & Acknowledgements
+
+A heartfelt **thank you to [cmoserror1](https://github.com/cmoserror1)** for inspiring the creation of this project. Your passion and vision for the enduring beauty of the Zune experience made Not-Zune possible!
+
+Additional gratitude to the vibrant Zune preservation, modding, and development community across [zunes.me](https://zunes.me), [ZuneDev](https://github.com/ZuneDev), and everyone keeping the spirit of authentic digital design alive.
+
+---
+
 ## 📄 License
 
 Licensed under the MIT License.
