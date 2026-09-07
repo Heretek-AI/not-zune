@@ -1,6 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="using:NotZune.UI"
+             xmlns:ui="clr-namespace:NotZune.UI;assembly=NotZune.UI"
              x:Class="NotZune.Desktop.App"
              RequestedThemeVariant="Dark">
   <Application.DataTemplates>

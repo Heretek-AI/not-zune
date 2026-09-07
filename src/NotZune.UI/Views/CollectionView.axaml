@@ -2,8 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:NotZune.UI.ViewModels"
-             xmlns:models="using:NotZune.Domain.Models"
+             xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
+             xmlns:models="clr-namespace:NotZune.Domain.Models;assembly=NotZune.Domain"
              mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
              x:Class="NotZune.UI.Views.CollectionView"
              x:DataType="vm:CollectionViewModel">
