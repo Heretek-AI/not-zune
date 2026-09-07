@@ -50,6 +50,11 @@ public interface IMediaLibraryService
     Task<IReadOnlyList<Track>> GetPlaylistTracksAsync(Guid playlistId);
     Task ExportPlaylistToZplAsync(Guid playlistId, string targetFilePath);
     Task UpdateTrackMetadataAsync(Guid trackId, string title, string artistName, string albumTitle, int? year, string genre, int trackNumber, int discNumber);
+    Task<IReadOnlyList<Album>> GetPinnedAlbumsAsync();
+    Task PinAlbumAsync(Guid albumId);
+    Task UnpinAlbumAsync(Guid albumId);
+    void StartDirectoryWatcher(string directoryPath);
+    void StopDirectoryWatcher();
     event EventHandler? LibraryUpdated;
 }
 

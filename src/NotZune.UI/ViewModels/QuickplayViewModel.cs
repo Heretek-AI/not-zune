@@ -74,19 +74,28 @@ public class QuickplayViewModel : ViewModelBase
         PlayDiscoveryMixCommand = new AsyncRelayCommand(OnPlayDiscoveryMixAsync);
         PlayHistoryItemCommand = new AsyncRelayCommand<PlayHistoryEntry>(OnPlayHistoryItemAsync);
         PlayAlbumCommand = new AsyncRelayCommand<Album>(OnPlayAlbumAsync);
-        UnpinAlbumCommand = new RelayCommand<Album>(album =>
+        UnpinAlbumCommand = new AsyncRelayCommand<Album>(async album =>
         {
-            if (album != null) Pins.Remove(album);
+            if (album != null)
+            {
+                Pins.Remove(album);
+                await _libraryService.UnpinAlbumAsync(album.Id);
+            }
         });
+
+        _libraryService.LibraryUpdated += async (_, _) =>
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(LoadInitialDataAsync);
+        };
 
         _ = LoadInitialDataAsync();
     }
 
     public async Task LoadInitialDataAsync()
     {
-        var allAlbums = await _libraryService.GetAllAlbumsAsync();
+        var pinnedAlbums = await _libraryService.GetPinnedAlbumsAsync();
         Pins.Clear();
-        foreach (var album in allAlbums.Take(6))
+        foreach (var album in pinnedAlbums)
         {
             Pins.Add(album);
         }

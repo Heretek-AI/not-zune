@@ -36,6 +36,8 @@ public class Album
     public string Genre { get; set; } = string.Empty;
     public string? ArtworkUri { get; set; }
     public int TrackCount { get; set; }
+    public bool IsPinned { get; set; }
+    public DateTime? PinnedAtUtc { get; set; }
     public List<Track> Tracks { get; set; } = new();
 }
 
@@ -81,6 +83,7 @@ public class ZuneDevice
 public class SmartDJSeed
 {
     public Guid? SeedTrackId { get; set; }
+    public Guid? SeedAlbumId { get; set; }
     public Guid? SeedArtistId { get; set; }
     public string? SeedGenre { get; set; }
     public int TargetTrackCount { get; set; } = 25;

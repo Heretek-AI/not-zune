@@ -8,13 +8,13 @@
              x:DataType="vm:MainShellViewModel"
              Background="{DynamicResource ZuneSurfaceElevatedBrush}">
 
-  <Grid RowDefinitions="Auto,*,Auto" PointerPressed="OnMiniBarPointerPressed">
+  <Grid RowDefinitions="Auto,Auto,*" PointerPressed="OnMiniBarPointerPressed">
     <!-- 1. Top Mini System Bar: Brand Wordmark & Restore/Close Window Controls -->
     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="12,6,8,2">
       <!-- Mini Brand Mark -->
       <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-        <Image Source="avares://NotZune.UI/Assets/Zune/Branding/ZUNECOLORLOGO.PNG" Width="14" Height="15" VerticalAlignment="Center" />
-        <TextBlock Text="ZUNE MINI" 
+        <Image Source="avares://NotZune.UI/Assets/xune_32.png" Width="14" Height="14" VerticalAlignment="Center" />
+        <TextBlock Text="ZUNE" 
                    FontFamily="{StaticResource ZunePivotFontFamily}" 
                    FontSize="10" 
                    FontWeight="Bold" 
@@ -45,7 +45,7 @@
                  Background="#1E1E1E" />
 
     <!-- 3. Player Content & Transport Strip -->
-    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="12,10,12,6" VerticalAlignment="Center">
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Margin="12,8,12,6" VerticalAlignment="Center">
       <!-- Left: Mini Square Album Art & Rating Badge -->
       <Border Grid.Column="0" 
               Width="44" Height="44" 

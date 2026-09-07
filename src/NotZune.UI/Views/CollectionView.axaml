@@ -94,6 +94,15 @@
                     <TextBlock Text="PLAY ARTIST" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
+                <Button Classes="zune-action" 
+                        Command="{Binding StartSmartDjFromArtistCommand}" 
+                        CommandParameter="{Binding SelectedArtist}"
+                        VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="🔀" Foreground="{DynamicResource ZuneAccentBrush}" FontSize="11" VerticalAlignment="Center" />
+                    <TextBlock Text="START SMART DJ" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
               </StackPanel>
             </StackPanel>
           </Grid>
@@ -117,6 +126,23 @@
                                 BorderBrush="{DynamicResource ZuneBorderBrush}" 
                                 BorderThickness="1" 
                                 CornerRadius="0">
+                          <Border.ContextMenu>
+                            <ContextMenu>
+                              <MenuItem Header="Play Album" 
+                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PlayAlbumCommand}" 
+                                        CommandParameter="{Binding}" />
+                              <MenuItem Header="Start Smart DJ Mix" 
+                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).StartSmartDjFromAlbumCommand}" 
+                                        CommandParameter="{Binding}" />
+                              <Separator Background="{DynamicResource ZuneBorderBrush}" />
+                              <MenuItem Header="Pin to Quickplay" 
+                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PinAlbumCommand}" 
+                                        CommandParameter="{Binding}" />
+                              <MenuItem Header="Unpin from Quickplay" 
+                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).UnpinAlbumCommand}" 
+                                        CommandParameter="{Binding}" />
+                            </ContextMenu>
+                          </Border.ContextMenu>
                           <Grid>
                             <TextBlock Text="♫" FontSize="44" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
                           </Grid>
@@ -192,6 +218,23 @@
                       CommandParameter="{Binding}"
                       Padding="0" 
                       Margin="0,0,24,24">
+                <Button.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="Play Album" 
+                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PlayAlbumCommand}" 
+                              CommandParameter="{Binding}" />
+                    <MenuItem Header="Start Smart DJ Mix" 
+                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).StartSmartDjFromAlbumCommand}" 
+                              CommandParameter="{Binding}" />
+                    <Separator Background="{DynamicResource ZuneBorderBrush}" />
+                    <MenuItem Header="Pin to Quickplay" 
+                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PinAlbumCommand}" 
+                              CommandParameter="{Binding}" />
+                    <MenuItem Header="Unpin from Quickplay" 
+                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).UnpinAlbumCommand}" 
+                              CommandParameter="{Binding}" />
+                  </ContextMenu>
+                </Button.ContextMenu>
                 <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
                         BorderBrush="{DynamicResource ZuneBorderBrush}" 
                         BorderThickness="1" 
@@ -252,6 +295,9 @@
                                 CommandParameter="{Binding}" />
                       <MenuItem Header="Add to Queue" 
                                 Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).EnqueueTrackCommand}" 
+                                CommandParameter="{Binding}" />
+                      <MenuItem Header="Start Smart DJ Mix" 
+                                Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).StartSmartDjFromTrackCommand}" 
                                 CommandParameter="{Binding}" />
                       <Separator Background="{DynamicResource ZuneBorderBrush}" />
                       <MenuItem Header="Favorite (Heart)" 

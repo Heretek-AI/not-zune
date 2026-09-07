@@ -55,6 +55,22 @@ public class ZuneFeatureGapTests
             LastUpdatedMetadata = (trackId, title, artistName, albumTitle, year, genre, trackNumber, discNumber);
             return Task.CompletedTask;
         }
+        public List<Album> PinnedAlbums { get; set; } = new();
+        public Task<IReadOnlyList<Album>> GetPinnedAlbumsAsync() => Task.FromResult<IReadOnlyList<Album>>(PinnedAlbums);
+        public Task PinAlbumAsync(Guid albumId)
+        {
+            var album = PinnedAlbums.FirstOrDefault(a => a.Id == albumId);
+            if (album != null) album.IsPinned = true;
+            return Task.CompletedTask;
+        }
+        public Task UnpinAlbumAsync(Guid albumId)
+        {
+            var album = PinnedAlbums.FirstOrDefault(a => a.Id == albumId);
+            if (album != null) album.IsPinned = false;
+            return Task.CompletedTask;
+        }
+        public void StartDirectoryWatcher(string directoryPath) { }
+        public void StopDirectoryWatcher() { }
 #pragma warning disable CS0067
         public event EventHandler? LibraryUpdated;
 #pragma warning restore CS0067
@@ -426,6 +442,102 @@ public class ZuneFeatureGapTests
         Assert.Equal("Electronic", lib.LastUpdatedMetadata.Value.genre);
         Assert.Equal(5, lib.LastUpdatedMetadata.Value.trackNum);
         Assert.Equal(2, lib.LastUpdatedMetadata.Value.discNum);
+    }
+
+    [Fact]
+    public async Task QuickplayPinning_PinsAndUnpinsAlbum()
+    {
+        var lib = new TestMediaLibraryService();
+        var album = new Album
+        {
+            Id = Guid.NewGuid(),
+            Title = "Subdivisions",
+            ArtistName = "Rush",
+            IsPinned = false
+        };
+        lib.PinnedAlbums.Add(album);
+
+        // Pin album
+        await lib.PinAlbumAsync(album.Id);
+        Assert.True(album.IsPinned);
+
+        // Unpin album
+        await lib.UnpinAlbumAsync(album.Id);
+        Assert.False(album.IsPinned);
+    }
+
+    [Fact]
+    public async Task SmartDJ_GeneratesMixFromAlbumSeed()
+    {
+        var engine = new NotZune.Application.Services.SmartDJEngine();
+        var albumId = Guid.NewGuid();
+        var artistId = Guid.NewGuid();
+
+        var libraryTracks = new List<Track>
+        {
+            new Track { Id = Guid.NewGuid(), Title = "Track 1", AlbumId = albumId, ArtistId = artistId, Genre = "Prog Rock" },
+            new Track { Id = Guid.NewGuid(), Title = "Track 2", AlbumId = albumId, ArtistId = artistId, Genre = "Prog Rock" },
+            new Track { Id = Guid.NewGuid(), Title = "Track 3", AlbumId = Guid.NewGuid(), ArtistId = artistId, Genre = "Prog Rock" },
+            new Track { Id = Guid.NewGuid(), Title = "Track 4", AlbumId = Guid.NewGuid(), ArtistId = Guid.NewGuid(), Genre = "Pop" }
+        };
+
+        var seed = new SmartDJSeed
+        {
+            SeedAlbumId = albumId,
+            TargetTrackCount = 3,
+            ExcludeDisliked = true
+        };
+
+        var mix = await engine.GenerateMixAsync(seed, libraryTracks);
+
+        Assert.NotEmpty(mix);
+        // The top candidate should match the album seed
+        Assert.Equal(albumId, mix[0].AlbumId);
+    }
+
+    [Fact]
+    public void NowPlaying_Showlist_TogglesAndUpdatesQueue()
+    {
+        var player = new PlaybackQueueCoordinator();
+        var lib = new TestMediaLibraryService();
+        var vm = new NowPlayingViewModel(player, lib);
+
+        Assert.False(vm.IsShowlistOpen);
+        Assert.Equal(0, vm.UpcomingQueueCount);
+
+        // Enqueue tracks
+        var t1 = new Track { Id = Guid.NewGuid(), Title = "Song A", ArtistName = "Artist A" };
+        var t2 = new Track { Id = Guid.NewGuid(), Title = "Song B", ArtistName = "Artist B" };
+        player.Enqueue(new[] { t1, t2 });
+
+        // Toggle showlist
+        vm.ToggleShowlistCommand.Execute(null);
+        Assert.True(vm.IsShowlistOpen);
+        Assert.Equal(2, vm.UpcomingQueueCount);
+        Assert.Equal("Song A", vm.UpcomingQueue[0].Title);
+
+        // Toggle closed
+        vm.ToggleShowlistCommand.Execute(null);
+        Assert.False(vm.IsShowlistOpen);
+    }
+
+    [Fact]
+    public void Settings_ExpandedPreferences_UpdateState()
+    {
+        var vm = new SettingsViewModel();
+
+        Assert.True(vm.VolumeLevelingEnabled);
+        Assert.True(vm.CompactModeAlwaysOnTop);
+        Assert.True(vm.AutoWatchFolder);
+
+        vm.VolumeLevelingEnabled = false;
+        Assert.False(vm.VolumeLevelingEnabled);
+
+        vm.CompactModeAlwaysOnTop = false;
+        Assert.False(vm.CompactModeAlwaysOnTop);
+
+        vm.AutoWatchFolder = false;
+        Assert.False(vm.AutoWatchFolder);
     }
 }
 

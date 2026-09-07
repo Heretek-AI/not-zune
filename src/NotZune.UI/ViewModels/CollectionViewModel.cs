@@ -21,6 +21,7 @@ public class CollectionViewModel : ViewModelBase
 {
     private readonly IPlayerCoordinator _playerCoordinator;
     private readonly IMediaLibraryService _libraryService;
+    private readonly ISmartDJService _smartDJService;
 
     private CollectionSubPivot _activeSubPivot = CollectionSubPivot.Artists;
     private string _searchQuery = string.Empty;
@@ -113,6 +114,11 @@ public class CollectionViewModel : ViewModelBase
     public ICommand ToggleDislikeCommand { get; }
     public ICommand OpenEditMetadataCommand { get; }
     public ICommand CloseEditMetadataCommand { get; }
+    public ICommand PinAlbumCommand { get; }
+    public ICommand UnpinAlbumCommand { get; }
+    public ICommand StartSmartDjFromTrackCommand { get; }
+    public ICommand StartSmartDjFromAlbumCommand { get; }
+    public ICommand StartSmartDjFromArtistCommand { get; }
 
     private MetadataEditViewModel? _activeEditMetadataVM;
     public MetadataEditViewModel? ActiveEditMetadataVM
@@ -132,10 +138,12 @@ public class CollectionViewModel : ViewModelBase
     public CollectionViewModel(
         IPlayerCoordinator playerCoordinator,
         IMediaLibraryService libraryService,
-        IPodcastService? podcastService = null)
+        IPodcastService? podcastService = null,
+        ISmartDJService? smartDJService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
+        _smartDJService = smartDJService ?? new NotZune.Application.Services.SmartDJEngine();
         var podService = podcastService ?? new NotZune.Application.Services.PodcastService(playerCoordinator);
         PodcastsVM = new PodcastsViewModel(podService);
         PlaylistsVM = new PlaylistsViewModel(libraryService, playerCoordinator);
@@ -168,6 +176,19 @@ public class CollectionViewModel : ViewModelBase
         });
         ToggleFavoriteCommand = new AsyncRelayCommand<Track>(OnToggleFavoriteAsync);
         ToggleDislikeCommand = new AsyncRelayCommand<Track>(OnToggleDislikeAsync);
+
+        PinAlbumCommand = new AsyncRelayCommand<Album>(async album =>
+        {
+            if (album != null) await _libraryService.PinAlbumAsync(album.Id);
+        });
+        UnpinAlbumCommand = new AsyncRelayCommand<Album>(async album =>
+        {
+            if (album != null) await _libraryService.UnpinAlbumAsync(album.Id);
+        });
+
+        StartSmartDjFromTrackCommand = new AsyncRelayCommand<Track>(OnStartSmartDjFromTrackAsync);
+        StartSmartDjFromAlbumCommand = new AsyncRelayCommand<Album>(OnStartSmartDjFromAlbumAsync);
+        StartSmartDjFromArtistCommand = new AsyncRelayCommand<Artist>(OnStartSmartDjFromArtistAsync);
 
         _ = RefreshDataAsync();
     }
@@ -353,5 +374,60 @@ public class CollectionViewModel : ViewModelBase
         track.Rating = newRating;
         await _playerCoordinator.SetRatingAsync(track.Id, newRating);
         await _libraryService.SetTrackRatingAsync(track.Id, newRating);
+    }
+
+    private async Task OnStartSmartDjFromTrackAsync(Track? track)
+    {
+        if (track == null) return;
+        var allTracks = await _libraryService.GetAllTracksAsync();
+        var seed = new SmartDJSeed
+        {
+            SeedTrackId = track.Id,
+            SeedArtistId = track.ArtistId,
+            SeedGenre = track.Genre,
+            TargetTrackCount = 25,
+            ExcludeDisliked = true
+        };
+        var mix = await _smartDJService.GenerateMixAsync(seed, allTracks);
+        if (mix.Count > 0)
+        {
+            await _playerCoordinator.PlayTrackAsync(mix[0], mix);
+        }
+    }
+
+    private async Task OnStartSmartDjFromAlbumAsync(Album? album)
+    {
+        if (album == null) return;
+        var allTracks = await _libraryService.GetAllTracksAsync();
+        var seed = new SmartDJSeed
+        {
+            SeedAlbumId = album.Id,
+            SeedArtistId = album.ArtistId,
+            SeedGenre = album.Genre,
+            TargetTrackCount = 25,
+            ExcludeDisliked = true
+        };
+        var mix = await _smartDJService.GenerateMixAsync(seed, allTracks);
+        if (mix.Count > 0)
+        {
+            await _playerCoordinator.PlayTrackAsync(mix[0], mix);
+        }
+    }
+
+    private async Task OnStartSmartDjFromArtistAsync(Artist? artist)
+    {
+        if (artist == null) return;
+        var allTracks = await _libraryService.GetAllTracksAsync();
+        var seed = new SmartDJSeed
+        {
+            SeedArtistId = artist.Id,
+            TargetTrackCount = 25,
+            ExcludeDisliked = true
+        };
+        var mix = await _smartDJService.GenerateMixAsync(seed, allTracks);
+        if (mix.Count > 0)
+        {
+            await _playerCoordinator.PlayTrackAsync(mix[0], mix);
+        }
     }
 }

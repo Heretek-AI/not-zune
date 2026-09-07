@@ -82,6 +82,55 @@
         </ScrollViewer>
       </Border>
 
+      <!-- Slide-out Drawer: Showlist (Upcoming Queue) -->
+      <Border HorizontalAlignment="Right" 
+              Width="360" 
+              Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+              BorderBrush="{DynamicResource ZuneBorderBrush}"
+              BorderThickness="1,0,0,0"
+              CornerRadius="0"
+              IsVisible="{Binding IsShowlistOpen}"
+              Padding="24">
+        <Grid RowDefinitions="Auto,*">
+          <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+            <StackPanel Grid.Column="0">
+              <TextBlock Text="NOW PLAYING SHOWLIST" Classes="caption" FontWeight="Bold" Foreground="{DynamicResource ZuneAccentBrush}" LetterSpacing="2" />
+              <TextBlock Text="{Binding UpcomingQueueCount, StringFormat={}{0} tracks queued}" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,4,0,0" />
+            </StackPanel>
+            <Button Grid.Column="1" Command="{Binding ToggleShowlistCommand}" Padding="6" Classes="window-control">
+              <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+            </Button>
+          </Grid>
+
+          <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding UpcomingQueue}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Track">
+                  <Button Command="{Binding $parent[UserControl].((vm:NowPlayingViewModel)DataContext).PlayQueueTrackCommand}"
+                          CommandParameter="{Binding}"
+                          HorizontalAlignment="Stretch"
+                          Padding="0">
+                    <Border Background="Transparent" 
+                            BorderBrush="{DynamicResource ZuneBorderBrush}" 
+                            BorderThickness="0,0,0,1" 
+                            CornerRadius="0" 
+                            Padding="10,8">
+                      <Grid ColumnDefinitions="*,50">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                          <TextBlock Text="{Binding Title}" Classes="body" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding ArtistName}" Classes="caption" Foreground="{DynamicResource ZuneTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding Duration, StringFormat={}{0:m\\:ss}}" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                      </Grid>
+                    </Border>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+
       <!-- Floating Auto-Hiding Transport HUD -->
       <Border VerticalAlignment="Bottom" 
               HorizontalAlignment="Center" 
@@ -124,6 +173,14 @@
             <Panel Width="17" Height="15">
               <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.HATEIT.SELECTED.PNG" IsVisible="{Binding IsDisliked}" Width="17" Height="15" />
               <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.HATEIT.PNG" IsVisible="{Binding !IsDisliked}" Width="17" Height="15" />
+            </Panel>
+          </Button>
+
+          <!-- Showlist Toggle Button -->
+          <Button Command="{Binding ToggleShowlistCommand}" Padding="4" ToolTip.Tip="Showlist (Upcoming Queue)">
+            <Panel Width="20" Height="20">
+              <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.SHOWLIST.ON.PNG" IsVisible="{Binding IsShowlistOpen}" Width="20" Height="20" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.SHOWLIST.OFF.PNG" IsVisible="{Binding !IsShowlistOpen}" Width="20" Height="20" />
             </Panel>
           </Button>
 
@@ -183,6 +240,14 @@
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Top" 
                 Margin="0,20,40,0">
+      <!-- Showlist Queue Toggle -->
+      <Button Command="{Binding ToggleShowlistCommand}" Classes="zune-action">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.SHOWLIST.ON.PNG" Width="13" Height="13" VerticalAlignment="Center" />
+          <TextBlock Text="SHOWLIST" Classes="caption" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+
       <!-- Lyrics & Bio Toggle -->
       <Button Command="{Binding ToggleBioDrawerCommand}" Classes="zune-action">
         <StackPanel Orientation="Horizontal" Spacing="6">

@@ -89,6 +89,27 @@
         </StackPanel>
       </StackPanel>
 
+      <!-- Section: Playback & Mini-Player Preferences -->
+      <StackPanel Spacing="12">
+        <TextBlock Text="PLAYBACK &amp; MINI-PLAYER" Classes="section-header" />
+        <TextBlock Text="Audio playback leveling and compact player behavior." Classes="caption" />
+        
+        <StackPanel Spacing="10" Margin="0,4,0,0">
+          <CheckBox IsChecked="{Binding VolumeLevelingEnabled}" 
+                    Content="Volume Leveling (ReplayGain normalization across tracks)" 
+                    CornerRadius="0"
+                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          <CheckBox IsChecked="{Binding AutoWatchFolder}" 
+                    Content="Background Library Watcher (Auto-detect newly added music files)" 
+                    CornerRadius="0"
+                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          <CheckBox IsChecked="{Binding CompactModeAlwaysOnTop}" 
+                    Content="Always Keep Compact Mini-Player on Top" 
+                    CornerRadius="0"
+                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
+        </StackPanel>
+      </StackPanel>
+
       <!-- Section: Library Folders -->
       <StackPanel Spacing="12">
         <TextBlock Text="MUSIC COLLECTION FOLDER" Classes="section-header" />

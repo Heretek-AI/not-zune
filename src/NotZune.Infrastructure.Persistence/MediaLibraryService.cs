@@ -293,6 +293,7 @@ public class MediaLibraryService : IMediaLibraryService
         }
 
         await ctx.SaveChangesAsync();
+        StartDirectoryWatcher(directoryPath);
         LibraryUpdated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -500,5 +501,133 @@ public class MediaLibraryService : IMediaLibraryService
 
         await ctx.SaveChangesAsync();
         LibraryUpdated?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async Task<IReadOnlyList<Album>> GetPinnedAlbumsAsync()
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var pinned = await ctx.Albums
+            .Include(a => a.Tracks)
+            .Where(a => a.IsPinned)
+            .OrderByDescending(a => a.PinnedAtUtc)
+            .ToListAsync();
+
+        if (pinned.Count == 0)
+        {
+            // Fall back to first 6 albums so quickplay is never blank on initial launch
+            return await ctx.Albums
+                .Include(a => a.Tracks)
+                .OrderBy(a => a.Title)
+                .Take(6)
+                .ToListAsync();
+        }
+
+        return pinned;
+    }
+
+    public async Task PinAlbumAsync(Guid albumId)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var album = await ctx.Albums.FindAsync(albumId);
+        if (album != null)
+        {
+            album.IsPinned = true;
+            album.PinnedAtUtc = DateTime.UtcNow;
+            await ctx.SaveChangesAsync();
+            LibraryUpdated?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public async Task UnpinAlbumAsync(Guid albumId)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var album = await ctx.Albums.FindAsync(albumId);
+        if (album != null)
+        {
+            album.IsPinned = false;
+            album.PinnedAtUtc = null;
+            await ctx.SaveChangesAsync();
+            LibraryUpdated?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private FileSystemWatcher? _watcher;
+    private System.Threading.Timer? _debounceTimer;
+    private string? _watchedDirectory;
+    private readonly object _watcherLock = new();
+
+    public void StartDirectoryWatcher(string directoryPath)
+    {
+        lock (_watcherLock)
+        {
+            StopDirectoryWatcher();
+
+            if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath))
+            {
+                return;
+            }
+
+            _watchedDirectory = directoryPath;
+            try
+            {
+                _watcher = new FileSystemWatcher(directoryPath)
+                {
+                    IncludeSubdirectories = true,
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite | NotifyFilters.Size
+                };
+
+                _watcher.Created += (_, _) => ScheduleDebouncedScan();
+                _watcher.Changed += (_, _) => ScheduleDebouncedScan();
+                _watcher.Deleted += (_, _) => ScheduleDebouncedScan();
+                _watcher.Renamed += (_, _) => ScheduleDebouncedScan();
+                _watcher.EnableRaisingEvents = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FileSystemWatcher] Could not start watcher for '{directoryPath}': {ex.Message}");
+            }
+        }
+    }
+
+    public void StopDirectoryWatcher()
+    {
+        lock (_watcherLock)
+        {
+            if (_watcher != null)
+            {
+                try
+                {
+                    _watcher.EnableRaisingEvents = false;
+                    _watcher.Dispose();
+                }
+                catch { }
+                _watcher = null;
+            }
+
+            _debounceTimer?.Dispose();
+            _debounceTimer = null;
+        }
+    }
+
+    private void ScheduleDebouncedScan()
+    {
+        lock (_watcherLock)
+        {
+            _debounceTimer?.Dispose();
+            _debounceTimer = new System.Threading.Timer(async _ =>
+            {
+                if (!string.IsNullOrEmpty(_watchedDirectory) && Directory.Exists(_watchedDirectory))
+                {
+                    try
+                    {
+                        await ScanDirectoryAsync(_watchedDirectory);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[FileSystemWatcher] Auto-scan error: {ex.Message}");
+                    }
+                }
+            }, null, 1500, System.Threading.Timeout.Infinite);
+        }
     }
 }

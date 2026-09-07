@@ -25,10 +25,25 @@ public class SmartDJEngine : ISmartDJService
             seedTrack = libraryTracks.FirstOrDefault(t => t.Id == seed.SeedTrackId.Value);
         }
 
+        Guid? targetAlbumId = seed.SeedAlbumId ?? seedTrack?.AlbumId;
         Guid? targetArtistId = seed.SeedArtistId ?? seedTrack?.ArtistId;
         string? targetGenre = !string.IsNullOrEmpty(seed.SeedGenre) ? seed.SeedGenre : seedTrack?.Genre;
 
+        if (!targetArtistId.HasValue && targetAlbumId.HasValue)
+        {
+            var albumTrack = libraryTracks.FirstOrDefault(t => t.AlbumId == targetAlbumId.Value);
+            if (albumTrack != null)
+            {
+                targetArtistId = albumTrack.ArtistId;
+                if (string.IsNullOrEmpty(targetGenre))
+                {
+                    targetGenre = albumTrack.Genre;
+                }
+            }
+        }
+
         // 3. Score candidates based on similarity:
+        // - Same album: high weight (+12)
         // - Same artist: high weight (+10)
         // - Same genre: medium weight (+5)
         // - Favorite rating: bonus (+4)
@@ -36,6 +51,10 @@ public class SmartDJEngine : ISmartDJService
         var scoredList = candidates.Select(track =>
         {
             double score = 0;
+            if (targetAlbumId.HasValue && track.AlbumId == targetAlbumId.Value)
+            {
+                score += 12.0;
+            }
             if (targetArtistId.HasValue && track.ArtistId == targetArtistId.Value)
             {
                 score += 10.0;

@@ -80,6 +80,47 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    private bool _volumeLevelingEnabled = true;
+    public bool VolumeLevelingEnabled
+    {
+        get => _volumeLevelingEnabled;
+        set => SetProperty(ref _volumeLevelingEnabled, value);
+    }
+
+    private bool _compactModeAlwaysOnTop = true;
+    public bool CompactModeAlwaysOnTop
+    {
+        get => _compactModeAlwaysOnTop;
+        set => SetProperty(ref _compactModeAlwaysOnTop, value);
+    }
+
+    private bool _autoWatchFolder = true;
+    public bool AutoWatchFolder
+    {
+        get => _autoWatchFolder;
+        set
+        {
+            if (SetProperty(ref _autoWatchFolder, value))
+            {
+                if (value)
+                {
+                    _libraryService?.StartDirectoryWatcher(NormalizePath(MusicFolderPath));
+                }
+                else
+                {
+                    _libraryService?.StopDirectoryWatcher();
+                }
+            }
+        }
+    }
+
+    private string _startupView = "Quickplay";
+    public string StartupView
+    {
+        get => _startupView;
+        set => SetProperty(ref _startupView, value);
+    }
+
     private string _musicFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic) is { Length: > 0 } myMusic
         ? myMusic
         : "~/Music";

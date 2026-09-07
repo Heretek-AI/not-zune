@@ -24,8 +24,10 @@ public class NowPlayingViewModel : ViewModelBase
     private NowPlayingMode _mode = NowPlayingMode.ArtistCanvas;
     private bool _isHudVisible = true;
     private bool _isBioDrawerOpen = false;
+    private bool _isShowlistOpen = false;
 
     public ObservableCollection<Album> MosaicWallAlbums { get; } = new();
+    public ObservableCollection<Track> UpcomingQueue { get; } = new();
 
     public NowPlayingMode Mode
     {
@@ -54,6 +56,14 @@ public class NowPlayingViewModel : ViewModelBase
         get => _isBioDrawerOpen;
         set => SetProperty(ref _isBioDrawerOpen, value);
     }
+
+    public bool IsShowlistOpen
+    {
+        get => _isShowlistOpen;
+        set => SetProperty(ref _isShowlistOpen, value);
+    }
+
+    public int UpcomingQueueCount => UpcomingQueue.Count;
 
     public Track? CurrentTrack => _playerCoordinator.CurrentTrack;
     public string TrackTitle => CurrentTrack?.Title ?? "No Track Playing";
@@ -86,6 +96,8 @@ public class NowPlayingViewModel : ViewModelBase
 
     public ICommand ToggleModeCommand { get; }
     public ICommand ToggleBioDrawerCommand { get; }
+    public ICommand ToggleShowlistCommand { get; }
+    public ICommand PlayQueueTrackCommand { get; }
     public ICommand ResetHudTimerCommand { get; }
     public ICommand PlayPauseCommand { get; }
     public ICommand NextCommand { get; }
@@ -118,6 +130,28 @@ public class NowPlayingViewModel : ViewModelBase
         ToggleBioDrawerCommand = new RelayCommand(() =>
         {
             IsBioDrawerOpen = !IsBioDrawerOpen;
+            if (IsBioDrawerOpen) IsShowlistOpen = false;
+            TriggerHudActivity();
+        });
+
+        ToggleShowlistCommand = new RelayCommand(() =>
+        {
+            IsShowlistOpen = !IsShowlistOpen;
+            if (IsShowlistOpen)
+            {
+                IsBioDrawerOpen = false;
+                UpdateUpcomingQueue();
+            }
+            TriggerHudActivity();
+        });
+
+        PlayQueueTrackCommand = new AsyncRelayCommand<Track>(async track =>
+        {
+            if (track != null)
+            {
+                await _playerCoordinator.PlayTrackAsync(track);
+                TriggerHudActivity();
+            }
         });
 
         ResetHudTimerCommand = new RelayCommand(TriggerHudActivity);
@@ -167,6 +201,7 @@ public class NowPlayingViewModel : ViewModelBase
         _playerCoordinator.RatingChanged += OnRatingChanged;
 
         _ = LoadMosaicWallAsync();
+        UpdateUpcomingQueue();
         TriggerHudActivity();
     }
 
@@ -187,6 +222,16 @@ public class NowPlayingViewModel : ViewModelBase
         }
     }
 
+    public void UpdateUpcomingQueue()
+    {
+        UpcomingQueue.Clear();
+        foreach (var track in _playerCoordinator.Queue)
+        {
+            UpcomingQueue.Add(track);
+        }
+        OnPropertyChanged(nameof(UpcomingQueueCount));
+    }
+
     private void OnTrackChanged(object? sender, TrackChangedEventArgs e)
     {
         OnPropertyChanged(nameof(CurrentTrack));
@@ -203,6 +248,7 @@ public class NowPlayingViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsFavorite));
         OnPropertyChanged(nameof(IsDisliked));
         OnPropertyChanged(nameof(BiographyText));
+        UpdateUpcomingQueue();
         TriggerHudActivity();
     }
 

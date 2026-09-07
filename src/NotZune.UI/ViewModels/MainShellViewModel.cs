@@ -255,7 +255,7 @@ public class MainShellViewModel : ViewModelBase
 
         // Child ViewModels
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
-        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService);
+        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService);
         DeviceVM = new DeviceViewModel(deviceSyncService);
         SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService);
