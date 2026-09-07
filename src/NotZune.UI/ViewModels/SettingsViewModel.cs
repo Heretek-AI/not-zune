@@ -1,4 +1,7 @@
+using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using NotZune.Application.Interfaces;
@@ -11,6 +14,8 @@ public record BackgroundThemeOption(string Name, string? AssetUri);
 public class SettingsViewModel : ViewModelBase
 {
     private readonly ISoundEffectService? _soundService;
+    private readonly IFolderPickerService? _folderPicker;
+    private readonly IMediaLibraryService? _libraryService;
     public event EventHandler<string?>? BackgroundArtChanged;
 
     public ObservableCollection<AccentColorOption> AccentColors { get; } = new()
@@ -75,27 +80,70 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
-    private string _musicFolderPath = "~/Music";
+    private string _musicFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic) is { Length: > 0 } myMusic
+        ? myMusic
+        : "~/Music";
     public string MusicFolderPath
     {
         get => _musicFolderPath;
         set => SetProperty(ref _musicFolderPath, value);
     }
 
+    private bool _isScanning;
+    public bool IsScanning
+    {
+        get => _isScanning;
+        set => SetProperty(ref _isScanning, value);
+    }
+
+    private double _scanProgress;
+    public double ScanProgress
+    {
+        get => _scanProgress;
+        set => SetProperty(ref _scanProgress, value);
+    }
+
+    private string? _scanStatusText;
+    public string? ScanStatusText
+    {
+        get => _scanStatusText;
+        set
+        {
+            if (SetProperty(ref _scanStatusText, value))
+            {
+                OnPropertyChanged(nameof(HasScanStatus));
+            }
+        }
+    }
+
+    public bool HasScanStatus => !string.IsNullOrEmpty(ScanStatusText);
+
     public string PlatformInfo => $"{System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture})";
     public string VersionInfo => "Not-Zune v0.1.0-alpha";
 
     public ICommand SelectFolderCommand { get; }
+    public ICommand RescanCommand { get; }
+    public ICommand ClearDemoLibraryCommand { get; }
     public ICommand SelectAccentCommand { get; }
     public ICommand SelectBackgroundCommand { get; }
     public ICommand TestSoundCommand { get; }
 
-    public SettingsViewModel(ISoundEffectService? soundService = null)
+    public SettingsViewModel(
+        ISoundEffectService? soundService = null,
+        IFolderPickerService? folderPicker = null,
+        IMediaLibraryService? libraryService = null)
     {
         _soundService = soundService;
+        _folderPicker = folderPicker;
+        _libraryService = libraryService;
+
         _selectedAccent = AccentColors[0];
         _selectedBackground = BackgroundThemes[1]; // Default to authentic Zune Vector Ribbon
-        SelectFolderCommand = new RelayCommand(() => { });
+
+        SelectFolderCommand = new AsyncRelayCommand(OnSelectFolderAsync);
+        RescanCommand = new AsyncRelayCommand(OnRescanAsync);
+        ClearDemoLibraryCommand = new AsyncRelayCommand(OnClearDemoLibraryAsync);
+
         SelectAccentCommand = new RelayCommand<AccentColorOption>(accent =>
         {
             if (accent != null)
@@ -111,6 +159,88 @@ public class SettingsViewModel : ViewModelBase
             }
         });
         TestSoundCommand = new RelayCommand(() => _soundService?.PlaySyncComplete());
+    }
+
+    private async Task OnSelectFolderAsync()
+    {
+        if (_folderPicker == null) return;
+        var selected = await _folderPicker.PickFolderAsync("Select Music Collection Folder");
+        if (!string.IsNullOrWhiteSpace(selected))
+        {
+            MusicFolderPath = selected;
+            await ScanFolderAsync(selected);
+        }
+    }
+
+    private async Task OnRescanAsync()
+    {
+        await ScanFolderAsync(MusicFolderPath);
+    }
+
+    private async Task OnClearDemoLibraryAsync()
+    {
+        if (_libraryService != null)
+        {
+            await _libraryService.ClearDemoDataAsync();
+            ScanStatusText = "Demo placeholder data cleared.";
+        }
+    }
+
+    private static string NormalizePath(string path)
+    {
+        if (path.StartsWith("~/") || path.StartsWith("~\\"))
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return Path.Combine(home, path.Substring(2));
+        }
+        return path;
+    }
+
+    private async Task ScanFolderAsync(string? rawPath)
+    {
+        if (string.IsNullOrWhiteSpace(rawPath))
+        {
+            ScanStatusText = "Please enter or select a valid music directory.";
+            return;
+        }
+
+        var folderPath = NormalizePath(rawPath);
+        if (!Directory.Exists(folderPath))
+        {
+            ScanStatusText = $"Directory not found: {folderPath}";
+            return;
+        }
+
+        if (_libraryService == null)
+        {
+            ScanStatusText = "Library service unavailable.";
+            return;
+        }
+
+        IsScanning = true;
+        ScanProgress = 0.0;
+        ScanStatusText = $"Scanning {folderPath}...";
+
+        try
+        {
+            var progress = new Progress<double>(p =>
+            {
+                ScanProgress = p;
+                ScanStatusText = $"Scanning audio files: {(int)(p * 100)}%";
+            });
+
+            await _libraryService.ScanDirectoryAsync(folderPath, progress);
+            _soundService?.PlaySyncComplete();
+            ScanStatusText = "Library scan complete.";
+        }
+        catch (Exception ex)
+        {
+            ScanStatusText = $"Scan failed: {ex.Message}";
+        }
+        finally
+        {
+            IsScanning = false;
+        }
     }
 
     private void ApplyAccent(AccentColorOption accent)

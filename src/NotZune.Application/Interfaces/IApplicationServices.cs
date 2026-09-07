@@ -42,6 +42,8 @@ public interface IMediaLibraryService
     Task<IReadOnlyList<Track>> SearchAsync(string query);
     Task SetTrackRatingAsync(Guid trackId, HeartRating rating);
     Task ScanDirectoryAsync(string directoryPath, IProgress<double>? progress = null);
+    Task ClearDemoDataAsync();
+    event EventHandler? LibraryUpdated;
 }
 
 public interface IDeviceSyncService

@@ -56,7 +56,31 @@ public class SoundEffectService : ISoundEffectService
             {
                 try
                 {
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        using var proc = Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "powershell",
+                            Arguments = $"-NoProfile -NonInteractive -Command \"(New-Object Media.SoundPlayer '{soundPath.Replace("'", "''")}').PlaySync()\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true
+                        });
+                        proc?.WaitForExit(3000);
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        using var proc = Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "afplay",
+                            Arguments = $"\"{soundPath}\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        });
+                        proc?.WaitForExit(3000);
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     {
                         var player = FindLinuxPlayer();
                         if (player != null)

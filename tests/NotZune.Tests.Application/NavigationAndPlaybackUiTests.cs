@@ -110,6 +110,10 @@ public class NavigationAndPlaybackUiTests
         public Task<IReadOnlyList<Track>> SearchAsync(string query) => Task.FromResult<IReadOnlyList<Track>>(new List<Track>());
         public Task SetTrackRatingAsync(Guid trackId, HeartRating rating) => Task.CompletedTask;
         public Task ScanDirectoryAsync(string directoryPath, IProgress<double>? progress = null) => Task.CompletedTask;
+        public Task ClearDemoDataAsync() => Task.CompletedTask;
+#pragma warning disable CS0067
+        public event EventHandler? LibraryUpdated;
+#pragma warning restore CS0067
     }
 
     private class DummyDeviceSyncService : NotZune.Application.Interfaces.IDeviceSyncService

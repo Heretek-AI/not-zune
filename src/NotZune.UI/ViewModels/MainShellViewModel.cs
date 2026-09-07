@@ -210,7 +210,8 @@ public class MainShellViewModel : ViewModelBase
         ISmartDJService smartDJService,
         ISoundEffectService? soundEffectService = null,
         IUserStatsService? userStatsService = null,
-        IPodcastService? podcastService = null)
+        IPodcastService? podcastService = null,
+        IFolderPickerService? folderPickerService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -224,7 +225,7 @@ public class MainShellViewModel : ViewModelBase
         CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService);
         DeviceVM = new DeviceViewModel(deviceSyncService);
-        SettingsVM = new SettingsViewModel(_soundEffectService);
+        SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService);
         ZuneCardVM = new ZuneCardViewModel(_userStatsService);
 
         _currentView = QuickplayVM;
@@ -239,6 +240,20 @@ public class MainShellViewModel : ViewModelBase
 
         // Wire device sync events
         _deviceSyncService.DeviceConnected += (_, _) => _soundEffectService?.PlayNotification();
+
+        // Wire library updates
+        _libraryService.LibraryUpdated += async (_, _) =>
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                await CollectionVM.RefreshDataAsync();
+                await QuickplayVM.LoadInitialDataAsync();
+                if (_userStatsService != null)
+                {
+                    await ZuneCardVM.LoadStatsAsync();
+                }
+            });
+        };
 
         // Setup commands
         SelectPivotCommand = new RelayCommand<NavigationPivot>(pivot => ActivePivot = pivot);

@@ -10,6 +10,7 @@ using NotZune.Domain.Models;
 using NotZune.Infrastructure.Audio;
 using NotZune.Infrastructure.Devices;
 using NotZune.Infrastructure.Persistence;
+using NotZune.UI.Services;
 using NotZune.UI.ViewModels;
 
 namespace NotZune.Desktop;
@@ -66,6 +67,7 @@ public partial class App : Avalonia.Application
         services.AddSingleton<ISoundEffectService, SoundEffectService>();
         services.AddSingleton<IUserStatsService, UserStatsService>();
         services.AddSingleton<IPodcastService, PodcastService>();
+        services.AddSingleton<IFolderPickerService, AvaloniaFolderPickerService>();
 
         // 3. Audio & Hardware Subsystems
         services.AddSingleton<AudioEngine>();
