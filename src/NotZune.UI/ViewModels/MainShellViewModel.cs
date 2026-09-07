@@ -53,6 +53,15 @@ public class MainShellViewModel : ViewModelBase
                     NavigationPivot.Settings => SettingsVM,
                     _ => QuickplayVM
                 };
+
+                if (_activePivot == NavigationPivot.Collection)
+                {
+                    _ = CollectionVM.RefreshDataAsync();
+                }
+                else if (_activePivot == NavigationPivot.Quickplay)
+                {
+                    _ = QuickplayVM.LoadInitialDataAsync();
+                }
             }
         }
     }
@@ -73,6 +82,7 @@ public class MainShellViewModel : ViewModelBase
     public Track? CurrentTrack => _playerCoordinator.CurrentTrack;
     public PlaybackState State => _playerCoordinator.State;
     public bool IsPlaying => State == PlaybackState.Playing;
+    public string PlayPauseIcon => IsPlaying ? "⏸" : "▶";
     public TimeSpan CurrentPosition => _playerCoordinator.CurrentPosition;
     public TimeSpan Duration => _playerCoordinator.Duration;
 
@@ -221,6 +231,7 @@ public class MainShellViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(State));
         OnPropertyChanged(nameof(IsPlaying));
+        OnPropertyChanged(nameof(PlayPauseIcon));
         OnPropertyChanged(nameof(CurrentPosition));
         OnPropertyChanged(nameof(ProgressPercentage));
         OnPropertyChanged(nameof(ElapsedTimeText));

@@ -1,0 +1,124 @@
+using NotZune.Application.Services;
+using NotZune.Domain.Enums;
+using NotZune.Domain.Models;
+using NotZune.UI;
+using NotZune.UI.ViewModels;
+using NotZune.UI.Views;
+using Xunit;
+
+namespace NotZune.Tests.Application;
+
+public class NavigationAndPlaybackUiTests
+{
+    [Fact]
+    public void ViewLocator_BuildsExpectedViewsForViewModels()
+    {
+        var locator = new ViewLocator();
+
+        // Create mock/dummy services
+        var coordinator = new PlaybackQueueCoordinator();
+        var smartDj = new SmartDJEngine();
+        var dummyLibrary = new DummyMediaLibraryService();
+        var dummyDevice = new DummyDeviceSyncService();
+
+        var qpVm = new QuickplayViewModel(coordinator, dummyLibrary, smartDj);
+        var collVm = new CollectionViewModel(coordinator, dummyLibrary);
+        var npVm = new NowPlayingViewModel(coordinator, dummyLibrary);
+        var devVm = new DeviceViewModel(dummyDevice);
+        var setVm = new SettingsViewModel();
+
+        Assert.True(locator.Match(qpVm));
+        Assert.IsType<QuickplayView>(locator.Build(qpVm));
+        Assert.IsType<CollectionView>(locator.Build(collVm));
+        Assert.IsType<NowPlayingView>(locator.Build(npVm));
+        Assert.IsType<DeviceView>(locator.Build(devVm));
+        Assert.IsType<SettingsView>(locator.Build(setVm));
+    }
+
+    [Fact]
+    public async Task MainShellViewModel_PlayPauseIcon_ReflectsPlaybackState()
+    {
+        var coordinator = new PlaybackQueueCoordinator();
+        var smartDj = new SmartDJEngine();
+        var dummyLibrary = new DummyMediaLibraryService();
+        var dummyDevice = new DummyDeviceSyncService();
+
+        var shellVm = new MainShellViewModel(coordinator, dummyLibrary, dummyDevice, smartDj);
+
+        // Initially paused/stopped
+        Assert.Equal("▶", shellVm.PlayPauseIcon);
+
+        // Play track
+        var track = new Track { Title = "Subdivisions", ArtistName = "Rush" };
+        await coordinator.PlayTrackAsync(track);
+
+        Assert.Equal("⏸", shellVm.PlayPauseIcon);
+
+        // Pause
+        await coordinator.PlayPauseAsync();
+        Assert.Equal("▶", shellVm.PlayPauseIcon);
+    }
+
+    [Fact]
+    public void SettingsViewModel_SelectAccentCommand_UpdatesAccentColor()
+    {
+        var vm = new SettingsViewModel();
+        Assert.Equal("#FA2A55", vm.SelectedAccent.HexCode);
+
+        var cyan = vm.AccentColors.First(a => a.HexCode == "#1BA1E2");
+        vm.SelectAccentCommand.Execute(cyan);
+
+        Assert.Equal(cyan, vm.SelectedAccent);
+        Assert.Equal("#1BA1E2", vm.SelectedAccent.HexCode);
+    }
+
+    [Fact]
+    public void MainShellViewModel_PivotSwitching_UpdatesCurrentView()
+    {
+        var coordinator = new PlaybackQueueCoordinator();
+        var smartDj = new SmartDJEngine();
+        var dummyLibrary = new DummyMediaLibraryService();
+        var dummyDevice = new DummyDeviceSyncService();
+
+        var shellVm = new MainShellViewModel(coordinator, dummyLibrary, dummyDevice, smartDj);
+
+        Assert.IsType<QuickplayViewModel>(shellVm.CurrentView);
+
+        shellVm.SelectPivotCommand.Execute(NavigationPivot.Collection);
+        Assert.IsType<CollectionViewModel>(shellVm.CurrentView);
+
+        shellVm.SelectPivotCommand.Execute(NavigationPivot.Device);
+        Assert.IsType<DeviceViewModel>(shellVm.CurrentView);
+
+        shellVm.SelectPivotCommand.Execute(NavigationPivot.Settings);
+        Assert.IsType<SettingsViewModel>(shellVm.CurrentView);
+
+        shellVm.ToggleNowPlayingCommand.Execute(null);
+        Assert.IsType<NowPlayingViewModel>(shellVm.CurrentView);
+    }
+
+    // Dummy test stubs
+    private class DummyMediaLibraryService : NotZune.Application.Interfaces.IMediaLibraryService
+    {
+        public Task<IReadOnlyList<Track>> GetAllTracksAsync() => Task.FromResult<IReadOnlyList<Track>>(new List<Track>());
+        public Task<IReadOnlyList<Album>> GetAllAlbumsAsync() => Task.FromResult<IReadOnlyList<Album>>(new List<Album>());
+        public Task<IReadOnlyList<Artist>> GetAllArtistsAsync() => Task.FromResult<IReadOnlyList<Artist>>(new List<Artist>());
+        public Task<IReadOnlyList<Playlist>> GetAllPlaylistsAsync() => Task.FromResult<IReadOnlyList<Playlist>>(new List<Playlist>());
+        public Task<IReadOnlyList<PlayHistoryEntry>> GetRecentHistoryAsync(int count = 20) => Task.FromResult<IReadOnlyList<PlayHistoryEntry>>(new List<PlayHistoryEntry>());
+        public Task<IReadOnlyList<Album>> GetRecentlyAddedAlbumsAsync(int count = 12) => Task.FromResult<IReadOnlyList<Album>>(new List<Album>());
+        public Task<IReadOnlyList<Track>> SearchAsync(string query) => Task.FromResult<IReadOnlyList<Track>>(new List<Track>());
+        public Task SetTrackRatingAsync(Guid trackId, HeartRating rating) => Task.CompletedTask;
+        public Task ScanDirectoryAsync(string directoryPath, IProgress<double>? progress = null) => Task.CompletedTask;
+    }
+
+    private class DummyDeviceSyncService : NotZune.Application.Interfaces.IDeviceSyncService
+    {
+        public IReadOnlyList<ZuneDevice> ConnectedDevices => new List<ZuneDevice>();
+        public Task StartMonitoringAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task SyncDeviceAsync(string serialNumber, IProgress<double>? progress = null) => Task.CompletedTask;
+#pragma warning disable CS0067
+        public event EventHandler<ZuneDevice>? DeviceConnected;
+        public event EventHandler<string>? DeviceDisconnected;
+#pragma warning restore CS0067
+    }
+}

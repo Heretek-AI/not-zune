@@ -41,11 +41,19 @@ public class SettingsViewModel : ViewModelBase
     public string VersionInfo => "Not-Zune v0.1.0-alpha";
 
     public ICommand SelectFolderCommand { get; }
+    public ICommand SelectAccentCommand { get; }
 
     public SettingsViewModel()
     {
         _selectedAccent = AccentColors[0];
         SelectFolderCommand = new RelayCommand(() => { });
+        SelectAccentCommand = new RelayCommand<AccentColorOption>(accent =>
+        {
+            if (accent != null)
+            {
+                SelectedAccent = accent;
+            }
+        });
     }
 
     private void ApplyAccent(AccentColorOption accent)
@@ -56,6 +64,12 @@ public class SettingsViewModel : ViewModelBase
             if (Avalonia.Media.Color.TryParse(accent.HexCode, out var color))
             {
                 Avalonia.Application.Current.Resources["ZuneAccentBrush"] = new Avalonia.Media.SolidColorBrush(color);
+                var hoverColor = Avalonia.Media.Color.FromArgb(
+                    255, 
+                    (byte)Math.Min(255, color.R + 25), 
+                    (byte)Math.Min(255, color.G + 25), 
+                    (byte)Math.Min(255, color.B + 25));
+                Avalonia.Application.Current.Resources["ZuneAccentHoverBrush"] = new Avalonia.Media.SolidColorBrush(hoverColor);
             }
         }
     }

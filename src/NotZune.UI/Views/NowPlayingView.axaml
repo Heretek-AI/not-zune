@@ -106,7 +106,7 @@
           <!-- Play / Pause -->
           <Button Command="{Binding PlayPauseCommand}" Padding="8,4">
             <Border Background="{DynamicResource ZuneAccentBrush}" Width="32" Height="32" CornerRadius="0">
-              <TextBlock Text="{Binding IsPlaying, Converter={x:Null}, FallbackValue='▶'}" 
+              <TextBlock Text="{Binding PlayPauseIcon, FallbackValue='▶'}" 
                          FontSize="14" 
                          Foreground="#FFFFFF" 
                          HorizontalAlignment="Center" 

@@ -3,10 +3,29 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:NotZune.UI.ViewModels"
+             xmlns:views="using:NotZune.UI.Views"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="780"
              x:Class="NotZune.UI.Views.MainShellView"
              x:DataType="vm:MainShellViewModel"
              Background="{DynamicResource ZuneBackgroundBrush}">
+
+  <UserControl.DataTemplates>
+    <DataTemplate DataType="vm:QuickplayViewModel">
+      <views:QuickplayView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:CollectionViewModel">
+      <views:CollectionView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:DeviceViewModel">
+      <views:DeviceView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:SettingsViewModel">
+      <views:SettingsView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:NowPlayingViewModel">
+      <views:NowPlayingView />
+    </DataTemplate>
+  </UserControl.DataTemplates>
 
   <Grid RowDefinitions="Auto,*,Auto">
     <!-- 1. Custom Borderless Window Chrome & Panoramic Pivot Navigation Header -->
@@ -168,7 +187,7 @@
               <Border Background="{DynamicResource ZuneAccentBrush}" 
                       Width="38" Height="38" 
                       CornerRadius="0">
-                <TextBlock Text="{Binding IsPlaying, Converter={x:Null}, FallbackValue='▶'}" 
+                <TextBlock Text="{Binding PlayPauseIcon, FallbackValue='▶'}" 
                            FontSize="18" 
                            Foreground="#FFFFFF" 
                            HorizontalAlignment="Center" 

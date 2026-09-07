@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\NotZune.Domain\NotZune.Domain.csproj" />
     <ProjectReference Include="..\..\src\NotZune.Application\NotZune.Application.csproj" />
+    <ProjectReference Include="..\..\src\NotZune.UI\NotZune.UI.csproj" />
   </ItemGroup>
 
 </Project>

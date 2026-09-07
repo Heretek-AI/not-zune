@@ -63,6 +63,7 @@ public class NowPlayingViewModel : ViewModelBase
     public int Year => CurrentTrack?.Year ?? 0;
 
     public bool IsPlaying => _playerCoordinator.State == PlaybackState.Playing;
+    public string PlayPauseIcon => IsPlaying ? "⏸" : "▶";
     public bool IsFavorite => CurrentTrack?.Rating == HeartRating.Favorite;
     public bool IsDisliked => CurrentTrack?.Rating == HeartRating.Dislike;
 
@@ -208,6 +209,7 @@ public class NowPlayingViewModel : ViewModelBase
     private void OnStateChanged(object? sender, PlaybackStateChangedEventArgs e)
     {
         OnPropertyChanged(nameof(IsPlaying));
+        OnPropertyChanged(nameof(PlayPauseIcon));
         OnPropertyChanged(nameof(CurrentPosition));
         OnPropertyChanged(nameof(ProgressPercentage));
         OnPropertyChanged(nameof(ElapsedTimeText));
