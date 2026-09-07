@@ -68,6 +68,11 @@ public class ZuneDevice
     public string FirmwareVersion { get; set; } = "4.8";
     public long CapacityBytes { get; set; }
     public long FreeSpaceBytes { get; set; }
+    public long MusicBytes { get; set; }
+    public long VideoBytes { get; set; }
+    public long PhotoBytes { get; set; }
+    public long PodcastBytes { get; set; }
+    public long SystemBytes { get; set; }
     public bool IsPaired { get; set; }
     public bool IsConnected { get; set; }
     public DeviceSyncState SyncState { get; set; } = DeviceSyncState.Disconnected;

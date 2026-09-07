@@ -57,6 +57,7 @@ public class MainShellViewModel : ViewModelBase
             if (SetProperty(ref _isCompactMode, value))
             {
                 CompactModeChanged?.Invoke(this, value);
+                OnPropertyChanged(nameof(IsQuickDockVisible));
             }
         }
     }
@@ -81,6 +82,34 @@ public class MainShellViewModel : ViewModelBase
         private set => SetProperty(ref _nowPlayingIconSource, value);
     }
 
+    private string _headerSearchQuery = string.Empty;
+    public string HeaderSearchQuery
+    {
+        get => _headerSearchQuery;
+        set
+        {
+            if (SetProperty(ref _headerSearchQuery, value))
+            {
+                CollectionVM.SearchQuery = value;
+                OnPropertyChanged(nameof(HasHeaderSearchQuery));
+                if (!string.IsNullOrWhiteSpace(value) && ActivePivot != NavigationPivot.Collection)
+                {
+                    ActivePivot = NavigationPivot.Collection;
+                }
+            }
+        }
+    }
+
+    public bool HasHeaderSearchQuery => !string.IsNullOrWhiteSpace(HeaderSearchQuery);
+
+    public bool IsQuickDockVisible => !IsNowPlayingActive && !IsCompactMode;
+    public string QuickDockDeviceName => DeviceVM.HasDevice ? DeviceVM.DeviceName.ToUpperInvariant() : "NO DEVICE";
+    public string QuickDockDeviceStatus => DeviceVM.HasDevice ? (DeviceVM.IsSyncing ? "SYNCING..." : "CONNECTED") : "CONNECT USB";
+    public double QuickDockDeviceOpacity => DeviceVM.HasDevice ? 1.0 : 0.45;
+    public string QuickDockDeviceTooltip => DeviceVM.HasDevice 
+        ? $"{DeviceVM.DeviceName} connected • Click to view device storage" 
+        : "No Zune device attached • Connect via USB";
+
     public NavigationPivot ActivePivot
     {
         get => _activePivot;
@@ -94,6 +123,7 @@ public class MainShellViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsDeviceActive));
                 OnPropertyChanged(nameof(IsSettingsActive));
                 OnPropertyChanged(nameof(IsSocialActive));
+                OnPropertyChanged(nameof(IsQuickDockVisible));
 
                 CurrentView = _activePivot switch
                 {
@@ -202,6 +232,9 @@ public class MainShellViewModel : ViewModelBase
     public ICommand SeekCommand { get; }
     public ICommand ToggleCompactModeCommand { get; }
     public ICommand ToggleZuneCardCommand { get; }
+    public ICommand ClearSearchCommand { get; }
+    public ICommand OpenDeviceCommand { get; }
+    public ICommand OpenPlaylistsCommand { get; }
 
     public MainShellViewModel(
         IPlayerCoordinator playerCoordinator,
@@ -239,7 +272,13 @@ public class MainShellViewModel : ViewModelBase
         _playerCoordinator.RatingChanged += OnPlayerRatingChanged;
 
         // Wire device sync events
-        _deviceSyncService.DeviceConnected += (_, _) => _soundEffectService?.PlayNotification();
+        _deviceSyncService.DeviceConnected += (_, _) =>
+        {
+            _soundEffectService?.PlayNotification();
+            NotifyQuickDockChanged();
+        };
+        _deviceSyncService.DeviceDisconnected += (_, _) => NotifyQuickDockChanged();
+        DeviceVM.PropertyChanged += (_, _) => NotifyQuickDockChanged();
 
         // Wire library updates
         _libraryService.LibraryUpdated += async (_, _) =>
@@ -265,6 +304,13 @@ public class MainShellViewModel : ViewModelBase
         ToggleShuffleCommand = new RelayCommand(() => Shuffle = !Shuffle);
         ToggleRepeatCommand = new RelayCommand(() => Repeat = !Repeat);
         ToggleCompactModeCommand = new RelayCommand(() => IsCompactMode = !IsCompactMode);
+        ClearSearchCommand = new RelayCommand(() => HeaderSearchQuery = string.Empty);
+        OpenDeviceCommand = new RelayCommand(() => ActivePivot = NavigationPivot.Device);
+        OpenPlaylistsCommand = new RelayCommand(() =>
+        {
+            ActivePivot = NavigationPivot.Collection;
+            CollectionVM.ActiveSubPivot = CollectionSubPivot.Playlists;
+        });
         ToggleZuneCardCommand = new RelayCommand(() =>
         {
             ActivePivot = ActivePivot == NavigationPivot.Social
@@ -373,5 +419,13 @@ public class MainShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentRating));
         OnPropertyChanged(nameof(IsFavorite));
         OnPropertyChanged(nameof(IsDisliked));
+    }
+
+    private void NotifyQuickDockChanged()
+    {
+        OnPropertyChanged(nameof(QuickDockDeviceName));
+        OnPropertyChanged(nameof(QuickDockDeviceStatus));
+        OnPropertyChanged(nameof(QuickDockDeviceOpacity));
+        OnPropertyChanged(nameof(QuickDockDeviceTooltip));
     }
 }

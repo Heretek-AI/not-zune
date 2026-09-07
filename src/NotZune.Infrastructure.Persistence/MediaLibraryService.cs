@@ -295,4 +295,210 @@ public class MediaLibraryService : IMediaLibraryService
         await ctx.SaveChangesAsync();
         LibraryUpdated?.Invoke(this, EventArgs.Empty);
     }
+
+    public async Task<Playlist> CreatePlaylistAsync(string name, string? description = null)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var playlist = new Playlist
+        {
+            Name = string.IsNullOrWhiteSpace(name) ? "New Playlist" : name.Trim(),
+            Description = description,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+            TrackIds = new List<Guid>()
+        };
+
+        ctx.Playlists.Add(playlist);
+        await ctx.SaveChangesAsync();
+
+        LibraryUpdated?.Invoke(this, EventArgs.Empty);
+        return playlist;
+    }
+
+    public async Task DeletePlaylistAsync(Guid playlistId)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var playlist = await ctx.Playlists.FindAsync(playlistId);
+        if (playlist != null)
+        {
+            ctx.Playlists.Remove(playlist);
+            await ctx.SaveChangesAsync();
+            LibraryUpdated?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public async Task AddTrackToPlaylistAsync(Guid playlistId, Guid trackId)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var playlist = await ctx.Playlists.FindAsync(playlistId);
+        if (playlist != null && !playlist.TrackIds.Contains(trackId))
+        {
+            var updated = new List<Guid>(playlist.TrackIds) { trackId };
+            playlist.TrackIds = updated;
+            playlist.UpdatedAtUtc = DateTime.UtcNow;
+            ctx.Entry(playlist).Property(p => p.TrackIds).IsModified = true;
+            await ctx.SaveChangesAsync();
+            LibraryUpdated?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public async Task RemoveTrackFromPlaylistAsync(Guid playlistId, Guid trackId)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var playlist = await ctx.Playlists.FindAsync(playlistId);
+        if (playlist != null && playlist.TrackIds.Contains(trackId))
+        {
+            var updated = new List<Guid>(playlist.TrackIds);
+            updated.Remove(trackId);
+            playlist.TrackIds = updated;
+            playlist.UpdatedAtUtc = DateTime.UtcNow;
+            ctx.Entry(playlist).Property(p => p.TrackIds).IsModified = true;
+            await ctx.SaveChangesAsync();
+            LibraryUpdated?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public async Task<IReadOnlyList<Track>> GetPlaylistTracksAsync(Guid playlistId)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var playlist = await ctx.Playlists.FindAsync(playlistId);
+        if (playlist == null || playlist.TrackIds.Count == 0)
+        {
+            return Array.Empty<Track>();
+        }
+
+        var trackIds = playlist.TrackIds.ToHashSet();
+        var tracks = await ctx.Tracks
+            .Where(t => trackIds.Contains(t.Id))
+            .ToListAsync();
+
+        // Maintain playlist track order
+        var trackMap = tracks.ToDictionary(t => t.Id);
+        var ordered = new List<Track>();
+        foreach (var id in playlist.TrackIds)
+        {
+            if (trackMap.TryGetValue(id, out var trk))
+            {
+                ordered.Add(trk);
+            }
+        }
+        return ordered;
+    }
+
+    public async Task ExportPlaylistToZplAsync(Guid playlistId, string targetFilePath)
+    {
+        var tracks = await GetPlaylistTracksAsync(playlistId);
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var playlist = await ctx.Playlists.FindAsync(playlistId);
+        var playlistName = playlist?.Name ?? "Playlist";
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("<?zune-album-playlist version=\"2.0\"?>");
+        sb.AppendLine("<smil>");
+        sb.AppendLine("  <head>");
+        sb.AppendLine("    <meta name=\"Generator\" content=\"Not-Zune v0.1.0\" />");
+        sb.AppendLine($"    <meta name=\"ItemCount\" content=\"{tracks.Count}\" />");
+        sb.AppendLine($"    <title>{System.Security.SecurityElement.Escape(playlistName)}</title>");
+        sb.AppendLine("  </head>");
+        sb.AppendLine("  <body>");
+        sb.AppendLine("    <seq>");
+        foreach (var trk in tracks)
+        {
+            var src = System.Security.SecurityElement.Escape(trk.FilePath ?? string.Empty);
+            var albumTitle = System.Security.SecurityElement.Escape(trk.AlbumTitle);
+            var artistName = System.Security.SecurityElement.Escape(trk.ArtistName);
+            var title = System.Security.SecurityElement.Escape(trk.Title);
+            var durationMs = (long)trk.Duration.TotalMilliseconds;
+            sb.AppendLine($"      <media src=\"{src}\" albumTitle=\"{albumTitle}\" albumArtist=\"{artistName}\" trackTitle=\"{title}\" trackArtist=\"{artistName}\" duration=\"{durationMs}\" />");
+        }
+        sb.AppendLine("    </seq>");
+        sb.AppendLine("  </body>");
+        sb.AppendLine("</smil>");
+
+        var targetDir = Path.GetDirectoryName(targetFilePath);
+        if (!string.IsNullOrEmpty(targetDir) && !Directory.Exists(targetDir))
+        {
+            Directory.CreateDirectory(targetDir);
+        }
+        await File.WriteAllTextAsync(targetFilePath, sb.ToString(), System.Text.Encoding.UTF8);
+    }
+
+    public async Task UpdateTrackMetadataAsync(Guid trackId, string title, string artistName, string albumTitle, int? year, string genre, int trackNumber, int discNumber)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var track = await ctx.Tracks.FindAsync(trackId);
+        if (track == null) return;
+
+        // 1. Write tags back to physical file if present
+        if (!string.IsNullOrWhiteSpace(track.FilePath) && File.Exists(track.FilePath))
+        {
+            try
+            {
+                using var tagFile = TagLib.File.Create(track.FilePath);
+                tagFile.Tag.Title = title;
+                tagFile.Tag.Performers = new[] { artistName };
+                tagFile.Tag.Album = albumTitle;
+                if (year.HasValue && year.Value > 0)
+                {
+                    tagFile.Tag.Year = (uint)year.Value;
+                }
+                if (!string.IsNullOrWhiteSpace(genre))
+                {
+                    tagFile.Tag.Genres = new[] { genre };
+                }
+                if (trackNumber > 0)
+                {
+                    tagFile.Tag.Track = (uint)trackNumber;
+                }
+                if (discNumber > 0)
+                {
+                    tagFile.Tag.Disc = (uint)discNumber;
+                }
+                tagFile.Save();
+            }
+            catch
+            {
+                // Fallback: Proceed to update database even if file tag writing has permission restriction
+            }
+        }
+
+        // 2. Resolve/update Artist entity
+        var artist = await ctx.Artists.FirstOrDefaultAsync(a => a.Name.ToLower() == artistName.Trim().ToLower());
+        if (artist == null)
+        {
+            artist = new Artist { Name = artistName.Trim(), SortName = artistName.Trim() };
+            ctx.Artists.Add(artist);
+            await ctx.SaveChangesAsync();
+        }
+
+        // 3. Resolve/update Album entity
+        var album = await ctx.Albums.FirstOrDefaultAsync(a => a.Title.ToLower() == albumTitle.Trim().ToLower() && a.ArtistName.ToLower() == artistName.Trim().ToLower());
+        if (album == null)
+        {
+            album = new Album
+            {
+                Title = albumTitle.Trim(),
+                ArtistId = artist.Id,
+                ArtistName = artist.Name,
+                Year = year,
+                Genre = genre
+            };
+            ctx.Albums.Add(album);
+            await ctx.SaveChangesAsync();
+        }
+
+        // 4. Update track fields
+        track.Title = title.Trim();
+        track.ArtistId = artist.Id;
+        track.ArtistName = artist.Name;
+        track.AlbumId = album.Id;
+        track.AlbumTitle = album.Title;
+        track.Year = year;
+        track.Genre = genre.Trim();
+        track.TrackNumber = trackNumber;
+        track.DiscNumber = discNumber;
+
+        await ctx.SaveChangesAsync();
+        LibraryUpdated?.Invoke(this, EventArgs.Empty);
+    }
 }

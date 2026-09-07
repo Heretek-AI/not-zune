@@ -128,8 +128,38 @@
             </Button>
           </StackPanel>
 
-          <!-- Right: Now Playing & Settings -->
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
+          <!-- Right: Search Box, Now Playing & Settings -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+            <!-- Header Search Box -->
+            <Border Background="#1A1A1A" 
+                    BorderBrush="#333333" 
+                    BorderThickness="1" 
+                    Height="26" 
+                    Width="175" 
+                    CornerRadius="0" 
+                    VerticalAlignment="Center">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0" 
+                         Text="{Binding HeaderSearchQuery, Mode=TwoWay}" 
+                         Watermark="search collection" 
+                         BorderThickness="0" 
+                         Background="Transparent" 
+                         Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                         FontSize="11" 
+                         VerticalAlignment="Center" 
+                         Padding="8,2" />
+                <Button Grid.Column="1" 
+                        Command="{Binding ClearSearchCommand}" 
+                        IsVisible="{Binding HasHeaderSearchQuery}" 
+                        Background="Transparent" 
+                        BorderThickness="0" 
+                        Padding="4,2,6,2" 
+                        VerticalAlignment="Center">
+                  <TextBlock Text="✕" FontSize="10" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                </Button>
+              </Grid>
+            </Border>
+
             <!-- Animated Now Playing Dancing Equalizer Button -->
             <Button Command="{Binding ToggleNowPlayingCommand}" VerticalAlignment="Center">
               <Border BorderBrush="{DynamicResource ZuneAccentBrush}" 
@@ -156,8 +186,69 @@
         </Grid>
       </Grid>
 
-      <!-- 2. Main Dynamic Content View Area -->
-      <TransitioningContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="0,4,0,0" />
+      <!-- 2. Main Dynamic Content View Area with Persistent Bottom-Left Quick Dock -->
+      <Grid Grid.Row="1" Margin="0,4,0,0">
+        <TransitioningContentControl Content="{Binding CurrentView}" />
+
+        <!-- Authentic Zune Bottom-Left Quick Dock -->
+        <Border HorizontalAlignment="Left" 
+                VerticalAlignment="Bottom" 
+                Margin="20,0,0,14" 
+                Background="#EE141414" 
+                BorderBrush="#2C2C2C" 
+                BorderThickness="1" 
+                Padding="8,4" 
+                CornerRadius="0"
+                IsVisible="{Binding IsQuickDockVisible}">
+          <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+            <!-- Device Dock Target -->
+            <Button Command="{Binding OpenDeviceCommand}" 
+                    Background="Transparent" 
+                    BorderThickness="0" 
+                    Padding="4,2" 
+                    CornerRadius="0"
+                    ToolTip.Tip="{Binding QuickDockDeviceTooltip}">
+              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Image Source="avares://NotZune.UI/Assets/Zune/Branding/ZUNEHDDEVICES.PNG" 
+                       Width="18" Height="18" 
+                       Opacity="{Binding QuickDockDeviceOpacity}" 
+                       VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center" Spacing="1">
+                  <TextBlock Text="{Binding QuickDockDeviceName}" 
+                             FontSize="10" 
+                             FontWeight="SemiBold" 
+                             Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                             LetterSpacing="0.5" />
+                  <TextBlock Text="{Binding QuickDockDeviceStatus}" 
+                             FontSize="8" 
+                             Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                </StackPanel>
+              </StackPanel>
+            </Button>
+
+            <!-- Hairline Separator -->
+            <Rectangle Width="1" Height="18" Fill="#333333" VerticalAlignment="Center" />
+
+            <!-- Playlists Quick Target -->
+            <Button Command="{Binding OpenPlaylistsCommand}" 
+                    Background="Transparent" 
+                    BorderThickness="0" 
+                    Padding="4,2" 
+                    CornerRadius="0"
+                    ToolTip.Tip="Open Playlists manager">
+              <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <TextBlock Text="📋" FontSize="11" Foreground="{DynamicResource ZuneAccentBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="PLAYLISTS" 
+                           FontSize="10" 
+                           FontWeight="SemiBold" 
+                           Foreground="{DynamicResource ZuneTextSecondaryBrush}" 
+                           LetterSpacing="0.5" 
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </Border>
+      </Grid>
 
       <!-- 3. Docked Zune Minimalist Player HUD Bar -->
       <Border Grid.Row="2" 

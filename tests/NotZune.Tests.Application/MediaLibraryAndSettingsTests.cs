@@ -224,4 +224,128 @@ public class MediaLibraryAndSettingsTests : IDisposable
         Assert.Equal("Demo placeholder data cleared.", vm.ScanStatusText);
         Assert.True(vm.HasScanStatus);
     }
+
+    [Fact]
+    public async Task Playlist_Creation_AddRemoveTracks_And_ZplExport_Works()
+    {
+        var service = new MediaLibraryService(_dbFactory);
+
+        // 1. Create a dummy track
+        var trackId = Guid.NewGuid();
+        using (var ctx = _dbFactory.CreateDbContext())
+        {
+            var artist = new Artist { Name = "Rush" };
+            ctx.Artists.Add(artist);
+            var album = new Album { Title = "Signals", ArtistId = artist.Id, ArtistName = artist.Name };
+            ctx.Albums.Add(album);
+            var track = new Track
+            {
+                Id = trackId,
+                Title = "Subdivisions",
+                ArtistId = artist.Id,
+                ArtistName = artist.Name,
+                AlbumId = album.Id,
+                AlbumTitle = album.Title,
+                FilePath = "/music/subdivisions.mp3",
+                Duration = TimeSpan.FromMinutes(5)
+            };
+            ctx.Tracks.Add(track);
+            await ctx.SaveChangesAsync();
+        }
+
+        // 2. Create playlist
+        var playlist = await service.CreatePlaylistAsync("Prog Rock Favorites", "Best progressive rock");
+        Assert.NotNull(playlist);
+        Assert.Equal("Prog Rock Favorites", playlist.Name);
+        Assert.Equal("Best progressive rock", playlist.Description);
+
+        // 3. Add track to playlist
+        await service.AddTrackToPlaylistAsync(playlist.Id, trackId);
+
+        // 4. Retrieve tracks in playlist
+        var tracks = await service.GetPlaylistTracksAsync(playlist.Id);
+        Assert.Single(tracks);
+        Assert.Equal("Subdivisions", tracks[0].Title);
+
+        // 5. Export to ZPL file
+        var tempZpl = Path.Combine(Path.GetTempPath(), $"playlist_test_{Guid.NewGuid():N}.zpl");
+        try
+        {
+            await service.ExportPlaylistToZplAsync(playlist.Id, tempZpl);
+            Assert.True(File.Exists(tempZpl));
+            var zplContent = await File.ReadAllTextAsync(tempZpl);
+            Assert.Contains("<?zune-album-playlist", zplContent);
+            Assert.Contains("<smil>", zplContent);
+            Assert.Contains("Prog Rock Favorites", zplContent);
+            Assert.Contains("Subdivisions", zplContent);
+            Assert.Contains("/music/subdivisions.mp3", zplContent);
+        }
+        finally
+        {
+            if (File.Exists(tempZpl)) File.Delete(tempZpl);
+        }
+
+        // 6. Remove track from playlist
+        await service.RemoveTrackFromPlaylistAsync(playlist.Id, trackId);
+        var tracksAfterRemove = await service.GetPlaylistTracksAsync(playlist.Id);
+        Assert.Empty(tracksAfterRemove);
+
+        // 7. Delete playlist
+        await service.DeletePlaylistAsync(playlist.Id);
+        var allPlaylists = await service.GetAllPlaylistsAsync();
+        Assert.DoesNotContain(allPlaylists, p => p.Id == playlist.Id);
+    }
+
+    [Fact]
+    public async Task UpdateTrackMetadataAsync_UpdatesDatabaseFields()
+    {
+        var service = new MediaLibraryService(_dbFactory);
+        var trackId = Guid.NewGuid();
+
+        using (var ctx = _dbFactory.CreateDbContext())
+        {
+            var artist = new Artist { Name = "Old Artist" };
+            ctx.Artists.Add(artist);
+            var album = new Album { Title = "Old Album", ArtistId = artist.Id, ArtistName = artist.Name };
+            ctx.Albums.Add(album);
+            var track = new Track
+            {
+                Id = trackId,
+                Title = "Old Title",
+                ArtistId = artist.Id,
+                ArtistName = artist.Name,
+                AlbumId = album.Id,
+                AlbumTitle = album.Title,
+                FilePath = "/nonexistent/test.mp3",
+                Duration = TimeSpan.FromMinutes(3)
+            };
+            ctx.Tracks.Add(track);
+            await ctx.SaveChangesAsync();
+        }
+
+        // Update metadata
+        await service.UpdateTrackMetadataAsync(
+            trackId,
+            title: "New Title",
+            artistName: "New Artist",
+            albumTitle: "New Album",
+            year: 2024,
+            genre: "Synthwave",
+            trackNumber: 3,
+            discNumber: 1);
+
+        using (var ctx = _dbFactory.CreateDbContext())
+        {
+            var updated = await ctx.Tracks.FindAsync(trackId);
+            Assert.NotNull(updated);
+            Assert.Equal("New Title", updated.Title);
+            Assert.Equal("New Artist", updated.ArtistName);
+            Assert.Equal("New Album", updated.AlbumTitle);
+            Assert.Equal(2024, updated.Year);
+            Assert.Equal("Synthwave", updated.Genre);
+            Assert.Equal(3, updated.TrackNumber);
+            Assert.Equal(1, updated.DiscNumber);
+        }
+    }
 }
+

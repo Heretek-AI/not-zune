@@ -111,6 +111,13 @@ public class NavigationAndPlaybackUiTests
         public Task SetTrackRatingAsync(Guid trackId, HeartRating rating) => Task.CompletedTask;
         public Task ScanDirectoryAsync(string directoryPath, IProgress<double>? progress = null) => Task.CompletedTask;
         public Task ClearDemoDataAsync() => Task.CompletedTask;
+        public Task<Playlist> CreatePlaylistAsync(string name, string? description = null) => Task.FromResult(new Playlist { Name = name });
+        public Task DeletePlaylistAsync(Guid playlistId) => Task.CompletedTask;
+        public Task AddTrackToPlaylistAsync(Guid playlistId, Guid trackId) => Task.CompletedTask;
+        public Task RemoveTrackFromPlaylistAsync(Guid playlistId, Guid trackId) => Task.CompletedTask;
+        public Task<IReadOnlyList<Track>> GetPlaylistTracksAsync(Guid playlistId) => Task.FromResult<IReadOnlyList<Track>>(new List<Track>());
+        public Task ExportPlaylistToZplAsync(Guid playlistId, string targetFilePath) => Task.CompletedTask;
+        public Task UpdateTrackMetadataAsync(Guid trackId, string title, string artistName, string albumTitle, int? year, string genre, int trackNumber, int discNumber) => Task.CompletedTask;
 #pragma warning disable CS0067
         public event EventHandler? LibraryUpdated;
 #pragma warning restore CS0067

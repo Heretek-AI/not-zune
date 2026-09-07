@@ -43,6 +43,13 @@ public interface IMediaLibraryService
     Task SetTrackRatingAsync(Guid trackId, HeartRating rating);
     Task ScanDirectoryAsync(string directoryPath, IProgress<double>? progress = null);
     Task ClearDemoDataAsync();
+    Task<Playlist> CreatePlaylistAsync(string name, string? description = null);
+    Task DeletePlaylistAsync(Guid playlistId);
+    Task AddTrackToPlaylistAsync(Guid playlistId, Guid trackId);
+    Task RemoveTrackFromPlaylistAsync(Guid playlistId, Guid trackId);
+    Task<IReadOnlyList<Track>> GetPlaylistTracksAsync(Guid playlistId);
+    Task ExportPlaylistToZplAsync(Guid playlistId, string targetFilePath);
+    Task UpdateTrackMetadataAsync(Guid trackId, string title, string artistName, string albumTitle, int? year, string genre, int trackNumber, int discNumber);
     event EventHandler? LibraryUpdated;
 }
 

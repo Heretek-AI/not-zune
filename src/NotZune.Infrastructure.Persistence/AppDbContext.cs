@@ -42,9 +42,19 @@ public class AppDbContext : DbContext
             entity.HasIndex(a => a.Name);
         });
 
+        var guidListComparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<Guid>>(
+            (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
+            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+            c => c.ToList());
+
         modelBuilder.Entity<Playlist>(entity =>
         {
             entity.HasKey(p => p.Id);
+            entity.Property(p => p.TrackIds)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => string.IsNullOrEmpty(v) ? new List<Guid>() : v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(Guid.Parse).ToList())
+                .Metadata.SetValueComparer(guidListComparer);
         });
 
         modelBuilder.Entity<PlayHistoryEntry>(entity =>

@@ -101,7 +101,12 @@ public class ZuneDeviceSyncService : IDeviceSyncService
                             IsConnected = true,
                             IsPaired = true,
                             CapacityBytes = modelName.Contains("30") ? 30L * 1024 * 1024 * 1024 : 16L * 1024 * 1024 * 1024,
-                            FreeSpaceBytes = 10L * 1024 * 1024 * 1024,
+                            MusicBytes = modelName.Contains("30") ? 14L * 1024 * 1024 * 1024 : 7L * 1024 * 1024 * 1024,
+                            VideoBytes = modelName.Contains("30") ? 3L * 1024 * 1024 * 1024 : 1536L * 1024 * 1024,
+                            PhotoBytes = 512L * 1024 * 1024,
+                            PodcastBytes = 1024L * 1024 * 1024,
+                            SystemBytes = 1024L * 1024 * 1024,
+                            FreeSpaceBytes = modelName.Contains("30") ? 10485760000L : 5242880000L,
                             SyncState = DeviceSyncState.Connected
                         };
 

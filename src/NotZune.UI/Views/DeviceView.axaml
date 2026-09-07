@@ -9,21 +9,72 @@
 
   <Grid Margin="40,20,40,20">
     <!-- State 1: Device Connected -->
-    <StackPanel IsVisible="{Binding HasDevice}" Spacing="24" MaxWidth="600" HorizontalAlignment="Left">
-      <TextBlock Text="{Binding DeviceName}" Classes="hero" />
-      <TextBlock Text="{Binding StorageText}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+    <StackPanel IsVisible="{Binding HasDevice}" Spacing="24" MaxWidth="720" HorizontalAlignment="Left">
+      <StackPanel Spacing="4">
+        <TextBlock Text="{Binding DeviceName}" Classes="hero" />
+        <TextBlock Classes="caption" Foreground="{DynamicResource ZuneTextSecondaryBrush}">
+          <TextBlock.Text>
+            <MultiBinding StringFormat="{}SERIAL: {0} • FIRMWARE: {1}">
+              <Binding Path="SerialNumber" />
+              <Binding Path="FirmwareVersion" />
+            </MultiBinding>
+          </TextBlock.Text>
+        </TextBlock>
+      </StackPanel>
 
-      <!-- Storage Breakdown Meter -->
-      <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}" Height="12" CornerRadius="0">
-        <Grid ColumnDefinitions="*,*">
-          <ProgressBar Value="{Binding StorageUsedPercentage}" 
-                       Maximum="1.0" 
-                       Height="12" 
-                       CornerRadius="0"
-                       Foreground="{DynamicResource ZuneAccentBrush}" 
-                       Background="Transparent" />
+      <!-- Section: Storage Gas Gauge Meter -->
+      <StackPanel Spacing="10">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="DEVICE STORAGE" Classes="section-header" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="1" Text="{Binding StorageText}" Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}" VerticalAlignment="Center" />
         </Grid>
-      </Border>
+
+        <!-- Segmented Multi-Color Gas Gauge Bar -->
+        <Border BorderBrush="{DynamicResource ZuneBorderBrush}" BorderThickness="1" CornerRadius="0" Height="20" Background="#111111">
+          <Grid x:Name="GasGaugeGrid">
+            <!-- Music (Accent/Pink) -->
+            <Border Grid.Column="0" Background="#FA2A55" ToolTip.Tip="{Binding MusicText}" CornerRadius="0" />
+            <!-- Video (Amber/Orange) -->
+            <Border Grid.Column="1" Background="#F09609" ToolTip.Tip="{Binding VideoText}" CornerRadius="0" />
+            <!-- Pictures (Cyan) -->
+            <Border Grid.Column="2" Background="#1BA1E2" ToolTip.Tip="{Binding PhotoText}" CornerRadius="0" />
+            <!-- Podcasts (Lime) -->
+            <Border Grid.Column="3" Background="#339933" ToolTip.Tip="{Binding PodcastText}" CornerRadius="0" />
+            <!-- System / Other (Grey) -->
+            <Border Grid.Column="4" Background="#555555" ToolTip.Tip="{Binding SystemText}" CornerRadius="0" />
+            <!-- Free Space (Dark Charcoal) -->
+            <Border Grid.Column="5" Background="#222222" ToolTip.Tip="{Binding FreeText}" CornerRadius="0" />
+          </Grid>
+        </Border>
+
+        <!-- Color Legend Row -->
+        <WrapPanel Margin="0,4,0,0">
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
+            <Border Width="10" Height="10" Background="#FA2A55" CornerRadius="0" />
+            <TextBlock Text="{Binding MusicText}" Classes="caption" FontSize="10" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
+            <Border Width="10" Height="10" Background="#F09609" CornerRadius="0" />
+            <TextBlock Text="{Binding VideoText}" Classes="caption" FontSize="10" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
+            <Border Width="10" Height="10" Background="#1BA1E2" CornerRadius="0" />
+            <TextBlock Text="{Binding PhotoText}" Classes="caption" FontSize="10" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
+            <Border Width="10" Height="10" Background="#339933" CornerRadius="0" />
+            <TextBlock Text="{Binding PodcastText}" Classes="caption" FontSize="10" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
+            <Border Width="10" Height="10" Background="#555555" CornerRadius="0" />
+            <TextBlock Text="{Binding SystemText}" Classes="caption" FontSize="10" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
+            <Border Width="10" Height="10" Background="#222222" BorderBrush="#444444" BorderThickness="1" CornerRadius="0" />
+            <TextBlock Text="{Binding FreeText}" Classes="caption" FontSize="10" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          </StackPanel>
+        </WrapPanel>
+      </StackPanel>
 
       <!-- Sync Button & Progress -->
       <StackPanel Spacing="12">

@@ -3,19 +3,21 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
+             xmlns:views="clr-namespace:NotZune.UI.Views;assembly=NotZune.UI"
              xmlns:models="clr-namespace:NotZune.Domain.Models;assembly=NotZune.Domain"
              mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
              x:Class="NotZune.UI.Views.CollectionView"
              x:DataType="vm:CollectionViewModel">
 
-  <Grid RowDefinitions="Auto,*" Margin="40,6,40,16">
-    <!-- Sub-pivot Navigation Bar & Search Box -->
-    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,20">
-      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="28">
-        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Artists}">
-          <TextBlock Text="artists" Classes="subpivot" Classes.active="{Binding IsArtistsActive}" />
-        </Button>
-        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Albums}">
+  <Panel>
+    <Grid RowDefinitions="Auto,*" Margin="40,6,40,16">
+      <!-- Sub-pivot Navigation Bar & Search Box -->
+      <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,20">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="28">
+          <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Artists}">
+            <TextBlock Text="artists" Classes="subpivot" Classes.active="{Binding IsArtistsActive}" />
+          </Button>
+          <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Albums}">
           <TextBlock Text="albums" Classes="subpivot" Classes.active="{Binding IsAlbumsActive}" />
         </Button>
         <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Songs}">
@@ -26,6 +28,9 @@
         </Button>
         <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Podcasts}">
           <TextBlock Text="podcasts" Classes="subpivot" Classes.active="{Binding IsPodcastsActive}" />
+        </Button>
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Playlists}">
+          <TextBlock Text="playlists" Classes="subpivot" Classes.active="{Binding IsPlaylistsActive}" />
         </Button>
       </StackPanel>
 
@@ -255,6 +260,10 @@
                       <MenuItem Header="Dislike (Broken Heart)" 
                                 Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).ToggleDislikeCommand}" 
                                 CommandParameter="{Binding}" />
+                      <Separator Background="{DynamicResource ZuneBorderBrush}" />
+                      <MenuItem Header="Edit Info..." 
+                                Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).OpenEditMetadataCommand}" 
+                                CommandParameter="{Binding}" />
                     </ContextMenu>
                   </Button.ContextMenu>
                   <Border Background="Transparent" 
@@ -316,6 +325,15 @@
       <!-- 5. PODCASTS SUB-PIVOT -->
       <ContentControl IsVisible="{Binding IsPodcastsActive}" Content="{Binding PodcastsVM}" />
 
+      <!-- 6. PLAYLISTS SUB-PIVOT -->
+      <ContentControl IsVisible="{Binding IsPlaylistsActive}" Content="{Binding PlaylistsVM}" />
+
     </Grid>
   </Grid>
+
+  <!-- 7. METADATA EDIT MODAL OVERLAY -->
+  <Grid IsVisible="{Binding IsEditMetadataOpen}" Background="#D9000000">
+    <views:MetadataEditView DataContext="{Binding ActiveEditMetadataVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </Grid>
+</Panel>
 </UserControl>

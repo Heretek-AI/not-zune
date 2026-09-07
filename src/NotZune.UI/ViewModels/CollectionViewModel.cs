@@ -13,7 +13,8 @@ public enum CollectionSubPivot
     Albums,
     Songs,
     Genres,
-    Podcasts
+    Podcasts,
+    Playlists
 }
 
 public class CollectionViewModel : ViewModelBase
@@ -23,10 +24,26 @@ public class CollectionViewModel : ViewModelBase
 
     private CollectionSubPivot _activeSubPivot = CollectionSubPivot.Artists;
     private string _searchQuery = string.Empty;
+    public string SearchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            if (SetProperty(ref _searchQuery, value))
+            {
+                FilterQuery(value);
+            }
+        }
+    }
     private Artist? _selectedArtist;
     private string? _selectedGenre;
 
+    private List<Artist> _allArtists = new();
+    private List<Album> _allAlbums = new();
+    private List<Track> _allSongs = new();
+
     public PodcastsViewModel PodcastsVM { get; }
+    public PlaylistsViewModel PlaylistsVM { get; }
 
     public ObservableCollection<Artist> Artists { get; } = new();
     public ObservableCollection<Album> Albums { get; } = new();
@@ -47,6 +64,7 @@ public class CollectionViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsSongsActive));
                 OnPropertyChanged(nameof(IsGenresActive));
                 OnPropertyChanged(nameof(IsPodcastsActive));
+                OnPropertyChanged(nameof(IsPlaylistsActive));
             }
         }
     }
@@ -56,6 +74,7 @@ public class CollectionViewModel : ViewModelBase
     public bool IsSongsActive => _activeSubPivot == CollectionSubPivot.Songs;
     public bool IsGenresActive => _activeSubPivot == CollectionSubPivot.Genres;
     public bool IsPodcastsActive => _activeSubPivot == CollectionSubPivot.Podcasts;
+    public bool IsPlaylistsActive => _activeSubPivot == CollectionSubPivot.Playlists;
 
     public Artist? SelectedArtist
     {
@@ -81,18 +100,6 @@ public class CollectionViewModel : ViewModelBase
         }
     }
 
-    public string SearchQuery
-    {
-        get => _searchQuery;
-        set
-        {
-            if (SetProperty(ref _searchQuery, value))
-            {
-                _ = PerformSearchAsync();
-            }
-        }
-    }
-
     public ICommand SelectSubPivotCommand { get; }
     public ICommand SelectArtistCommand { get; }
     public ICommand SelectGenreCommand { get; }
@@ -104,6 +111,23 @@ public class CollectionViewModel : ViewModelBase
     public ICommand EnqueueTrackCommand { get; }
     public ICommand ToggleFavoriteCommand { get; }
     public ICommand ToggleDislikeCommand { get; }
+    public ICommand OpenEditMetadataCommand { get; }
+    public ICommand CloseEditMetadataCommand { get; }
+
+    private MetadataEditViewModel? _activeEditMetadataVM;
+    public MetadataEditViewModel? ActiveEditMetadataVM
+    {
+        get => _activeEditMetadataVM;
+        set
+        {
+            if (SetProperty(ref _activeEditMetadataVM, value))
+            {
+                OnPropertyChanged(nameof(IsEditMetadataOpen));
+            }
+        }
+    }
+
+    public bool IsEditMetadataOpen => ActiveEditMetadataVM != null;
 
     public CollectionViewModel(
         IPlayerCoordinator playerCoordinator,
@@ -114,6 +138,18 @@ public class CollectionViewModel : ViewModelBase
         _libraryService = libraryService;
         var podService = podcastService ?? new NotZune.Application.Services.PodcastService(playerCoordinator);
         PodcastsVM = new PodcastsViewModel(podService);
+        PlaylistsVM = new PlaylistsViewModel(libraryService, playerCoordinator);
+
+        OpenEditMetadataCommand = new RelayCommand<Track>(track =>
+        {
+            if (track != null)
+            {
+                var vm = new MetadataEditViewModel(track, _libraryService);
+                vm.RequestClose += (_, _) => ActiveEditMetadataVM = null;
+                ActiveEditMetadataVM = vm;
+            }
+        });
+        CloseEditMetadataCommand = new RelayCommand(() => ActiveEditMetadataVM = null);
 
         SelectSubPivotCommand = new RelayCommand<CollectionSubPivot>(pivot => ActiveSubPivot = pivot);
         SelectArtistCommand = new RelayCommand<Artist>(artist => SelectedArtist = artist);
@@ -136,9 +172,55 @@ public class CollectionViewModel : ViewModelBase
         _ = RefreshDataAsync();
     }
 
+    public void FilterQuery(string query)
+    {
+        _searchQuery = query;
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            Albums.Clear();
+            foreach (var a in _allAlbums) Albums.Add(a);
+
+            Artists.Clear();
+            foreach (var a in _allArtists) Artists.Add(a);
+
+            Songs.Clear();
+            foreach (var s in _allSongs) Songs.Add(s);
+            return;
+        }
+
+        var lower = query.Trim().ToLowerInvariant();
+
+        Songs.Clear();
+        foreach (var s in _allSongs.Where(s => 
+            s.Title.ToLowerInvariant().Contains(lower) || 
+            s.ArtistName.ToLowerInvariant().Contains(lower) || 
+            s.AlbumTitle.ToLowerInvariant().Contains(lower) || 
+            s.Genre.ToLowerInvariant().Contains(lower)))
+        {
+            Songs.Add(s);
+        }
+
+        Albums.Clear();
+        foreach (var a in _allAlbums.Where(a => 
+            a.Title.ToLowerInvariant().Contains(lower) || 
+            a.ArtistName.ToLowerInvariant().Contains(lower) || 
+            a.Genre.ToLowerInvariant().Contains(lower)))
+        {
+            Albums.Add(a);
+        }
+
+        Artists.Clear();
+        foreach (var a in _allArtists.Where(a => 
+            a.Name.ToLowerInvariant().Contains(lower)))
+        {
+            Artists.Add(a);
+        }
+    }
+
     public async Task RefreshDataAsync()
     {
         var albums = await _libraryService.GetAllAlbumsAsync();
+        _allAlbums = albums.ToList();
         Albums.Clear();
         foreach (var album in albums)
         {
@@ -146,6 +228,7 @@ public class CollectionViewModel : ViewModelBase
         }
 
         var artists = await _libraryService.GetAllArtistsAsync();
+        _allArtists = artists.ToList();
         Artists.Clear();
         foreach (var artist in artists)
         {
@@ -153,6 +236,7 @@ public class CollectionViewModel : ViewModelBase
         }
 
         var songs = await _libraryService.GetAllTracksAsync();
+        _allSongs = songs.ToList();
         Songs.Clear();
         var uniqueGenres = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var song in songs)
@@ -169,6 +253,8 @@ public class CollectionViewModel : ViewModelBase
         {
             Genres.Add(g);
         }
+
+        await PlaylistsVM.LoadPlaylistsAsync();
 
         if (Artists.Count > 0 && SelectedArtist == null)
         {
