@@ -1,13 +1,18 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using NotZune.Application.Interfaces;
 
 namespace NotZune.UI.ViewModels;
 
 public record AccentColorOption(string Name, string HexCode);
+public record BackgroundThemeOption(string Name, string? AssetUri);
 
 public class SettingsViewModel : ViewModelBase
 {
+    private readonly ISoundEffectService? _soundService;
+    public event EventHandler<string?>? BackgroundArtChanged;
+
     public ObservableCollection<AccentColorOption> AccentColors { get; } = new()
     {
         new("Zune Pink (Signature)", "#FA2A55"),
@@ -15,6 +20,20 @@ public class SettingsViewModel : ViewModelBase
         new("Zune Electric Cyan", "#1BA1E2"),
         new("Zune Vivid Lime", "#339933"),
         new("Zune Deep Purple", "#A200FF")
+    };
+
+    public ObservableCollection<BackgroundThemeOption> BackgroundThemes { get; } = new()
+    {
+        new("Classic Minimal (Matte Black)", null),
+        new("Vector Ribbon 10", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-10.JPG"),
+        new("Abstract Aurora 15", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-15.JPG"),
+        new("Geometric Mesh 20", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-20.JPG"),
+        new("Cosmic Gradient 25", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-25.JPG"),
+        new("Circuit Flow 30", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-30.JPG"),
+        new("Prism Waves 35", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-35.JPG"),
+        new("Retro Horizon 40", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-40.JPG"),
+        new("Radiant Bloom 45", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-45.JPG"),
+        new("Neon Drift 47", "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-47.JPG")
     };
 
     private AccentColorOption _selectedAccent;
@@ -26,6 +45,32 @@ public class SettingsViewModel : ViewModelBase
             if (SetProperty(ref _selectedAccent, value))
             {
                 ApplyAccent(value);
+            }
+        }
+    }
+
+    private BackgroundThemeOption _selectedBackground;
+    public BackgroundThemeOption SelectedBackground
+    {
+        get => _selectedBackground;
+        set
+        {
+            if (SetProperty(ref _selectedBackground, value))
+            {
+                BackgroundArtChanged?.Invoke(this, value.AssetUri);
+            }
+        }
+    }
+
+    public bool SoundEffectsEnabled
+    {
+        get => _soundService?.SoundEffectsEnabled ?? true;
+        set
+        {
+            if (_soundService != null)
+            {
+                _soundService.SoundEffectsEnabled = value;
+                OnPropertyChanged();
             }
         }
     }
@@ -42,10 +87,14 @@ public class SettingsViewModel : ViewModelBase
 
     public ICommand SelectFolderCommand { get; }
     public ICommand SelectAccentCommand { get; }
+    public ICommand SelectBackgroundCommand { get; }
+    public ICommand TestSoundCommand { get; }
 
-    public SettingsViewModel()
+    public SettingsViewModel(ISoundEffectService? soundService = null)
     {
+        _soundService = soundService;
         _selectedAccent = AccentColors[0];
+        _selectedBackground = BackgroundThemes[1]; // Default to authentic Zune Vector Ribbon
         SelectFolderCommand = new RelayCommand(() => { });
         SelectAccentCommand = new RelayCommand<AccentColorOption>(accent =>
         {
@@ -54,6 +103,14 @@ public class SettingsViewModel : ViewModelBase
                 SelectedAccent = accent;
             }
         });
+        SelectBackgroundCommand = new RelayCommand<BackgroundThemeOption>(theme =>
+        {
+            if (theme != null)
+            {
+                SelectedBackground = theme;
+            }
+        });
+        TestSoundCommand = new RelayCommand(() => _soundService?.PlaySyncComplete());
     }
 
     private void ApplyAccent(AccentColorOption accent)

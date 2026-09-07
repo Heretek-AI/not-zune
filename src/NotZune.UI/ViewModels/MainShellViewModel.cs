@@ -1,9 +1,14 @@
+using System;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using NotZune.Application.Events;
 using NotZune.Application.Interfaces;
+using NotZune.Application.Services;
 using NotZune.Domain.Enums;
 using NotZune.Domain.Models;
+using NotZune.Infrastructure.Audio;
 
 namespace NotZune.UI.ViewModels;
 
@@ -13,7 +18,8 @@ public enum NavigationPivot
     Collection,
     NowPlaying,
     Device,
-    Settings
+    Settings,
+    Social
 }
 
 public class MainShellViewModel : ViewModelBase
@@ -21,15 +27,59 @@ public class MainShellViewModel : ViewModelBase
     private readonly IPlayerCoordinator _playerCoordinator;
     private readonly IMediaLibraryService _libraryService;
     private readonly IDeviceSyncService _deviceSyncService;
+    private readonly ISoundEffectService? _soundEffectService;
+    private readonly IUserStatsService? _userStatsService;
 
     private NavigationPivot _activePivot = NavigationPivot.Quickplay;
     private ViewModelBase _currentView;
+
+    private bool _isCompactMode;
+    private string? _selectedBackgroundArt = "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-10.JPG";
+
+    private int _equalizerFrame = 1;
+    private readonly DispatcherTimer? _equalizerTimer;
+    private string _nowPlayingIconSource = "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.PNG";
 
     public QuickplayViewModel QuickplayVM { get; }
     public CollectionViewModel CollectionVM { get; }
     public NowPlayingViewModel NowPlayingVM { get; }
     public DeviceViewModel DeviceVM { get; }
     public SettingsViewModel SettingsVM { get; }
+    public ZuneCardViewModel ZuneCardVM { get; }
+
+    public event EventHandler<bool>? CompactModeChanged;
+
+    public bool IsCompactMode
+    {
+        get => _isCompactMode;
+        set
+        {
+            if (SetProperty(ref _isCompactMode, value))
+            {
+                CompactModeChanged?.Invoke(this, value);
+            }
+        }
+    }
+
+    public string? SelectedBackgroundArt
+    {
+        get => _selectedBackgroundArt;
+        set
+        {
+            if (SetProperty(ref _selectedBackgroundArt, value))
+            {
+                OnPropertyChanged(nameof(HasBackgroundArt));
+            }
+        }
+    }
+
+    public bool HasBackgroundArt => !string.IsNullOrEmpty(SelectedBackgroundArt);
+
+    public string NowPlayingIconSource
+    {
+        get => _nowPlayingIconSource;
+        private set => SetProperty(ref _nowPlayingIconSource, value);
+    }
 
     public NavigationPivot ActivePivot
     {
@@ -43,6 +93,7 @@ public class MainShellViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsNowPlayingActive));
                 OnPropertyChanged(nameof(IsDeviceActive));
                 OnPropertyChanged(nameof(IsSettingsActive));
+                OnPropertyChanged(nameof(IsSocialActive));
 
                 CurrentView = _activePivot switch
                 {
@@ -51,6 +102,7 @@ public class MainShellViewModel : ViewModelBase
                     NavigationPivot.NowPlaying => NowPlayingVM,
                     NavigationPivot.Device => DeviceVM,
                     NavigationPivot.Settings => SettingsVM,
+                    NavigationPivot.Social => ZuneCardVM,
                     _ => QuickplayVM
                 };
 
@@ -62,6 +114,10 @@ public class MainShellViewModel : ViewModelBase
                 {
                     _ = QuickplayVM.LoadInitialDataAsync();
                 }
+                else if (_activePivot == NavigationPivot.Social)
+                {
+                    _ = ZuneCardVM.LoadStatsAsync();
+                }
             }
         }
     }
@@ -71,6 +127,7 @@ public class MainShellViewModel : ViewModelBase
     public bool IsNowPlayingActive => _activePivot == NavigationPivot.NowPlaying;
     public bool IsDeviceActive => _activePivot == NavigationPivot.Device;
     public bool IsSettingsActive => _activePivot == NavigationPivot.Settings;
+    public bool IsSocialActive => _activePivot == NavigationPivot.Social;
 
     public ViewModelBase CurrentView
     {
@@ -143,30 +200,45 @@ public class MainShellViewModel : ViewModelBase
     public ICommand ToggleShuffleCommand { get; }
     public ICommand ToggleRepeatCommand { get; }
     public ICommand SeekCommand { get; }
+    public ICommand ToggleCompactModeCommand { get; }
+    public ICommand ToggleZuneCardCommand { get; }
 
     public MainShellViewModel(
         IPlayerCoordinator playerCoordinator,
         IMediaLibraryService libraryService,
         IDeviceSyncService deviceSyncService,
-        ISmartDJService smartDJService)
+        ISmartDJService smartDJService,
+        ISoundEffectService? soundEffectService = null,
+        IUserStatsService? userStatsService = null,
+        IPodcastService? podcastService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
         _deviceSyncService = deviceSyncService;
+        _soundEffectService = soundEffectService ?? new SoundEffectService();
+        _userStatsService = userStatsService ?? new UserStatsService(libraryService);
+        var podService = podcastService ?? new PodcastService(playerCoordinator);
 
         // Child ViewModels
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
-        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService);
+        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService);
         DeviceVM = new DeviceViewModel(deviceSyncService);
-        SettingsVM = new SettingsViewModel();
+        SettingsVM = new SettingsViewModel(_soundEffectService);
+        ZuneCardVM = new ZuneCardViewModel(_userStatsService);
 
         _currentView = QuickplayVM;
 
-        // Wire events
+        // Background sync
+        SettingsVM.BackgroundArtChanged += (_, artUri) => SelectedBackgroundArt = artUri;
+
+        // Wire player events
         _playerCoordinator.TrackChanged += OnPlayerTrackChanged;
         _playerCoordinator.StateChanged += OnPlayerStateChanged;
         _playerCoordinator.RatingChanged += OnPlayerRatingChanged;
+
+        // Wire device sync events
+        _deviceSyncService.DeviceConnected += (_, _) => _soundEffectService?.PlayNotification();
 
         // Setup commands
         SelectPivotCommand = new RelayCommand<NavigationPivot>(pivot => ActivePivot = pivot);
@@ -177,6 +249,14 @@ public class MainShellViewModel : ViewModelBase
         ToggleDislikeCommand = new AsyncRelayCommand(OnToggleDislikeAsync);
         ToggleShuffleCommand = new RelayCommand(() => Shuffle = !Shuffle);
         ToggleRepeatCommand = new RelayCommand(() => Repeat = !Repeat);
+        ToggleCompactModeCommand = new RelayCommand(() => IsCompactMode = !IsCompactMode);
+        ToggleZuneCardCommand = new RelayCommand(() =>
+        {
+            ActivePivot = ActivePivot == NavigationPivot.Social
+                ? NavigationPivot.Collection
+                : NavigationPivot.Social;
+        });
+
         SeekCommand = new AsyncRelayCommand<double>(async progress =>
         {
             if (Duration.TotalSeconds > 0)
@@ -185,12 +265,31 @@ public class MainShellViewModel : ViewModelBase
                 await _playerCoordinator.SeekAsync(target);
             }
         });
+
         ToggleNowPlayingCommand = new RelayCommand(() =>
         {
             ActivePivot = ActivePivot == NavigationPivot.NowPlaying 
                 ? NavigationPivot.Collection 
                 : NavigationPivot.NowPlaying;
         });
+
+        // Initialize Now Playing equalizer animation timer
+        try
+        {
+            _equalizerTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(120)
+            };
+            _equalizerTimer.Tick += (s, e) =>
+            {
+                _equalizerFrame = (_equalizerFrame % 10) + 1;
+                NowPlayingIconSource = $"avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.FRAME{_equalizerFrame:D2}.PNG";
+            };
+        }
+        catch
+        {
+            // Fallback for headless test environments where Dispatcher is unavailable
+        }
     }
 
     private async Task OnToggleFavoriteAsync()
@@ -209,7 +308,6 @@ public class MainShellViewModel : ViewModelBase
         await _libraryService.SetTrackRatingAsync(CurrentTrack.Id, newRating);
         if (newRating == HeartRating.Dislike)
         {
-            // Auto skip disliked song
             await _playerCoordinator.NextAsync();
         }
     }
@@ -225,6 +323,11 @@ public class MainShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentRating));
         OnPropertyChanged(nameof(IsFavorite));
         OnPropertyChanged(nameof(IsDisliked));
+
+        if (e.CurrentTrack != null)
+        {
+            _ = _userStatsService?.RecordTrackPlayedAsync(e.CurrentTrack);
+        }
     }
 
     private void OnPlayerStateChanged(object? sender, PlaybackStateChangedEventArgs e)
@@ -238,6 +341,16 @@ public class MainShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(RemainingTimeText));
         OnPropertyChanged(nameof(Shuffle));
         OnPropertyChanged(nameof(Repeat));
+
+        if (IsPlaying)
+        {
+            _equalizerTimer?.Start();
+        }
+        else
+        {
+            _equalizerTimer?.Stop();
+            NowPlayingIconSource = "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.PNG";
+        }
     }
 
     private void OnPlayerRatingChanged(object? sender, HeartRatingChangedEventArgs e)

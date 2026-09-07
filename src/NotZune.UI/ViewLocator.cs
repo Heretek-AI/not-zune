@@ -20,6 +20,8 @@ public class ViewLocator : IDataTemplate
             DeviceViewModel => new DeviceView(),
             SettingsViewModel => new SettingsView(),
             MainShellViewModel => new MainShellView(),
+            ZuneCardViewModel => new ZuneCardView(),
+            PodcastsViewModel => new PodcastsView(),
             _ => FindViewByConvention(data)
         };
     }

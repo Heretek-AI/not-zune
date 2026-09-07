@@ -63,6 +63,9 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IMediaLibraryService, MediaLibraryService>();
         services.AddSingleton<IDeviceSyncService, ZuneDeviceSyncService>();
         services.AddSingleton<ISmartDJService, SmartDJEngine>();
+        services.AddSingleton<ISoundEffectService, SoundEffectService>();
+        services.AddSingleton<IUserStatsService, UserStatsService>();
+        services.AddSingleton<IPodcastService, PodcastService>();
 
         // 3. Audio & Hardware Subsystems
         services.AddSingleton<AudioEngine>();

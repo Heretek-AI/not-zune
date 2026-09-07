@@ -37,6 +37,58 @@
         </ItemsControl>
       </StackPanel>
 
+      <!-- Section: Background Themes Gallery -->
+      <StackPanel Spacing="16">
+        <TextBlock Text="BACKGROUND ART THEME" Classes="section-header" />
+        <TextBlock Text="Select an authentic Zune 4.8 vector illustration backdrop." Classes="caption" />
+
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding BackgroundThemes}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="12" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SelectBackgroundCommand}"
+                        CommandParameter="{Binding}"
+                        Padding="0">
+                  <Border Width="160" Height="80" 
+                          Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+                          BorderBrush="{DynamicResource ZuneBorderBrush}" 
+                          BorderThickness="1" 
+                          CornerRadius="0">
+                    <Grid>
+                      <Image Source="{Binding AssetUri}" Stretch="UniformToFill" Opacity="0.5" />
+                      <Border Background="#99111111" VerticalAlignment="Bottom" Padding="6,4">
+                        <TextBlock Text="{Binding Name}" Classes="caption" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      </Border>
+                    </Grid>
+                  </Border>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+
+      <!-- Section: Authentic Zune Sound Effects -->
+      <StackPanel Spacing="12">
+        <TextBlock Text="AUDIO SOUND EFFECTS" Classes="section-header" />
+        <TextBlock Text="Tactile audio feedback for device sync, ripping, and notifications." Classes="caption" />
+        
+        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,4,0,0">
+          <CheckBox IsChecked="{Binding SoundEffectsEnabled}" 
+                    Content="Enable Classic Zune Sound Effects" 
+                    CornerRadius="0"
+                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          <Button Classes="zune-action" Command="{Binding TestSoundCommand}">
+            <TextBlock Text="TEST SYNC SOUND" Classes="caption" FontWeight="SemiBold" />
+          </Button>
+        </StackPanel>
+      </StackPanel>
+
       <!-- Section: Library Folders -->
       <StackPanel Spacing="12">
         <TextBlock Text="MUSIC COLLECTION FOLDER" Classes="section-header" />

@@ -24,6 +24,9 @@
         <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Genres}">
           <TextBlock Text="genres" Classes="subpivot" Classes.active="{Binding IsGenresActive}" />
         </Button>
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Podcasts}">
+          <TextBlock Text="podcasts" Classes="subpivot" Classes.active="{Binding IsPodcastsActive}" />
+        </Button>
       </StackPanel>
 
       <!-- Minimal Search Box -->
@@ -309,6 +312,9 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </ScrollViewer>
+
+      <!-- 5. PODCASTS SUB-PIVOT -->
+      <ContentControl IsVisible="{Binding IsPodcastsActive}" Content="{Binding PodcastsVM}" />
 
     </Grid>
   </Grid>

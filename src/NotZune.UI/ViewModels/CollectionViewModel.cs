@@ -12,7 +12,8 @@ public enum CollectionSubPivot
     Artists,
     Albums,
     Songs,
-    Genres
+    Genres,
+    Podcasts
 }
 
 public class CollectionViewModel : ViewModelBase
@@ -24,6 +25,8 @@ public class CollectionViewModel : ViewModelBase
     private string _searchQuery = string.Empty;
     private Artist? _selectedArtist;
     private string? _selectedGenre;
+
+    public PodcastsViewModel PodcastsVM { get; }
 
     public ObservableCollection<Artist> Artists { get; } = new();
     public ObservableCollection<Album> Albums { get; } = new();
@@ -43,6 +46,7 @@ public class CollectionViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsAlbumsActive));
                 OnPropertyChanged(nameof(IsSongsActive));
                 OnPropertyChanged(nameof(IsGenresActive));
+                OnPropertyChanged(nameof(IsPodcastsActive));
             }
         }
     }
@@ -51,6 +55,7 @@ public class CollectionViewModel : ViewModelBase
     public bool IsAlbumsActive => _activeSubPivot == CollectionSubPivot.Albums;
     public bool IsSongsActive => _activeSubPivot == CollectionSubPivot.Songs;
     public bool IsGenresActive => _activeSubPivot == CollectionSubPivot.Genres;
+    public bool IsPodcastsActive => _activeSubPivot == CollectionSubPivot.Podcasts;
 
     public Artist? SelectedArtist
     {
@@ -102,10 +107,13 @@ public class CollectionViewModel : ViewModelBase
 
     public CollectionViewModel(
         IPlayerCoordinator playerCoordinator,
-        IMediaLibraryService libraryService)
+        IMediaLibraryService libraryService,
+        IPodcastService? podcastService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
+        var podService = podcastService ?? new NotZune.Application.Services.PodcastService(playerCoordinator);
+        PodcastsVM = new PodcastsViewModel(podService);
 
         SelectSubPivotCommand = new RelayCommand<CollectionSubPivot>(pivot => ActiveSubPivot = pivot);
         SelectArtistCommand = new RelayCommand<Artist>(artist => SelectedArtist = artist);
