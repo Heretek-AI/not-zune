@@ -5,7 +5,7 @@
 # 🎵 Not-Zune
 **The authentic cross-platform spiritual successor to Microsoft Zune Desktop & Player**
 
-[![Build & Test](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![Build & Release](https://github.com/Heretek-AI/not-zune/actions/workflows/build.yml/badge.svg)](https://github.com/Heretek-AI/not-zune/actions/workflows/build.yml)
 [![Avalonia UI](https://img.shields.io/badge/Avalonia_UI-11.2-8C15E9?logo=avalonia&logoColor=white)](https://avaloniaui.net/)
 [![Platforms](https://img.shields.io/badge/Platforms-Windows%20%7C%20Linux%20(x64%20%26%20arm64)-0078D7)]()
 [![Design](https://img.shields.io/badge/Aesthetic-Zune%20Metro%20%2F%20Iris-FA2A55)]()
