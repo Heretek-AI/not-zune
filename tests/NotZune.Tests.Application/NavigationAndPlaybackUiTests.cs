@@ -4,13 +4,14 @@ using NotZune.Domain.Models;
 using NotZune.UI;
 using NotZune.UI.ViewModels;
 using NotZune.UI.Views;
+using Avalonia.Headless.XUnit;
 using Xunit;
 
 namespace NotZune.Tests.Application;
 
 public class NavigationAndPlaybackUiTests
 {
-    [Fact]
+    [AvaloniaFact]
     public void ViewLocator_BuildsExpectedViewsForViewModels()
     {
         var locator = new ViewLocator();

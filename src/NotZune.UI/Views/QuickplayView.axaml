@@ -19,7 +19,10 @@
             Margin="0,0,32,0">
       <StackPanel Spacing="20">
         <!-- Smart DJ Header -->
-        <TextBlock Text="smart dj" Classes="hero" Margin="0,0,0,4" />
+        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,4">
+          <Image Source="avares://NotZune.UI/Assets/Zune/Branding/QUICKMIXICON.PNG" Width="16" Height="18" VerticalAlignment="Center" />
+          <TextBlock Text="smart dj" Classes="hero" VerticalAlignment="Center" />
+        </StackPanel>
         <TextBlock Text="Dynamic, continuous mixes crafted from your music collection, weighted by your favorites." 
                    Classes="caption" 
                    Foreground="{DynamicResource ZuneTextSecondaryBrush}"
@@ -45,7 +48,7 @@
                   Command="{Binding PlayFavoritesMixCommand}"
                   HorizontalAlignment="Stretch">
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-              <TextBlock Text="♥" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.LIKEIT.SELECTED.PNG" Width="17" Height="15" VerticalAlignment="Center" />
               <TextBlock Text="START FAVORITES MIX" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
             </StackPanel>
           </Button>

@@ -30,3 +30,6 @@ bld/
 *.sqlite
 *.sqlite3
 notzune.db
+
+# Disassembly temporary downloads and unpack caches
+tools/

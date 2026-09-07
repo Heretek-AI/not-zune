@@ -37,6 +37,7 @@
 
     <!-- State 2: No Device Connected -->
     <StackPanel IsVisible="{Binding !HasDevice}" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="16">
+      <Image Source="avares://NotZune.UI/Assets/Zune/Branding/ZUNEHDDEVICES.PNG" Width="64" Height="74" HorizontalAlignment="Center" Margin="0,0,0,8" />
       <TextBlock Text="connect a zune" Classes="hero" HorizontalAlignment="Center" />
       <TextBlock Text="Attach your Zune 30, Zune 4/8/16, Zune 80/120, or Zune HD via USB cable." 
                  Classes="body" 

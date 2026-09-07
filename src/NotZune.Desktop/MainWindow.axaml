@@ -7,7 +7,7 @@
         x:Class="NotZune.Desktop.MainWindow"
         Title="Not-Zune"
         Width="1240" Height="780"
-        MinWidth="960" MinHeight="600"
+        MinWidth="734" MinHeight="500"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1"

@@ -39,9 +39,9 @@
       <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
         <!-- Zune Brand Wordmark -->
         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Rectangle Width="6" Height="6" Fill="{DynamicResource ZuneAccentBrush}" VerticalAlignment="Center" />
+          <Image Source="avares://NotZune.UI/Assets/Zune/Branding/ZUNECOLORLOGO.PNG" Width="18" Height="19" VerticalAlignment="Center" />
           <TextBlock Text="ZUNE" 
-                     FontFamily="Segoe UI, Inter, Selawik, sans-serif" 
+                     FontFamily="{StaticResource ZunePivotFontFamily}" 
                      FontSize="12" 
                      FontWeight="Bold" 
                      LetterSpacing="3" 
@@ -50,15 +50,15 @@
         </StackPanel>
 
         <!-- Window Action Controls (Minimize, Maximize, Close) -->
-        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="1" VerticalAlignment="Top">
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top">
           <Button Classes="window-control" Click="OnMinimizeClicked" ToolTip.Tip="Minimize">
-            <TextBlock Text="—" FontSize="10" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+            <Image Source="avares://NotZune.UI/Assets/Zune/Window/WINDOW.MINIMIZE.PNG" Width="14" Height="15" />
           </Button>
           <Button Classes="window-control" Click="OnMaximizeClicked" ToolTip.Tip="Maximize / Restore">
-            <TextBlock Text="▢" FontSize="11" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+            <Image Source="avares://NotZune.UI/Assets/Zune/Window/WINDOW.MAXIMIZE.PNG" Width="14" Height="15" />
           </Button>
           <Button Classes="window-control window-close" Click="OnCloseClicked" ToolTip.Tip="Close">
-            <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+            <Image Source="avares://NotZune.UI/Assets/Zune/Window/WINDOW.CLOSE.PNG" Width="14" Height="15" />
           </Button>
         </StackPanel>
       </Grid>
@@ -151,21 +151,18 @@
             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="6,0,0,0">
               <!-- Favorite Heart Button -->
               <Button Command="{Binding ToggleFavoriteCommand}" Padding="4" ToolTip.Tip="Love this song">
-                <TextBlock Text="♥" FontSize="18" Classes.active="{Binding IsFavorite}">
-                  <TextBlock.Styles>
-                    <Style Selector="TextBlock">
-                      <Setter Property="Foreground" Value="{DynamicResource ZuneTextDimmedBrush}" />
-                    </Style>
-                    <Style Selector="TextBlock.active">
-                      <Setter Property="Foreground" Value="{DynamicResource ZuneAccentBrush}" />
-                    </Style>
-                  </TextBlock.Styles>
-                </TextBlock>
+                <Panel Width="17" Height="15">
+                  <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.LIKEIT.SELECTED.PNG" IsVisible="{Binding IsFavorite}" Width="17" Height="15" />
+                  <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.LIKEIT.PNG" IsVisible="{Binding !IsFavorite}" Width="17" Height="15" />
+                </Panel>
               </Button>
 
               <!-- Dislike Broken Heart Button -->
               <Button Command="{Binding ToggleDislikeCommand}" Padding="4" ToolTip.Tip="Dislike and skip song">
-                <TextBlock Text="💔" FontSize="15" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                <Panel Width="17" Height="15">
+                  <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.HATEIT.SELECTED.PNG" IsVisible="{Binding IsDisliked}" Width="17" Height="15" />
+                  <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.HATEIT.PNG" IsVisible="{Binding !IsDisliked}" Width="17" Height="15" />
+                </Panel>
               </Button>
             </StackPanel>
           </StackPanel>
@@ -174,35 +171,36 @@
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
             <!-- Shuffle -->
             <Button Command="{Binding ToggleShuffleCommand}" Padding="6" ToolTip.Tip="Shuffle">
-              <TextBlock Text="⇄" FontSize="16" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <Panel Width="23" Height="23">
+                <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.SHUFFLE.ON.PNG" IsVisible="{Binding Shuffle}" Width="23" Height="23" />
+                <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.SHUFFLE.OFF.PNG" IsVisible="{Binding !Shuffle}" Width="23" Height="23" />
+              </Panel>
             </Button>
 
             <!-- Previous -->
             <Button Command="{Binding PreviousCommand}" Padding="6" ToolTip.Tip="Previous">
-              <TextBlock Text="⏮" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.BACK.PNG" Width="25" Height="25" />
             </Button>
 
             <!-- Play / Pause Circle Accent Button -->
-            <Button Command="{Binding PlayPauseCommand}" Padding="10,6" ToolTip.Tip="Play / Pause">
-              <Border Background="{DynamicResource ZuneAccentBrush}" 
-                      Width="38" Height="38" 
-                      CornerRadius="0">
-                <TextBlock Text="{Binding PlayPauseIcon, FallbackValue='▶'}" 
-                           FontSize="18" 
-                           Foreground="#FFFFFF" 
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center" />
-              </Border>
+            <Button Command="{Binding PlayPauseCommand}" Padding="4" ToolTip.Tip="Play / Pause">
+              <Panel Width="35" Height="35">
+                <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.PLAY.PNG" IsVisible="{Binding !IsPlaying}" Width="35" Height="35" />
+                <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.PAUSE.PNG" IsVisible="{Binding IsPlaying}" Width="35" Height="35" />
+              </Panel>
             </Button>
 
             <!-- Next -->
             <Button Command="{Binding NextCommand}" Padding="6" ToolTip.Tip="Next">
-              <TextBlock Text="⏭" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.FORWARD.PNG" Width="25" Height="25" />
             </Button>
 
             <!-- Repeat -->
             <Button Command="{Binding ToggleRepeatCommand}" Padding="6" ToolTip.Tip="Repeat">
-              <TextBlock Text="↻" FontSize="16" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <Panel Width="23" Height="23">
+                <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.REPEAT.ON.PNG" IsVisible="{Binding Repeat}" Width="23" Height="23" />
+                <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.REPEAT.OFF.PNG" IsVisible="{Binding !Repeat}" Width="23" Height="23" />
+              </Panel>
             </Button>
           </StackPanel>
 
@@ -214,7 +212,7 @@
 
             <!-- Volume Control -->
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="10,0,0,0">
-              <TextBlock Text="🔊" FontSize="13" Foreground="{DynamicResource ZuneTextSecondaryBrush}" VerticalAlignment="Center" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.MUTE.OFF.PNG" Width="19" Height="16" VerticalAlignment="Center" />
               <Slider Width="90" 
                       Value="{Binding Volume}" 
                       Minimum="0" 

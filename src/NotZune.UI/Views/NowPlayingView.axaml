@@ -94,34 +94,37 @@
               IsVisible="{Binding IsHudVisible}">
         <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
           <!-- Favorite -->
-          <Button Command="{Binding ToggleFavoriteCommand}" Padding="4">
-            <TextBlock Text="♥" FontSize="16" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          <Button Command="{Binding ToggleFavoriteCommand}" Padding="4" ToolTip.Tip="Love this song">
+            <Panel Width="17" Height="15">
+              <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.LIKEIT.SELECTED.PNG" IsVisible="{Binding IsFavorite}" Width="17" Height="15" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.LIKEIT.PNG" IsVisible="{Binding !IsFavorite}" Width="17" Height="15" />
+            </Panel>
           </Button>
 
           <!-- Previous -->
-          <Button Command="{Binding PreviousCommand}" Padding="4">
-            <TextBlock Text="⏮" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          <Button Command="{Binding PreviousCommand}" Padding="4" ToolTip.Tip="Previous">
+            <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.BACK.PNG" Width="25" Height="25" />
           </Button>
 
           <!-- Play / Pause -->
-          <Button Command="{Binding PlayPauseCommand}" Padding="8,4">
-            <Border Background="{DynamicResource ZuneAccentBrush}" Width="32" Height="32" CornerRadius="0">
-              <TextBlock Text="{Binding PlayPauseIcon, FallbackValue='▶'}" 
-                         FontSize="14" 
-                         Foreground="#FFFFFF" 
-                         HorizontalAlignment="Center" 
-                         VerticalAlignment="Center" />
-            </Border>
+          <Button Command="{Binding PlayPauseCommand}" Padding="4" ToolTip.Tip="Play / Pause">
+            <Panel Width="35" Height="35">
+              <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.PLAY.PNG" IsVisible="{Binding !IsPlaying}" Width="35" Height="35" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.PAUSE.PNG" IsVisible="{Binding IsPlaying}" Width="35" Height="35" />
+            </Panel>
           </Button>
 
           <!-- Next -->
-          <Button Command="{Binding NextCommand}" Padding="4">
-            <TextBlock Text="⏭" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          <Button Command="{Binding NextCommand}" Padding="4" ToolTip.Tip="Next">
+            <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.FORWARD.PNG" Width="25" Height="25" />
           </Button>
 
           <!-- Dislike -->
-          <Button Command="{Binding ToggleDislikeCommand}" Padding="4">
-            <TextBlock Text="💔" FontSize="14" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          <Button Command="{Binding ToggleDislikeCommand}" Padding="4" ToolTip.Tip="Dislike and skip song">
+            <Panel Width="17" Height="15">
+              <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.HATEIT.SELECTED.PNG" IsVisible="{Binding IsDisliked}" Width="17" Height="15" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Rating/RATING.HATEIT.PNG" IsVisible="{Binding !IsDisliked}" Width="17" Height="15" />
+            </Panel>
           </Button>
 
           <!-- Timer -->
