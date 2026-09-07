@@ -20,8 +20,8 @@ public class QuickplayViewModel : ViewModelBase
     private readonly IMediaLibraryService _libraryService;
     private readonly ISmartDJService _smartDJService;
 
-    private QuickplayDeck _activeDeck = QuickplayDeck.History;
-    private string _smartDjSeedText = "Pick an artist or track...";
+    private QuickplayDeck _activeDeck = QuickplayDeck.Pins;
+    private string _smartDjSeedText = "Seed: Entire Collection";
 
     public ObservableCollection<Album> Pins { get; } = new();
     public ObservableCollection<PlayHistoryEntry> History { get; } = new();
@@ -53,7 +53,11 @@ public class QuickplayViewModel : ViewModelBase
 
     public ICommand SelectDeckCommand { get; }
     public ICommand LaunchSmartDjCommand { get; }
+    public ICommand PlayFavoritesMixCommand { get; }
+    public ICommand PlayDiscoveryMixCommand { get; }
     public ICommand PlayHistoryItemCommand { get; }
+    public ICommand PlayAlbumCommand { get; }
+    public ICommand UnpinAlbumCommand { get; }
 
     public QuickplayViewModel(
         IPlayerCoordinator playerCoordinator,
@@ -66,13 +70,27 @@ public class QuickplayViewModel : ViewModelBase
 
         SelectDeckCommand = new RelayCommand<QuickplayDeck>(deck => ActiveDeck = deck);
         LaunchSmartDjCommand = new AsyncRelayCommand(OnLaunchSmartDjAsync);
+        PlayFavoritesMixCommand = new AsyncRelayCommand(OnPlayFavoritesMixAsync);
+        PlayDiscoveryMixCommand = new AsyncRelayCommand(OnPlayDiscoveryMixAsync);
         PlayHistoryItemCommand = new AsyncRelayCommand<PlayHistoryEntry>(OnPlayHistoryItemAsync);
+        PlayAlbumCommand = new AsyncRelayCommand<Album>(OnPlayAlbumAsync);
+        UnpinAlbumCommand = new RelayCommand<Album>(album =>
+        {
+            if (album != null) Pins.Remove(album);
+        });
 
         _ = LoadInitialDataAsync();
     }
 
     public async Task LoadInitialDataAsync()
     {
+        var allAlbums = await _libraryService.GetAllAlbumsAsync();
+        Pins.Clear();
+        foreach (var album in allAlbums.Take(6))
+        {
+            Pins.Add(album);
+        }
+
         var historyItems = await _libraryService.GetRecentHistoryAsync(10);
         History.Clear();
         foreach (var item in historyItems)
@@ -104,6 +122,50 @@ public class QuickplayViewModel : ViewModelBase
         {
             await _playerCoordinator.PlayTrackAsync(mix[0], mix);
         }
+    }
+
+    private async Task OnPlayFavoritesMixAsync()
+    {
+        var allTracks = await _libraryService.GetAllTracksAsync();
+        var favTracks = allTracks.Where(t => t.Rating == HeartRating.Favorite).ToList();
+        var pool = favTracks.Count > 0 ? favTracks : allTracks.ToList();
+
+        var seed = new SmartDJSeed
+        {
+            TargetTrackCount = 20,
+            ExcludeDisliked = true
+        };
+
+        var mix = await _smartDJService.GenerateMixAsync(seed, pool);
+        if (mix.Count > 0)
+        {
+            await _playerCoordinator.PlayTrackAsync(mix[0], mix);
+        }
+    }
+
+    private async Task OnPlayDiscoveryMixAsync()
+    {
+        var allTracks = await _libraryService.GetAllTracksAsync();
+        var unplayed = allTracks.Where(t => t.PlayCount == 0 && t.Rating != HeartRating.Dislike).ToList();
+        var pool = unplayed.Count > 0 ? unplayed : allTracks.ToList();
+
+        var seed = new SmartDJSeed
+        {
+            TargetTrackCount = 20,
+            ExcludeDisliked = true
+        };
+
+        var mix = await _smartDJService.GenerateMixAsync(seed, pool);
+        if (mix.Count > 0)
+        {
+            await _playerCoordinator.PlayTrackAsync(mix[0], mix);
+        }
+    }
+
+    private async Task OnPlayAlbumAsync(Album? album)
+    {
+        if (album == null || album.Tracks.Count == 0) return;
+        await _playerCoordinator.PlayTrackAsync(album.Tracks[0], album.Tracks);
     }
 
     private async Task OnPlayHistoryItemAsync(PlayHistoryEntry? entry)

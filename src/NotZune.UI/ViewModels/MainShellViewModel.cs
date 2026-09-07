@@ -102,6 +102,26 @@ public class MainShellViewModel : ViewModelBase
     public bool IsFavorite => CurrentRating == HeartRating.Favorite;
     public bool IsDisliked => CurrentRating == HeartRating.Dislike;
 
+    public bool Shuffle
+    {
+        get => _playerCoordinator.Shuffle;
+        set
+        {
+            _playerCoordinator.Shuffle = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool Repeat
+    {
+        get => _playerCoordinator.Repeat;
+        set
+        {
+            _playerCoordinator.Repeat = value;
+            OnPropertyChanged();
+        }
+    }
+
     // Commands
     public ICommand SelectPivotCommand { get; }
     public ICommand PlayPauseCommand { get; }
@@ -110,6 +130,9 @@ public class MainShellViewModel : ViewModelBase
     public ICommand ToggleFavoriteCommand { get; }
     public ICommand ToggleDislikeCommand { get; }
     public ICommand ToggleNowPlayingCommand { get; }
+    public ICommand ToggleShuffleCommand { get; }
+    public ICommand ToggleRepeatCommand { get; }
+    public ICommand SeekCommand { get; }
 
     public MainShellViewModel(
         IPlayerCoordinator playerCoordinator,
@@ -142,6 +165,16 @@ public class MainShellViewModel : ViewModelBase
         PreviousCommand = new AsyncRelayCommand(() => _playerCoordinator.PreviousAsync());
         ToggleFavoriteCommand = new AsyncRelayCommand(OnToggleFavoriteAsync);
         ToggleDislikeCommand = new AsyncRelayCommand(OnToggleDislikeAsync);
+        ToggleShuffleCommand = new RelayCommand(() => Shuffle = !Shuffle);
+        ToggleRepeatCommand = new RelayCommand(() => Repeat = !Repeat);
+        SeekCommand = new AsyncRelayCommand<double>(async progress =>
+        {
+            if (Duration.TotalSeconds > 0)
+            {
+                var target = TimeSpan.FromSeconds(progress * Duration.TotalSeconds);
+                await _playerCoordinator.SeekAsync(target);
+            }
+        });
         ToggleNowPlayingCommand = new RelayCommand(() =>
         {
             ActivePivot = ActivePivot == NavigationPivot.NowPlaying 
@@ -192,6 +225,8 @@ public class MainShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(ProgressPercentage));
         OnPropertyChanged(nameof(ElapsedTimeText));
         OnPropertyChanged(nameof(RemainingTimeText));
+        OnPropertyChanged(nameof(Shuffle));
+        OnPropertyChanged(nameof(Repeat));
     }
 
     private void OnPlayerRatingChanged(object? sender, HeartRatingChangedEventArgs e)

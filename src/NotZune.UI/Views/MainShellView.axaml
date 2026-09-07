@@ -3,119 +3,210 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:NotZune.UI.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="780"
              x:Class="NotZune.UI.Views.MainShellView"
              x:DataType="vm:MainShellViewModel"
              Background="{DynamicResource ZuneBackgroundBrush}">
 
   <Grid RowDefinitions="Auto,*,Auto">
-    <!-- 1. Top Pivot Navigation Header -->
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="40,24,40,12">
-      <!-- Left: Primary Pivots -->
-      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="28">
-        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Quickplay}">
-          <TextBlock Text="QUICKPLAY" Classes="pivot-header" Classes.active="{Binding IsQuickplayActive}" />
-        </Button>
-        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Collection}">
-          <TextBlock Text="COLLECTION" Classes="pivot-header" Classes.active="{Binding IsCollectionActive}" />
-        </Button>
-        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Device}">
-          <TextBlock Text="DEVICE" Classes="pivot-header" Classes.active="{Binding IsDeviceActive}" />
-        </Button>
-      </StackPanel>
+    <!-- 1. Custom Borderless Window Chrome & Panoramic Pivot Navigation Header -->
+    <Grid Grid.Row="0" 
+          Background="Transparent" 
+          PointerPressed="OnTitleBarPointerPressed"
+          RowDefinitions="36,60"
+          Margin="24,8,8,0">
+      
+      <!-- Topmost System Row: Mini Brand Wordmark & Minimal Window Controls -->
+      <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+        <!-- Zune Brand Wordmark -->
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Rectangle Width="6" Height="6" Fill="{DynamicResource ZuneAccentBrush}" VerticalAlignment="Center" />
+          <TextBlock Text="ZUNE" 
+                     FontFamily="Segoe UI, Inter, Selawik, sans-serif" 
+                     FontSize="12" 
+                     FontWeight="Bold" 
+                     LetterSpacing="3" 
+                     Foreground="{DynamicResource ZuneTextDimmedBrush}" 
+                     VerticalAlignment="Center" />
+        </StackPanel>
 
-      <!-- Right: Settings & Now Playing Shortcut -->
-      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
-        <Button Command="{Binding ToggleNowPlayingCommand}">
-          <TextBlock Text="NOW PLAYING" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneAccentBrush}" />
-        </Button>
-        <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Settings}">
-          <TextBlock Text="SETTINGS" Classes="caption" Classes.active="{Binding IsSettingsActive}" />
-        </Button>
-      </StackPanel>
+        <!-- Window Action Controls (Minimize, Maximize, Close) -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="1" VerticalAlignment="Top">
+          <Button Classes="window-control" Click="OnMinimizeClicked" ToolTip.Tip="Minimize">
+            <TextBlock Text="—" FontSize="10" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </Button>
+          <Button Classes="window-control" Click="OnMaximizeClicked" ToolTip.Tip="Maximize / Restore">
+            <TextBlock Text="▢" FontSize="11" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </Button>
+          <Button Classes="window-control window-close" Click="OnCloseClicked" ToolTip.Tip="Close">
+            <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </Button>
+        </StackPanel>
+      </Grid>
+
+      <!-- Second Row: Primary Panoramic Pivots & Search / Mode Toggles -->
+      <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,0,16,0">
+        <!-- Left: Iconic Zune Metro Panoramic Pivots -->
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="32" VerticalAlignment="Center">
+          <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Quickplay}">
+            <TextBlock Text="QUICKPLAY" Classes="pivot-header" Classes.active="{Binding IsQuickplayActive}" />
+          </Button>
+          <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Collection}">
+            <TextBlock Text="COLLECTION" Classes="pivot-header" Classes.active="{Binding IsCollectionActive}" />
+          </Button>
+          <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Device}">
+            <TextBlock Text="DEVICE" Classes="pivot-header" Classes.active="{Binding IsDeviceActive}" />
+          </Button>
+        </StackPanel>
+
+        <!-- Right: Now Playing & Settings -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
+          <Button Command="{Binding ToggleNowPlayingCommand}" VerticalAlignment="Center">
+            <Border BorderBrush="{DynamicResource ZuneAccentBrush}" 
+                    BorderThickness="1" 
+                    Padding="12,4" 
+                    Background="{DynamicResource ZuneCardBrush}" 
+                    CornerRadius="0">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="♫" FontSize="12" Foreground="{DynamicResource ZuneAccentBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="NOW PLAYING" 
+                           Classes="caption" 
+                           FontWeight="SemiBold" 
+                           LetterSpacing="1"
+                           Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+          </Button>
+
+          <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Settings}" VerticalAlignment="Center">
+            <TextBlock Text="SETTINGS" Classes="caption" Classes.active="{Binding IsSettingsActive}" LetterSpacing="1" />
+          </Button>
+        </StackPanel>
+      </Grid>
     </Grid>
 
-    <!-- 2. Main Content View Area -->
-    <TransitioningContentControl Grid.Row="1" Content="{Binding CurrentView}" />
+    <!-- 2. Main Dynamic Content View Area -->
+    <TransitioningContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="0,4,0,0" />
 
-    <!-- 3. Docked Minimalist Player HUD Bar -->
+    <!-- 3. Docked Zune Minimalist Player HUD Bar -->
     <Border Grid.Row="2" 
             Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
-            Height="68" 
-            CornerRadius="0">
+            Height="74" 
+            CornerRadius="0"
+            BorderBrush="{DynamicResource ZuneBorderBrush}"
+            BorderThickness="0,1,0,0">
       <Grid RowDefinitions="Auto,*">
-        <!-- Thin Seek Bar on Top Edge -->
+        <!-- 2px Hairline Seek Scrubber across Full Window Width -->
         <ProgressBar Grid.Row="0" 
-                     Height="2" 
+                     Height="3" 
                      CornerRadius="0"
                      Value="{Binding ProgressPercentage}" 
                      Maximum="1.0" 
                      Foreground="{DynamicResource ZuneAccentBrush}" 
-                     Background="Transparent" />
+                     Background="#1A1A1A" />
 
-        <!-- Player Controls Strip -->
-        <Grid Grid.Row="1" ColumnDefinitions="320,*,320" Margin="24,0,24,0" VerticalAlignment="Center">
-          <!-- Left: Track Metadata & Heart Rating -->
-          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-            <!-- Thumbnail Box -->
-            <Border Width="40" Height="40" Background="{DynamicResource ZuneCardBrush}" CornerRadius="0">
-              <TextBlock Text="♫" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+        <!-- Controls Row -->
+        <Grid Grid.Row="1" ColumnDefinitions="340,*,340" Margin="28,0,28,0" VerticalAlignment="Center">
+          <!-- Left: Track Metadata & Heart / Broken Heart Rating -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <!-- Sharp Square Artwork Box -->
+            <Border Width="46" Height="46" Background="{DynamicResource ZuneCardBrush}" CornerRadius="0" BorderBrush="{DynamicResource ZuneBorderBrush}" BorderThickness="1">
+              <TextBlock Text="♫" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
             </Border>
 
-            <StackPanel VerticalAlignment="Center" Spacing="2">
-              <TextBlock Text="{Binding CurrentTrack.Title, FallbackValue='Not Playing'}" Classes="body" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="180" />
-              <TextBlock Text="{Binding CurrentTrack.ArtistName, FallbackValue='Zune'}" Classes="caption" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+            <StackPanel VerticalAlignment="Center" Spacing="3">
+              <TextBlock Text="{Binding CurrentTrack.Title, FallbackValue='Not Playing'}" 
+                         Classes="body" 
+                         FontWeight="SemiBold" 
+                         TextTrimming="CharacterEllipsis" 
+                         MaxWidth="190" />
+              <TextBlock Text="{Binding CurrentTrack.ArtistName, FallbackValue='Zune Player'}" 
+                         Classes="caption" 
+                         Foreground="{DynamicResource ZuneTextSecondaryBrush}" 
+                         TextTrimming="CharacterEllipsis" 
+                         MaxWidth="190" />
             </StackPanel>
 
-            <!-- Zune Tri-State Heart Rating Buttons -->
-            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <!-- Zune Signature Tri-State Rating (Heart & Broken Heart) -->
+            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="6,0,0,0">
               <!-- Favorite Heart Button -->
-              <Button Command="{Binding ToggleFavoriteCommand}" Padding="4">
-                <TextBlock Text="♥" FontSize="18" 
-                           Foreground="{Binding IsFavorite, Converter={x:Null}}" 
-                           Classes.active="{Binding IsFavorite}">
+              <Button Command="{Binding ToggleFavoriteCommand}" Padding="4" ToolTip.Tip="Love this song">
+                <TextBlock Text="♥" FontSize="18" Classes.active="{Binding IsFavorite}">
                   <TextBlock.Styles>
+                    <Style Selector="TextBlock">
+                      <Setter Property="Foreground" Value="{DynamicResource ZuneTextDimmedBrush}" />
+                    </Style>
                     <Style Selector="TextBlock.active">
                       <Setter Property="Foreground" Value="{DynamicResource ZuneAccentBrush}" />
                     </Style>
                   </TextBlock.Styles>
                 </TextBlock>
               </Button>
+
               <!-- Dislike Broken Heart Button -->
-              <Button Command="{Binding ToggleDislikeCommand}" Padding="4">
-                <TextBlock Text="💔" FontSize="14" Opacity="{Binding IsDisliked, Converter={x:Null}}" />
+              <Button Command="{Binding ToggleDislikeCommand}" Padding="4" ToolTip.Tip="Dislike and skip song">
+                <TextBlock Text="💔" FontSize="15" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
               </Button>
             </StackPanel>
           </StackPanel>
 
-          <!-- Center: Transport Buttons -->
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Button Command="{Binding PreviousCommand}">
+          <!-- Center: Complete Transport Controls -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- Shuffle -->
+            <Button Command="{Binding ToggleShuffleCommand}" Padding="6" ToolTip.Tip="Shuffle">
+              <TextBlock Text="⇄" FontSize="16" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+            </Button>
+
+            <!-- Previous -->
+            <Button Command="{Binding PreviousCommand}" Padding="6" ToolTip.Tip="Previous">
               <TextBlock Text="⏮" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
             </Button>
-            <Button Command="{Binding PlayPauseCommand}" Padding="8,4">
-              <TextBlock Text="{Binding IsPlaying, Converter={x:Null}, FallbackValue='▶'}" FontSize="20" Foreground="{DynamicResource ZuneAccentBrush}">
-                <!-- Toggle between Play and Pause symbols -->
-              </TextBlock>
+
+            <!-- Play / Pause Circle Accent Button -->
+            <Button Command="{Binding PlayPauseCommand}" Padding="10,6" ToolTip.Tip="Play / Pause">
+              <Border Background="{DynamicResource ZuneAccentBrush}" 
+                      Width="38" Height="38" 
+                      CornerRadius="0">
+                <TextBlock Text="{Binding IsPlaying, Converter={x:Null}, FallbackValue='▶'}" 
+                           FontSize="18" 
+                           Foreground="#FFFFFF" 
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center" />
+              </Border>
             </Button>
-            <Button Command="{Binding NextCommand}">
+
+            <!-- Next -->
+            <Button Command="{Binding NextCommand}" Padding="6" ToolTip.Tip="Next">
               <TextBlock Text="⏭" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+            </Button>
+
+            <!-- Repeat -->
+            <Button Command="{Binding ToggleRepeatCommand}" Padding="6" ToolTip.Tip="Repeat">
+              <TextBlock Text="↻" FontSize="16" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
             </Button>
           </StackPanel>
 
-          <!-- Right: Timers & Volume -->
-          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <!-- Right: Scrub Timers & Volume Slider -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="14" HorizontalAlignment="Right" VerticalAlignment="Center">
             <TextBlock Text="{Binding ElapsedTimeText}" Classes="caption" VerticalAlignment="Center" />
             <TextBlock Text="/" Classes="caption" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
-            <TextBlock Text="{Binding Duration, StringFormat={}{0:m\\:ss}}" Classes="caption" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding RemainingTimeText}" Classes="caption" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
 
-            <!-- Volume Slider -->
-            <Slider Width="90" 
-                    Value="{Binding Volume}" 
-                    Minimum="0" 
-                    Maximum="100" 
-                    VerticalAlignment="Center" 
-                    Margin="8,0,0,0" />
+            <!-- Volume Control -->
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="10,0,0,0">
+              <TextBlock Text="🔊" FontSize="13" Foreground="{DynamicResource ZuneTextSecondaryBrush}" VerticalAlignment="Center" />
+              <Slider Width="90" 
+                      Value="{Binding Volume}" 
+                      Minimum="0" 
+                      Maximum="100" 
+                      VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Fullscreen Now Playing trigger -->
+            <Button Command="{Binding ToggleNowPlayingCommand}" Padding="4" ToolTip.Tip="Full screen Now Playing">
+              <TextBlock Text="⤢" FontSize="16" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+            </Button>
           </StackPanel>
         </Grid>
       </Grid>

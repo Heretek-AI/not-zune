@@ -3,66 +3,170 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:NotZune.UI.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             xmlns:models="using:NotZune.Domain.Models"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
              x:Class="NotZune.UI.Views.NowPlayingView"
              x:DataType="vm:NowPlayingViewModel">
 
-  <Grid Margin="0">
-    <!-- Mode 1: Dynamic Artist Canvas -->
+  <Grid Margin="0" PointerMoved="OnPointerMoved">
+    
+    <!-- ============================================== -->
+    <!-- MODE 1: DYNAMIC ARTIST CANVAS                  -->
+    <!-- ============================================== -->
     <Grid IsVisible="{Binding IsArtistCanvasMode}">
-      <!-- Ambient Gradient Backdrop -->
-      <Border Background="#161616" CornerRadius="0">
-        <!-- Subtle linear vignette -->
+      <!-- Ambient Gradient Vignette -->
+      <Border CornerRadius="0">
         <Border.Background>
           <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-            <GradientStop Offset="0.0" Color="#1C1C1C" />
-            <GradientStop Offset="0.5" Color="#121212" />
-            <GradientStop Offset="1.0" Color="#0A0A0A" />
+            <GradientStop Offset="0.0" Color="#181818" />
+            <GradientStop Offset="0.4" Color="#101010" />
+            <GradientStop Offset="1.0" Color="#070707" />
           </LinearGradientBrush>
         </Border.Background>
       </Border>
 
-      <!-- Dynamic Artist Watermark -->
+      <!-- Giant Ambient Typographic Watermark -->
       <TextBlock Text="{Binding ArtistName}" 
-                 FontSize="120" 
+                 FontSize="140" 
                  FontWeight="Bold" 
                  Foreground="{DynamicResource ZuneTextWatermarkBrush}"
                  HorizontalAlignment="Right" 
                  VerticalAlignment="Bottom" 
-                 Margin="0,0,-40,-40" />
+                 Margin="0,0,-20,-20" />
 
       <!-- Iconic Zune Big Typography Overlay -->
-      <StackPanel VerticalAlignment="Bottom" Margin="60,0,0,100" Spacing="8">
-        <TextBlock Text="{Binding TrackTitle}" Classes="hero" TextWrapping="Wrap" />
-        <TextBlock Text="{Binding ArtistName}" 
-                   FontSize="28" 
+      <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="64,0,0,120" Spacing="8" MaxWidth="700">
+        <TextBlock Text="{Binding TrackTitle}" 
+                   FontSize="60" 
                    FontWeight="Light" 
+                   FontFamily="Segoe UI, Inter, Selawik, sans-serif"
+                   Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                   TextWrapping="Wrap" />
+        <TextBlock Text="{Binding ArtistName}" 
+                   FontSize="32" 
+                   FontWeight="Light" 
+                   FontFamily="Segoe UI, Inter, Selawik, sans-serif"
                    Foreground="{DynamicResource ZuneAccentBrush}" />
-        <TextBlock Text="{Binding AlbumTitle}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+          <TextBlock Text="{Binding AlbumTitle}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          <TextBlock Text="•" Classes="body" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          <TextBlock Text="{Binding Year, StringFormat={}{0}}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          <TextBlock Text="•" Classes="body" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          <TextBlock Text="{Binding Genre}" Classes="body" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+        </StackPanel>
       </StackPanel>
+
+      <!-- Slide-out Drawer: Lyrics & Artist Biography -->
+      <Border HorizontalAlignment="Right" 
+              Width="340" 
+              Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+              BorderBrush="{DynamicResource ZuneBorderBrush}"
+              BorderThickness="1,0,0,0"
+              CornerRadius="0"
+              IsVisible="{Binding IsBioDrawerOpen}"
+              Padding="24">
+        <ScrollViewer>
+          <StackPanel Spacing="24">
+            <!-- Biography Section -->
+            <StackPanel Spacing="8">
+              <TextBlock Text="BIOGRAPHY" Classes="caption" FontWeight="Bold" Foreground="{DynamicResource ZuneAccentBrush}" LetterSpacing="2" />
+              <TextBlock Text="{Binding BiographyText}" Classes="body" TextWrapping="Wrap" LineHeight="18" Foreground="{DynamicResource ZuneTextHoverBrush}" />
+            </StackPanel>
+
+            <!-- Lyrics Section -->
+            <StackPanel Spacing="8">
+              <TextBlock Text="LYRICS" Classes="caption" FontWeight="Bold" Foreground="{DynamicResource ZuneAccentBrush}" LetterSpacing="2" />
+              <TextBlock Text="{Binding LyricsText}" Classes="body" TextWrapping="Wrap" LineHeight="20" Foreground="{DynamicResource ZuneTextHoverBrush}" />
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+
+      <!-- Floating Auto-Hiding Transport HUD -->
+      <Border VerticalAlignment="Bottom" 
+              HorizontalAlignment="Center" 
+              Margin="0,0,0,32"
+              Background="{DynamicResource ZuneCardBrush}" 
+              BorderBrush="{DynamicResource ZuneBorderBrush}"
+              BorderThickness="1"
+              CornerRadius="0"
+              Padding="24,12"
+              IsVisible="{Binding IsHudVisible}">
+        <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+          <!-- Favorite -->
+          <Button Command="{Binding ToggleFavoriteCommand}" Padding="4">
+            <TextBlock Text="♥" FontSize="16" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          </Button>
+
+          <!-- Previous -->
+          <Button Command="{Binding PreviousCommand}" Padding="4">
+            <TextBlock Text="⏮" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </Button>
+
+          <!-- Play / Pause -->
+          <Button Command="{Binding PlayPauseCommand}" Padding="8,4">
+            <Border Background="{DynamicResource ZuneAccentBrush}" Width="32" Height="32" CornerRadius="0">
+              <TextBlock Text="{Binding IsPlaying, Converter={x:Null}, FallbackValue='▶'}" 
+                         FontSize="14" 
+                         Foreground="#FFFFFF" 
+                         HorizontalAlignment="Center" 
+                         VerticalAlignment="Center" />
+            </Border>
+          </Button>
+
+          <!-- Next -->
+          <Button Command="{Binding NextCommand}" Padding="4">
+            <TextBlock Text="⏭" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </Button>
+
+          <!-- Dislike -->
+          <Button Command="{Binding ToggleDislikeCommand}" Padding="4">
+            <TextBlock Text="💔" FontSize="14" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          </Button>
+
+          <!-- Timer -->
+          <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="8,0,0,0">
+            <TextBlock Text="{Binding ElapsedTimeText}" Classes="caption" VerticalAlignment="Center" />
+            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+            <TextBlock Text="{Binding RemainingTimeText}" Classes="caption" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
     </Grid>
 
-    <!-- Mode 2: Album Art Mosaic Wall -->
-    <Grid IsVisible="{Binding IsMosaicWallMode}" Background="#0E0E0E">
+    <!-- ============================================== -->
+    <!-- MODE 2: ALBUM ART MOSAIC WALL                  -->
+    <!-- ============================================== -->
+    <Grid IsVisible="{Binding IsMosaicWallMode}" Background="#0C0C0C">
       <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-        <ItemsControl ItemsSource="{Binding MosaicWallAlbums}" Margin="24">
+        <ItemsControl ItemsSource="{Binding MosaicWallAlbums}" Margin="32">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
               <WrapPanel Orientation="Horizontal" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Border Background="{DynamicResource ZuneCardBrush}" 
+            <DataTemplate x:DataType="models:Album">
+              <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+                      BorderBrush="{DynamicResource ZuneBorderBrush}" 
+                      BorderThickness="1"
                       CornerRadius="0" 
-                      Width="120" 
-                      Height="120" 
-                      Margin="6">
-                <TextBlock Text="♫" 
-                           FontSize="28" 
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center" 
-                           Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                      Width="150" 
+                      Height="150" 
+                      Margin="8">
+                <Grid>
+                  <Border Background="{DynamicResource ZuneCardBrush}" CornerRadius="0">
+                    <TextBlock Text="♫" 
+                               FontSize="36" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center" 
+                               Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                  </Border>
+                  <!-- Overlay Album Title at Bottom -->
+                  <Border VerticalAlignment="Bottom" Background="#DD111111" Padding="6,4">
+                    <TextBlock Text="{Binding Title}" Classes="caption" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+                  </Border>
+                </Grid>
               </Border>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
@@ -70,13 +174,28 @@
       </ScrollViewer>
     </Grid>
 
-    <!-- Floating Mode Switch Button (Top Right) -->
-    <Button Command="{Binding ToggleModeCommand}" 
-            HorizontalAlignment="Right" 
-            VerticalAlignment="Top" 
-            Margin="0,24,40,0"
-            Classes="zune-action">
-      <TextBlock Text="SWITCH VIEW (WALL / CANVAS)" Classes="caption" FontWeight="SemiBold" />
-    </Button>
+    <!-- Top Right Action Controls (Wall/Canvas & Lyrics/Bio) -->
+    <StackPanel Orientation="Horizontal" 
+                Spacing="12" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Top" 
+                Margin="0,20,40,0">
+      <!-- Lyrics & Bio Toggle -->
+      <Button Command="{Binding ToggleBioDrawerCommand}" Classes="zune-action">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="≡" FontSize="12" Foreground="{DynamicResource ZuneAccentBrush}" VerticalAlignment="Center" />
+          <TextBlock Text="LYRICS &amp; BIO" Classes="caption" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+
+      <!-- View Mode Switch -->
+      <Button Command="{Binding ToggleModeCommand}" Classes="zune-action">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="⊞" FontSize="12" Foreground="{DynamicResource ZuneAccentBrush}" VerticalAlignment="Center" />
+          <TextBlock Text="WALL / CANVAS" Classes="caption" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </StackPanel>
+
   </Grid>
 </UserControl>
