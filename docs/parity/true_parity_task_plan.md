@@ -1,89 +1,61 @@
 # Not-Zune True-Parity Task Plan
 
-Derived from the audit in [`zune48_parity_audit.md`](zune48_parity_audit.md). Scoping decisions: **ManagedBass** audio engine, **video/photos included** (Phase 8), **i18n deferred**.
+Derived from the audit in [`zune48_parity_audit.md`](zune48_parity_audit.md). Scoping decisions: **ManagedBass** audio engine, **video/photos included**, **i18n deferred**.
 
 Cross-cutting convention per phase: unit tests for every new service · design-invariants audit (0 violations) · Release build 0 warnings/0 errors · walkthrough section · milestone commit.
 
+## Status Snapshot (updated after Phase 8)
+
+| Phase | Status | Commit |
+|---|---|---|
+| 5 — Real Audio Engine | ✅ **COMPLETE** | `fc5e7a1` |
+| 6 — Collection Parity | ✅ **COMPLETE** | `ead9a07` |
+| 7 — Onboarding & Shell Parity | ✅ **COMPLETE** | `f3d95aa` |
+| 8 — Video & Photos | ✅ **COMPLETE** | `833b5ef` |
+| 9 — Device Sync Architecture | **NEXT** | — |
+| 10 — CD Land Real Pipeline | Optional (no drive to test) | — |
+| 11 — Final Parity Sweep | Final | — |
+
+Tests: **99 passing** · Design audit: **24 files, 0 violations** · Estimated audit parity after Phase 8: **~80%** (re-measure in Phase 11).
+
 ---
 
-## Phase 5 — Real Audio Engine (P0, unblocks everything audible)
+## Phase 9 — Device Sync Architecture (P2, hardware N-A but architecturally real)
 
-Audit target: Domain F (currently SIMULATED/0%).
-
-| # | Task |
-|---|---|
-| 5.1 | Add ManagedBass + native BASS binaries (win-x64/linux-x64/arm64, non-commercial license); `Bass.Init` with NoSound fallback so CI/headless never crashes |
-| 5.2 | `IAudioOutputEngine` contract: Load/Play/Pause/Stop/Seek, real Position/Duration, Volume/Mute, EndOfTrack, TrackTransitioned, FFT |
-| 5.3 | `BassAudioOutputEngine`: decode files/URLs, real stream duration, channel position |
-| 5.4 | Rewire `PlaybackQueueCoordinator` → engine; real auto-advance honoring shuffle/repeat; retire simulated position timer |
-| 5.5 | Gapless via BassMix mixer slots (crossfade = 0 path) |
-| 5.6 | Crossfade: equal-power envelopes over mixer, 0–10s from persisted settings; real `IsCrossfading` |
-| 5.7 | ReplayGain: RG track/peak tags via TagLibSharp, applied as preamp behind `VolumeLevelingEnabled` |
-| 5.8 | Real FFT visualizer: `ChannelGetData` FFT → 24-bar aggregation into `VisualizerBars` |
-| 5.9 | Podcast HTTP-stream playback |
-| 5.10 | Tests: `FakeAudioOutputEngine`, coordinator wiring tests, NoSound smoke tests |
-
-## Phase 6 — Collection Parity (P1)
+Goal: replace the simulated sync blob with a genuine sync-group engine so that (a) the UI reflects Zune's sync semantics faithfully and (b) a real MTPZ transport can slot in later with zero UI changes.
 
 | # | Task |
 |---|---|
-| 6.1 | Smart/auto playlists (`AUTOPLAYLISTDIALOG` parity): rule model (genre/artist/rating/playcount/recency), rule-builder dialog, live evaluation, ZPL export |
-| 6.2 | Find Album Info track matching (`FINDALBUMINFOSONGMATCH` parity): per-track MusicBrainz recordings lookup + review dialog honoring `WriteTagsToFile` |
-| 6.3 | Search autocomplete dropdown (`AUTOCOMPLETEBOX` parity) |
-| 6.4 | Global back-stack navigation service (per-view history; today only MixStack) |
-| 6.5 | Mixview hover tiles fully wired: like/hate/info/add + bio hover card |
-| 6.6 | Mixview similarity upgrade (local genre-vector weighting + optional external related artists) |
+| 9.1 | **Sync-group engine.** `SyncGroup` / `SyncCategory` / `SyncMode` domain models (music/pictures/videos/podcasts categories mirroring `SchemaSyncGroup`/`DetailsBackedSchemaSyncGroup`), persisted per device serial. |
+| 9.2 | **Rule evaluation → planned transfer.** Engine consumes the sync rules already in Settings (music/podcast/video/pictures rules) and computes a *planned transfer set*: files to add, remove, keep. **Dry-run mode** (no device): the Device view shows "what would sync" as a reviewable manifest. |
+| 9.3 | **`IDeviceTransport` abstraction.** Contract: enumerate contents, read device DB metadata, copy to/from device, free-space query. Implement `SimulatedTransport` (in-memory device filesystem, powers the existing UI states); a future `MtpTransport` implements the same contract against `ZuneMTPZ` semantics. |
+| 9.4 | **Live gas gauge + sync animation from engine progress.** Replace the fake progress blob with per-category byte accounting from the planned set; the Phase 7 toast/glow already renders it. |
+| 9.5 | **Guest sync mode** (`GuestSchemaSyncGroup` parity): temporary profile that copies selected content without claiming ownership; device view "GUEST SESSION" state. |
+| 9.6 | **Reverse sync (device → PC) manifest.** Even without a transport, model the flow: browse device contents via `SimulatedTransport`, "copy back to collection" produces a file-import queue. |
+| 9.7 | Tests: rule evaluation → planned set (add/remove/keep), dry-run manifest correctness, guest session isolation, category byte accounting. |
 
-## Phase 7 — Onboarding & Shell Parity (P1)
-
-| # | Task |
-|---|---|
-| 7.1 | First-launch wizard (`FIRSTLAUNCH` parity): welcome → folder pick → scan → done |
-| 7.2 | What's New dialog on version change (`WHATSNEW` parity) |
-| 7.3 | Sync animation + instruction toast (`SYNCANIMATION`/`SYNCINSTRUCTIONTOAST` parity) |
-| 7.4 | (Optional) Notification-area tray icon |
-
-## Phase 8 — Video & Photos (P2, approved)
+## Phase 10 — CD Land Real Pipeline (P3, capability-gated — no optical drive to test)
 
 | # | Task |
 |---|---|
-| 8.1 | `Video`/`Photo`/`PhotoFolder` models + EF persistence |
-| 8.2 | LibVLCSharp video engine + Avalonia video surface |
-| 8.3 | Video library view (`VIDEOLIBRARY` parity) |
-| 8.4 | Now Playing video clips + video mini-player (`NOWPLAYINGCLIPS`/`MINIMODEVIDEO` parity) |
-| 8.5 | Photo library: folder tree + gallery grid (`PHOTOLIBRARY`/`GALLERYVIEW` parity) |
-| 8.6 | Photo slideshow land (`PHOTOSLIDESHOW` parity) |
-| 8.7 | Device picture/video sync categories (`DEVICEPICTUREVIDEO` parity) |
+| 10.1 | **`IOpticalDriveService`** with platform detection (Linux: `udisks2`/`/dev/sr0` + `blockdev` capability; Windows: MCI/SPTI). Graceful "no optical drive" state — the current DISC view stays as the manual/simulated mode. |
+| 10.2 | **Real rip:** CDDA extraction (Bass `BASS_CD` add-on or platform `cdparanoia`) → encode via Bass encoders (FLAC/MP3 honoring the rip settings) → library ingest with MusicBrainz release tagging (reuse Phase 4/6 services). |
+| 10.3 | **Real burn:** playlist → Audio CD via platform tooling (Linux `cdrdao`/`wodim`, Windows IMAPI2) with the authentic burn-completion chime. |
 
-## Phase 9 — Device Sync Architecture (P2, hardware N-A)
-
-| # | Task |
-|---|---|
-| 9.1 | Sync-group engine (`SyncGroup`/`SyncCategory`/`SyncMode` parity), dry-run mode |
-| 9.2 | `IDeviceTransport` abstraction (simulator today; MTPZ slot-in later) |
-| 9.3 | Live gas gauge + sync animation from progress |
-| 9.4 | Guest sync mode (`GuestSchemaSyncGroup` parity) |
-
-## Phase 10 — CD Land Real Pipeline (P3, capability-gated)
-
-| # | Task |
-|---|---|
-| 10.1 | `IOpticalDriveService` platform detection; graceful no-drive state |
-| 10.2 | Real rip: CD-DA extraction → encode (Bass FLAC/MP3) → ingest |
-| 10.3 | Real burn via platform tooling |
+*Execution only if you want it blind-implemented; everything is capability-gated so machines without drives (yours) keep today's experience.*
 
 ## Phase 11 — Final Parity Sweep (P3)
 
 | # | Task |
 |---|---|
-| 11.1 | Re-run parity audit; update status columns; measure delta from ~55–60% |
-| 11.2 | Performance pass (startup, scan, decode caching) |
-| 11.3 | Self-contained publish + release CI refresh |
-| 11.4 | Deferred registry: i18n (26 locales), UPnP sharing, shell extensions/jump lists, firmware update/restore |
+| 11.1 | **CI/release packaging for native audio+video.** Add `apt-get install -y libvlc` (linux-x64/arm64 jobs) so published Linux builds get video; verify Bass natives ship in archives (they do — vendored); document the win-arm64 Bass limitation (simulated audio fallback) in release notes. |
+| 11.2 | **Re-run the parity audit** against `docs/parity/zune48_parity_audit.md` — update every status column, measure the delta from ~55%, refresh the executive summary. |
+| 11.3 | **Performance pass:** startup (deferred service init), large-library scan responsiveness, artwork decode caching, slideshow memory. |
+| 11.4 | **Polish backlog triage:** mini-player video surface (currently text-only), Mixview external related-artist satellites (currently local-only), notification-area tray icon. Fold in or move to deferred. |
+| 11.5 | **Deferred registry (documented, not scheduled):** i18n (26 locales), UPnP media sharing (ZuneNSS parity), Explorer/taskbar shell integration, MTPZ firmware update/restore/rollback (hardware N-A), Windows jump lists. |
 
 ## Execution Order
 
-5 → 6 → 7 → 8 → 9 → (10 optional, untestable without drive) → 11
+**9 → 11 → (10 only if blind-implementing CD is desired)**
 
-**N-A permanent (no hardware):** MTPZ internals, firmware update/restore/rollback, wireless pairing.
-**Deferred:** i18n, UPnP sharing, shell extensions, jump lists.
+Phase 9 is the last *architectural* gap (sync semantics); Phase 11 closes the loop with CI packaging, the measured re-audit, and the deferred registry.
