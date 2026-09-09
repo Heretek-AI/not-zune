@@ -80,6 +80,13 @@ dotnet publish src/NotZune.Desktop -r win-x64 -c Release
 dotnet publish src/NotZune.Desktop -r win-arm64 -c Release
 ```
 
+### Platform Notes
+- **Linux:** video playback loads system VLC at runtime — install `vlc` (or `libvlc5`/`libvlccore9`) for the video surface. BASS audio natives are vendored per-RID and ship with every build.
+- **Windows x64:** full audio + video out of the box (VLC natives bundled via `VideoLAN.LibVLC.Windows`).
+- **Windows arm64:** BASS publishes no ARM64 natives, so audio playback runs in simulated (silent) mode; video is unaffected.
+
+Continuous integration (`.github/workflows/ci.yml`) builds the solution Release with a zero-warnings policy, runs the full test suite, and re-runs the design-invariants audit on every push. Tagging `v*` (or `.github/workflows/release.yml` → Run workflow) publishes self-contained archives for linux-x64, linux-arm64, win-x64, and win-arm64.
+
 ---
 
 ## 🧰 Self-Contained Repository Skills & MCP Tools

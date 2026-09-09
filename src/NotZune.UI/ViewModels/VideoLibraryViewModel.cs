@@ -73,7 +73,7 @@ public class VideoLibraryViewModel : ViewModelBase
         _videoLibraryService = videoLibraryService;
         _videoEngine = videoEngine;
 
-        PlayVideoCommand = new AsyncRelayCommand<Video>(OnPlayVideoAsync);
+        PlayVideoCommand = new RelayCommand<Video>(OnPlayVideoAsync);
         ClosePlayerCommand = new RelayCommand(OnClosePlayer);
         ScanFolderCommand = new AsyncRelayCommand<string>(OnScanFolderAsync);
 
@@ -92,7 +92,7 @@ public class VideoLibraryViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasVideos));
     }
 
-    private async Task OnPlayVideoAsync(Video? video)
+    private void OnPlayVideoAsync(Video? video)
     {
         if (video == null)
         {

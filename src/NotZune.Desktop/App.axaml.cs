@@ -100,6 +100,10 @@ public partial class App : Avalonia.Application
             using var ctx = factory.CreateDbContext();
             ctx.Database.EnsureCreated();
 
+            // WAL journaling persists in the database file and keeps large library
+            // scans/sync-group writes responsive.
+            ctx.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+
             // Schema upgrades for databases created before later phases (EnsureCreated
             // only provisions brand-new databases; it never alters existing ones).
             ctx.Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS SmartPlaylists (

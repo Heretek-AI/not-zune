@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install libVLC (video playback smoke test parity)
+        run: sudo apt-get update && sudo apt-get install -y libvlc5 libvlccore9 vlc-plugin-base
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore NotZune.sln
+
+      - name: Build (Release, zero warnings policy)
+        run: dotnet build NotZune.sln -c Release --no-restore /warnaserror
+
+      - name: Test
+        run: dotnet test NotZune.sln -c Release --no-build --nologo
+
+      - name: Design invariants audit
+        run: |
+          python3 - << 'EOF'
+          import sys
+          sys.path.insert(0, 'scripts')
+          from mcp_tools import audit_design_invariants
+          result = audit_design_invariants('.')
+          print(result)
+          assert result['status'] == 'PASSED', 'design invariant violations found'
+          EOF

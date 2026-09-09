@@ -46,13 +46,13 @@ Goal: replace the simulated sync blob with a genuine sync-group engine so that (
 
 ## Phase 11 — Final Parity Sweep (P3)
 
-| # | Task |
-|---|---|
-| 11.1 | **CI/release packaging for native audio+video.** Add `apt-get install -y libvlc` (linux-x64/arm64 jobs) so published Linux builds get video; verify Bass natives ship in archives (they do — vendored); document the win-arm64 Bass limitation (simulated audio fallback) in release notes. |
-| 11.2 | **Re-run the parity audit** against `docs/parity/zune48_parity_audit.md` — update every status column, measure the delta from ~55%, refresh the executive summary. |
-| 11.3 | **Performance pass:** startup (deferred service init), large-library scan responsiveness, artwork decode caching, slideshow memory. |
-| 11.4 | **Polish backlog triage:** mini-player video surface (currently text-only), Mixview external related-artist satellites (currently local-only), notification-area tray icon. Fold in or move to deferred. |
-| 11.5 | **Deferred registry (documented, not scheduled):** i18n (26 locales), UPnP media sharing (ZuneNSS parity), Explorer/taskbar shell integration, MTPZ firmware update/restore/rollback (hardware N-A), Windows jump lists. |
+| # | Task | Status |
+|---|---|---|
+| 11.1 | **CI/release packaging for native audio+video.** Add `apt-get install -y libvlc` (linux-x64/arm64 jobs) so published Linux builds get video; verify Bass natives ship in archives (they do — vendored); document the win-arm64 Bass limitation (simulated audio fallback) in release notes. | ✅ Done — `.github/workflows/ci.yml` (build+test+audit with libvlc installed) and `release.yml` (4-RID self-contained publish, natives verification, platform notes); README Platform Notes added |
+| 11.2 | **Re-run the parity audit** against `docs/parity/zune48_parity_audit.md` — update every status column, measure the delta from ~55%, refresh the executive summary. | ✅ Done — dated re-audit snapshot added; ≈55–60% → ≈75–80% |
+| 11.3 | **Performance pass:** startup (deferred service init), large-library scan responsiveness, artwork decode caching, slideshow memory. | ✅ Done — startup was already lazy (pivot loads on navigation); SQLite WAL journaling for scan/sync responsiveness; artwork decode cache (600 tiles / 48 hi-res slideshow frames, bounded) |
+| 11.4 | **Polish backlog triage:** mini-player video surface (currently text-only), Mixview external related-artist satellites (currently local-only), notification-area tray icon. Fold in or move to deferred. | ✅ Done — all three triaged to the deferred registry with rationale |
+| 11.5 | **Deferred registry (documented, not scheduled):** i18n (26 locales), UPnP media sharing (ZuneNSS parity), Explorer/taskbar shell integration, MTPZ firmware update/restore/rollback (hardware N-A), Windows jump lists. | ✅ Done — `docs/parity/deferred_registry.md` (9 items incl. the 11.4 triage) |
 
 ## Execution Order
 

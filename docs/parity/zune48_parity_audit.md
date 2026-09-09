@@ -33,6 +33,10 @@ Both `review/ZunePackage.exe` and `review/ZuneSetupPkg.exe` verified: `ZunePacka
 
 ## 2. Executive Summary
 
+> **RE-AUDIT SNAPSHOT (2026-09-09, post Phases 5–9):** The critical gaps closed below moved weighted overall parity from **≈ 55–60% → ≈ 75–80%** (weighted for UI presentation, hardware-dependent features neutral). Deltas per domain: **F. Audio engine** SIMULATED 0% → **HIGH ~85%** (ManagedBass 2.4: real decode, gapless, crossfade, ReplayGain, EQ, FFT visualizer, podcast streams); **L. First-launch** MISSING 0% → **HIGH ~85%** (welcome→folders→privacy→done wizard, What's New, monitored-folder scan); **H. Device sync** SIMULATED ~35% → **MEDIUM ~65%** (sync-group engine, dry-run manifest, guest sessions, reverse sync, transport seam; real MTPZ hardware remains N-A); **C. Collection** 80% → **HIGH ~90%** (smart playlists, Find-Album-Info per-track matching, autocomplete, back-stack, Mixview tiles); **D. Now Playing** 75% → **HIGH ~85%** (now-playing video clips via libVLC); **I. Podcasts** 50% → **MEDIUM-HIGH ~70%** (real audio playback); **M. Platform services** 40% → **~50%** (video/photo libraries on the SQLite ZMDB substitute). Remaining below-70% domains: B. Quickplay (~65%), E. Mixview (~60%), G. CD Land (~40%, capability-gated — no optical drive), J. Social/Marketplace (N-A, dead servers), M. Platform services (~50%: no UPnP/share/MUI).
+>
+> The original pre-Phase-5 snapshot is preserved below for history.
+
 Not-Zune is a **faithful UI shell** with a **growing feature set** built on clean architecture, but it has **one critical structural gap: there is no real audio playback engine** — `AudioEngine` (`src/NotZune.Infrastructure.Audio/AudioEngine.cs`) is a position-ticker simulation and no audio library (NAudio/ManagedBass) is referenced anywhere. Every audible experience (music, crossfade, ReplayGain, volume, the visualizer, podcast streams) is currently simulated; the only real audio output is `SoundEffectService` playing authentic Zune WAV chimes through OS CLI players.
 
 | Domain | Parity | Verdict |

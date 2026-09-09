@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
 using Avalonia;
 using Avalonia.Data.Converters;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 
@@ -11,6 +13,8 @@ namespace NotZune.UI.Converters;
 /// <summary>
 /// Converts a local cached artwork file path (or avares:// asset URI) into an IImage for XAML bindings.
 /// Returns null for missing sources so typographic fallback tiles remain visible.
+/// Decoded bitmaps are cached (keyed by source + decode width) so scrolling the collection or
+/// cycling the slideshow never re-decodes from disk.
 /// </summary>
 public class ArtworkSourceConverter : IValueConverter
 {
@@ -18,6 +22,9 @@ public class ArtworkSourceConverter : IValueConverter
 
     /// <summary>High-resolution variant for photo zoom/slideshow surfaces.</summary>
     public static readonly ArtworkSourceConverter Large = new() { DecodeWidth = 1600 };
+
+    private const int CacheCapacity = 600;
+    private static readonly ConcurrentDictionary<string, IImage?> Cache = new();
 
     public int DecodeWidth { get; set; } = 300;
 
@@ -28,6 +35,19 @@ public class ArtworkSourceConverter : IValueConverter
             return null;
         }
 
+        var key = $"{DecodeWidth}|{source}";
+        // High-resolution slideshow/zoom surfaces get a far smaller cache (memory).
+        var capacity = DecodeWidth > 600 ? 48 : CacheCapacity;
+        if (Cache.Count > capacity)
+        {
+            Cache.Clear();
+        }
+
+        return Cache.GetOrAdd(key, _ => Decode(source));
+    }
+
+    private IImage? Decode(string source)
+    {
         try
         {
             if (source.StartsWith("avares://", StringComparison.OrdinalIgnoreCase))
