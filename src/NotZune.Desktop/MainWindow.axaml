@@ -20,14 +20,14 @@
 
     <!-- Borderless Edge-Resize Hit Zones (SystemDecorations=None has no native resize grips) -->
     <Grid ColumnDefinitions="6,*,6" RowDefinitions="6,*,6">
-      <Border x:Name="ResizeNorthWest" Grid.Row="0" Grid.Column="0" Background="Transparent" Cursor="SizeNorthWestSouthEast" PointerPressed="OnResizeZonePointerPressed" />
-      <Border x:Name="ResizeNorth" Grid.Row="0" Grid.Column="1" Background="Transparent" Cursor="SizeNorthSouth" PointerPressed="OnResizeZonePointerPressed" />
-      <Border x:Name="ResizeNorthEast" Grid.Row="0" Grid.Column="2" Background="Transparent" Cursor="SizeNorthEastSouthWest" PointerPressed="OnResizeZonePointerPressed" />
-      <Border x:Name="ResizeWest" Grid.Row="1" Grid.Column="0" Background="Transparent" Cursor="SizeWestEast" PointerPressed="OnResizeZonePointerPressed" />
-      <Border x:Name="ResizeEast" Grid.Row="1" Grid.Column="2" Background="Transparent" Cursor="SizeWestEast" PointerPressed="OnResizeZonePointerPressed" />
-      <Border x:Name="ResizeSouthWest" Grid.Row="2" Grid.Column="0" Background="Transparent" Cursor="SizeNorthEastSouthWest" PointerPressed="OnResizeZonePointerPressed" />
-      <Border x:Name="ResizeSouth" Grid.Row="2" Grid.Column="1" Background="Transparent" Cursor="SizeNorthSouth" PointerPressed="OnResizeZonePointerPressed" />
-      <Border x:Name="ResizeSouthEast" Grid.Row="2" Grid.Column="2" Background="Transparent" Cursor="SizeNorthWestSouthEast" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeNorthWest" Grid.Row="0" Grid.Column="0" Background="Transparent" Cursor="TopLeftCorner" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeNorth" Grid.Row="0" Grid.Column="1" Background="Transparent" Cursor="TopSide" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeNorthEast" Grid.Row="0" Grid.Column="2" Background="Transparent" Cursor="TopRightCorner" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeWest" Grid.Row="1" Grid.Column="0" Background="Transparent" Cursor="LeftSide" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeEast" Grid.Row="1" Grid.Column="2" Background="Transparent" Cursor="RightSide" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeSouthWest" Grid.Row="2" Grid.Column="0" Background="Transparent" Cursor="BottomLeftCorner" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeSouth" Grid.Row="2" Grid.Column="1" Background="Transparent" Cursor="BottomSide" PointerPressed="OnResizeZonePointerPressed" />
+      <Border x:Name="ResizeSouthEast" Grid.Row="2" Grid.Column="2" Background="Transparent" Cursor="BottomRightCorner" PointerPressed="OnResizeZonePointerPressed" />
     </Grid>
   </Grid>
 </Window>
