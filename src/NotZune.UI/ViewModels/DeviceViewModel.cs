@@ -1,7 +1,11 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using NotZune.Application.Interfaces;
+using NotZune.Application.Models;
 using NotZune.Domain.Enums;
 using NotZune.Domain.Models;
 
@@ -11,6 +15,13 @@ public class DeviceViewModel : ViewModelBase
 {
     private readonly IDeviceSyncService _deviceSyncService;
     private readonly IMediaLibraryService? _libraryService;
+    private readonly ISyncEngine? _syncEngine;
+    private readonly ISyncGroupService? _syncGroupService;
+    private readonly ISettingsStore? _settingsStore;
+    private readonly IVideoLibraryService? _videoLibraryService;
+    private readonly IPhotoLibraryService? _photoLibraryService;
+    private readonly IPodcastService? _podcastService;
+    private readonly ISoundEffectService? _soundService;
 
     public ObservableCollection<ZuneDevice> Devices { get; } = new();
 
@@ -168,21 +179,120 @@ public class DeviceViewModel : ViewModelBase
         ? $"SYNCING {SyncItemCount} ITEM{(SyncItemCount == 1 ? string.Empty : "S")} — {SyncProgressPercent}% COMPLETE"
         : string.Empty;
 
-    public string SyncToastInstruction => "Keep your Zune connected via USB. Wireless sync can be enabled in Settings → Device.";
+    public string SyncToastInstruction => IsGuestSession
+        ? "Guest session — content is copied to the device without removing anything."
+        : "Keep your Zune connected via USB. Wireless sync can be enabled in Settings → Device.";
 
     public string SyncStatusText => IsSyncing ? "SYNCING..." : (HasDevice ? "CONNECTED" : "CONNECT USB");
 
+    private string? _statusText;
+    public string? StatusText
+    {
+        get => _statusText;
+        set => SetProperty(ref _statusText, value);
+    }
+
     public ICommand SyncCommand { get; }
 
-    public DeviceViewModel(IDeviceSyncService deviceSyncService, IMediaLibraryService? libraryService = null)
+    // ==========================================
+    // SYNC ENGINE (SchemaSyncGroup parity)
+    // ==========================================
+    public ObservableCollection<TransferItem> PlannedItems { get; } = new();
+    public ObservableCollection<DeviceContentItem> DeviceContents { get; } = new();
+    public ObservableCollection<DeviceContentItem> PendingImports { get; } = new();
+
+    private SyncPlan? _currentPlan;
+    public SyncPlan? CurrentPlan
+    {
+        get => _currentPlan;
+        private set
+        {
+            if (SetProperty(ref _currentPlan, value))
+            {
+                OnPropertyChanged(nameof(HasSyncPlan));
+                OnPropertyChanged(nameof(PlanSummaryText));
+                OnPropertyChanged(nameof(PlanFreeSpaceText));
+                PlannedItems.Clear();
+                if (value != null)
+                {
+                    foreach (var item in value.Items)
+                    {
+                        PlannedItems.Add(item);
+                    }
+                }
+            }
+        }
+    }
+
+    public bool HasSyncPlan => CurrentPlan != null && CurrentPlan.Items.Any(i => i.Action != TransferAction.Keep);
+
+    public string PlanSummaryText => CurrentPlan == null
+        ? string.Empty
+        : $"{CurrentPlan.AddCount} to add • {CurrentPlan.RemoveCount} to remove • {CurrentPlan.KeepCount} kept";
+
+    public string PlanFreeSpaceText => CurrentPlan == null
+        ? string.Empty
+        : $"Projected free: {(SelectedDevice != null ? (FreeGb + (CurrentPlan.TotalRemoveBytes - CurrentPlan.TotalAddBytes) / (1024.0 * 1024 * 1024)) : 0):F1} GB";
+
+    private bool _isGuestSession;
+    public bool IsGuestSession
+    {
+        get => _isGuestSession;
+        private set
+        {
+            if (SetProperty(ref _isGuestSession, value))
+            {
+                OnPropertyChanged(nameof(GuestSessionBadgeText));
+                OnPropertyChanged(nameof(SyncToastInstruction));
+            }
+        }
+    }
+
+    public string GuestSessionBadgeText => IsGuestSession ? "GUEST SESSION" : string.Empty;
+
+    private DeviceContentItem? _selectedDeviceContent;
+    public DeviceContentItem? SelectedDeviceContent
+    {
+        get => _selectedDeviceContent;
+        set => SetProperty(ref _selectedDeviceContent, value);
+    }
+
+    public ICommand BuildSyncPlanCommand { get; }
+    public ICommand StartGuestSessionCommand { get; }
+    public ICommand EndGuestSessionCommand { get; }
+    public ICommand QueueCopyBackCommand { get; }
+    public ICommand RefreshDeviceContentsCommand { get; }
+
+    public DeviceViewModel(
+        IDeviceSyncService deviceSyncService,
+        IMediaLibraryService? libraryService = null,
+        ISyncEngine? syncEngine = null,
+        ISettingsStore? settingsStore = null,
+        IVideoLibraryService? videoLibraryService = null,
+        IPhotoLibraryService? photoLibraryService = null,
+        IPodcastService? podcastService = null,
+        ISoundEffectService? soundService = null,
+        ISyncGroupService? syncGroupService = null)
     {
         _deviceSyncService = deviceSyncService;
         _libraryService = libraryService;
+        _syncEngine = syncEngine;
+        _syncGroupService = syncGroupService;
+        _settingsStore = settingsStore;
+        _videoLibraryService = videoLibraryService;
+        _photoLibraryService = photoLibraryService;
+        _podcastService = podcastService;
+        _soundService = soundService;
 
         _deviceSyncService.DeviceConnected += OnDeviceConnected;
         _deviceSyncService.DeviceDisconnected += OnDeviceDisconnected;
 
         SyncCommand = new AsyncRelayCommand(OnSyncAsync);
+        BuildSyncPlanCommand = new AsyncRelayCommand(OnBuildSyncPlanAsync);
+        StartGuestSessionCommand = new AsyncRelayCommand(OnStartGuestSessionAsync);
+        EndGuestSessionCommand = new RelayCommand(OnEndGuestSession);
+        QueueCopyBackCommand = new RelayCommand<DeviceContentItem>(OnQueueCopyBack);
+        RefreshDeviceContentsCommand = new RelayCommand(RefreshDeviceContents);
 
         RefreshDevices();
     }
@@ -210,6 +320,161 @@ public class DeviceViewModel : ViewModelBase
         if (SelectedDevice?.SerialNumber == serial) SelectedDevice = Devices.FirstOrDefault();
     }
 
+    private async Task OnBuildSyncPlanAsync()
+    {
+        if (_syncEngine == null || SelectedDevice == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var settings = _settingsStore?.Load() ?? new AppSettings();
+            var group = BuildGroupForDevice(settings);
+            var transport = _syncEngine.GetTransport(SelectedDevice.SerialNumber, SelectedDevice.ModelName, SelectedDevice.CapacityBytes);
+            var input = await BuildSyncInputAsync();
+            var plan = _syncEngine.BuildPlan(group, input, transport);
+            CurrentPlan = plan;
+            RefreshDeviceContents();
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Sync plan failed: {ex.Message}";
+        }
+    }
+
+    private SyncGroup BuildGroupForDevice(AppSettings settings)
+    {
+        var serial = SelectedDevice?.SerialNumber ?? string.Empty;
+        if (_syncGroupService != null && !IsGuestSession)
+        {
+            // Prefer the persisted group (ZMDB sync-group parity); fall back to defaults.
+            var persisted = _syncGroupService.GetForDeviceAsync(serial).GetAwaiter().GetResult();
+            if (persisted != null)
+            {
+                return persisted;
+            }
+        }
+
+        return _syncEngine!.BuildDefaultGroup(serial, settings, IsGuestSession);
+    }
+
+    private async Task<SyncInput> BuildSyncInputAsync()
+    {
+        var tracks = _libraryService != null ? await _libraryService.GetAllTracksAsync() : Array.Empty<Track>();
+        var videos = _videoLibraryService != null ? await _videoLibraryService.GetAllVideosAsync() : Array.Empty<Video>();
+        var photos = _photoLibraryService != null ? await _photoLibraryService.GetAllPhotosAsync() : Array.Empty<Photo>();
+        var episodes = Array.Empty<PodcastEpisode>();
+        if (_podcastService != null)
+        {
+            try
+            {
+                var series = await _podcastService.GetAllPodcastsAsync();
+                episodes = series.SelectMany(s => s.Episodes).ToArray();
+            }
+            catch
+            {
+            }
+        }
+
+        return new SyncInput
+        {
+            Tracks = tracks,
+            Videos = videos,
+            Photos = photos,
+            PodcastEpisodes = episodes
+        };
+    }
+
+    private async Task OnStartGuestSessionAsync()
+    {
+        IsGuestSession = true;
+        CurrentPlan = null;
+        await OnBuildSyncPlanAsync();
+    }
+
+    private void OnEndGuestSession()
+    {
+        IsGuestSession = false;
+        CurrentPlan = null;
+    }
+
+    private void OnQueueCopyBack(DeviceContentItem? item)
+    {
+        if (item == null || PendingImports.Any(i => i.EntityId == item.EntityId))
+        {
+            return;
+        }
+
+        PendingImports.Add(item);
+    }
+
+    private void RefreshDeviceContents()
+    {
+        DeviceContents.Clear();
+        if (_syncEngine == null || SelectedDevice == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var transport = _syncEngine.GetTransport(SelectedDevice.SerialNumber, SelectedDevice.ModelName, SelectedDevice.CapacityBytes);
+            foreach (var content in transport.GetContents())
+            {
+                DeviceContents.Add(content);
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    /// <summary>Folds the transport's live byte accounting into the gas gauge (ZuneDevice).</summary>
+    private void ApplyTransportToGauge()
+    {
+        if (_syncEngine == null || SelectedDevice == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var transport = _syncEngine.GetTransport(SelectedDevice.SerialNumber, SelectedDevice.ModelName, SelectedDevice.CapacityBytes);
+            var contents = transport.GetContents();
+            SelectedDevice.MusicBytes = contents.Where(c => c.Category == SyncCategoryType.Music).Sum(c => c.SizeBytes);
+            SelectedDevice.PodcastBytes = contents.Where(c => c.Category == SyncCategoryType.Podcasts).Sum(c => c.SizeBytes);
+            SelectedDevice.VideoBytes = contents.Where(c => c.Category == SyncCategoryType.Videos).Sum(c => c.SizeBytes);
+            SelectedDevice.PhotoBytes = contents.Where(c => c.Category == SyncCategoryType.Pictures).Sum(c => c.SizeBytes);
+            SelectedDevice.SystemBytes = transport.SystemBytes;
+            SelectedDevice.FreeSpaceBytes = transport.FreeBytes;
+
+            // Re-raise all gauge bindings.
+            OnPropertyChanged(nameof(StorageText));
+            OnPropertyChanged(nameof(StorageUsedPercentage));
+            OnPropertyChanged(nameof(TotalGb));
+            OnPropertyChanged(nameof(FreeGb));
+            OnPropertyChanged(nameof(MusicGb));
+            OnPropertyChanged(nameof(VideoGb));
+            OnPropertyChanged(nameof(PhotoGb));
+            OnPropertyChanged(nameof(PodcastGb));
+            OnPropertyChanged(nameof(SystemGb));
+            OnPropertyChanged(nameof(MusicText));
+            OnPropertyChanged(nameof(VideoText));
+            OnPropertyChanged(nameof(PhotoText));
+            OnPropertyChanged(nameof(PodcastText));
+            OnPropertyChanged(nameof(SystemText));
+            OnPropertyChanged(nameof(FreeText));
+            OnPropertyChanged(nameof(GasGaugeColumns));
+            OnPropertyChanged(nameof(ReservedGbText));
+            OnPropertyChanged(nameof(SyncSpaceGbText));
+            OnPropertyChanged(nameof(SpaceReservationSummaryText));
+        }
+        catch
+        {
+        }
+    }
+
     private async Task OnSyncAsync()
     {
         if (SelectedDevice == null) return;
@@ -217,15 +482,35 @@ public class DeviceViewModel : ViewModelBase
         {
             IsSyncing = true;
             SyncProgress = 0.0;
-            if (_libraryService != null)
-            {
-                var tracks = await _libraryService.GetAllTracksAsync();
-                SyncItemCount = tracks.Count;
-            }
 
-            var progressReporter = new Progress<double>(p => SyncProgress = p);
-            await _deviceSyncService.SyncDeviceAsync(SelectedDevice.SerialNumber, progressReporter);
-            SyncProgress = 1.0;
+            if (_syncEngine != null)
+            {
+                var settings = _settingsStore?.Load() ?? new AppSettings();
+                var group = BuildGroupForDevice(settings);
+                var transport = _syncEngine.GetTransport(SelectedDevice.SerialNumber, SelectedDevice.ModelName, SelectedDevice.CapacityBytes);
+
+                if (CurrentPlan == null)
+                {
+                    var input = await BuildSyncInputAsync();
+                    CurrentPlan = _syncEngine.BuildPlan(group, input, transport);
+                }
+
+                var workItems = CurrentPlan.Items.Count(i => i.Action != TransferAction.Keep);
+                SyncItemCount = workItems;
+
+                await _syncEngine.ApplyPlanAsync(CurrentPlan, transport, new Progress<double>(p => SyncProgress = p));
+                ApplyTransportToGauge();
+                RefreshDeviceContents();
+                CurrentPlan = null;
+                _soundService?.PlaySyncComplete();
+            }
+            else
+            {
+                // Legacy fallback: no engine wired (older tests), plain progress blob.
+                var progressReporter = new Progress<double>(p => SyncProgress = p);
+                await _deviceSyncService.SyncDeviceAsync(SelectedDevice.SerialNumber, progressReporter);
+                SyncProgress = 1.0;
+            }
         }
         finally
         {

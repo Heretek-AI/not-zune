@@ -24,15 +24,15 @@ Tests: **99 passing** · Design audit: **24 files, 0 violations** · Estimated a
 
 Goal: replace the simulated sync blob with a genuine sync-group engine so that (a) the UI reflects Zune's sync semantics faithfully and (b) a real MTPZ transport can slot in later with zero UI changes.
 
-| # | Task |
-|---|---|
-| 9.1 | **Sync-group engine.** `SyncGroup` / `SyncCategory` / `SyncMode` domain models (music/pictures/videos/podcasts categories mirroring `SchemaSyncGroup`/`DetailsBackedSchemaSyncGroup`), persisted per device serial. |
-| 9.2 | **Rule evaluation → planned transfer.** Engine consumes the sync rules already in Settings (music/podcast/video/pictures rules) and computes a *planned transfer set*: files to add, remove, keep. **Dry-run mode** (no device): the Device view shows "what would sync" as a reviewable manifest. |
-| 9.3 | **`IDeviceTransport` abstraction.** Contract: enumerate contents, read device DB metadata, copy to/from device, free-space query. Implement `SimulatedTransport` (in-memory device filesystem, powers the existing UI states); a future `MtpTransport` implements the same contract against `ZuneMTPZ` semantics. |
-| 9.4 | **Live gas gauge + sync animation from engine progress.** Replace the fake progress blob with per-category byte accounting from the planned set; the Phase 7 toast/glow already renders it. |
-| 9.5 | **Guest sync mode** (`GuestSchemaSyncGroup` parity): temporary profile that copies selected content without claiming ownership; device view "GUEST SESSION" state. |
-| 9.6 | **Reverse sync (device → PC) manifest.** Even without a transport, model the flow: browse device contents via `SimulatedTransport`, "copy back to collection" produces a file-import queue. |
-| 9.7 | Tests: rule evaluation → planned set (add/remove/keep), dry-run manifest correctness, guest session isolation, category byte accounting. |
+| # | Task | Status |
+|---|---|---|
+| 9.1 | **Sync-group engine.** `SyncGroup` / `SyncCategory` / `SyncMode` domain models (music/pictures/videos/podcasts categories mirroring `SchemaSyncGroup`/`DetailsBackedSchemaSyncGroup`), persisted per device serial. | ✅ Done — `SyncModels.cs`, `SyncGroupService` (SQLite via AppDbContext `SyncGroups`), default group built from Settings rules |
+| 9.2 | **Rule evaluation → planned transfer.** Engine consumes the sync rules already in Settings (music/podcast/video/pictures rules) and computes a *planned transfer set*: files to add, remove, keep. **Dry-run mode** (no device): the Device view shows "what would sync" as a reviewable manifest. | ✅ Done — `SyncEngine.BuildPlan` (removals first to free space, capacity-truncated adds, `NewestCount` limits, hearted-only selection); Device view "PREVIEW WHAT WILL SYNC" manifest |
+| 9.3 | **`IDeviceTransport` abstraction.** Contract: enumerate contents, read device DB metadata, copy to/from device, free-space query. Implement `SimulatedTransport` (in-memory device filesystem, powers the existing UI states); a future `MtpTransport` implements the same contract against `ZuneMTPZ` semantics. | ✅ Done — `IDeviceTransport` + `SimulatedDeviceTransport` (seeded stale content, byte accounting); a real MTP transport is the only remaining hardware step (N-A) |
+| 9.4 | **Live gas gauge + sync animation from engine progress.** Replace the fake progress blob with per-category byte accounting from the planned set; the Phase 7 toast/glow already renders it. | ✅ Done — `ApplyPlanAsync` reports progress; `ApplyTransportToGauge` folds live `transport` bytes into `ZuneDevice` gas gauge; sync-complete chime |
+| 9.5 | **Guest sync mode** (`GuestSchemaSyncGroup` parity): temporary profile that copies selected content without claiming ownership; device view "GUEST SESSION" state. | ✅ Done — guest `SyncGroup` (add-only, rules flow but removals suppressed); START/END buttons + badge in Device view |
+| 9.6 | **Reverse sync (device → PC) manifest.** Even without a transport, model the flow: browse device contents via `SimulatedTransport`, "copy back to collection" produces a file-import queue. | ✅ Done — "ON DEVICE" browser + per-item COPY BACK → `PendingImports` queue |
+| 9.7 | Tests: rule evaluation → planned set (add/remove/keep), dry-run manifest correctness, guest session isolation, category byte accounting. | ✅ Done — 13 tests in `SyncEngineParityTests` + `SyncGroupPersistenceTests` (108 total, 0 failed) |
 
 ## Phase 10 — CD Land Real Pipeline (P3, capability-gated — no optical drive to test)
 
@@ -56,6 +56,6 @@ Goal: replace the simulated sync blob with a genuine sync-group engine so that (
 
 ## Execution Order
 
-**9 → 11 → (10 only if blind-implementing CD is desired)**
+**9 ✅ → 11 → (10 only if blind-implementing CD is desired)**
 
-Phase 9 is the last *architectural* gap (sync semantics); Phase 11 closes the loop with CI packaging, the measured re-audit, and the deferred registry.
+Phase 9 ✅ complete (all sync semantics + transport abstraction + guest/reverse sync). Remaining: Phase 11 (CI packaging, measured re-audit, performance pass, deferred registry) and the optional capability-gated Phase 10.

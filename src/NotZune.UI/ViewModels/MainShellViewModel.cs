@@ -350,7 +350,9 @@ public class MainShellViewModel : ViewModelBase
         ISmartPlaylistService? smartPlaylistService = null,
         IVideoLibraryService? videoLibraryService = null,
         IVideoPlaybackEngine? videoEngine = null,
-        IPhotoLibraryService? photoLibraryService = null)
+        IPhotoLibraryService? photoLibraryService = null,
+        ISyncEngine? syncEngine = null,
+        ISyncGroupService? syncGroupService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -363,7 +365,7 @@ public class MainShellViewModel : ViewModelBase
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
         CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService, smartPlaylistService, videoLibraryService, videoEngine, photoLibraryService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService, audioEngine, videoLibraryService, videoEngine);
-        DeviceVM = new DeviceViewModel(deviceSyncService, libraryService);
+        DeviceVM = new DeviceViewModel(deviceSyncService, libraryService, syncEngine, settingsStore, videoLibraryService, photoLibraryService, podService, _soundEffectService, syncGroupService);
         SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService, settingsStore);
 
         // Onboarding (FIRSTLAUNCH + WHATSNEW parity): wizard on first run, What's New on version change.

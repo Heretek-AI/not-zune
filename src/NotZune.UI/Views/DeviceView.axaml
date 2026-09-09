@@ -2,7 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
+              xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
+              xmlns:models="clr-namespace:NotZune.Domain.Models;assembly=NotZune.Domain"
+              xmlns:conv="clr-namespace:NotZune.UI.Converters;assembly=NotZune.UI"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              x:Class="NotZune.UI.Views.DeviceView"
              x:DataType="vm:DeviceViewModel">
@@ -98,17 +100,95 @@
         </StackPanel>
       </StackPanel>
 
-      <!-- Sync Button & Progress -->
+      <!-- Sync Controls & Progress -->
       <StackPanel Spacing="12">
-        <Button Classes="zune-action" Command="{Binding SyncCommand}" HorizontalAlignment="Left">
-          <TextBlock Text="SYNC TO DEVICE" Classes="section-header" />
-        </Button>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <Button Classes="zune-action" Command="{Binding BuildSyncPlanCommand}">
+            <TextBlock Text="PREVIEW WHAT WILL SYNC" Classes="section-header" />
+          </Button>
+          <Button Classes="zune-action" Command="{Binding SyncCommand}">
+            <TextBlock Text="SYNC TO DEVICE" Classes="section-header" Foreground="{DynamicResource ZuneAccentBrush}" />
+          </Button>
+          <Button Classes="zune-action" Command="{Binding StartGuestSessionCommand}" IsVisible="{Binding !IsGuestSession}">
+            <TextBlock Text="GUEST SESSION" Classes="section-header" />
+          </Button>
+          <Button Classes="zune-action" Command="{Binding EndGuestSessionCommand}" IsVisible="{Binding IsGuestSession}">
+            <TextBlock Text="END GUEST SESSION" Classes="section-header" Foreground="#FF5555" />
+          </Button>
+        </StackPanel>
         <ProgressBar Value="{Binding SyncProgress}" Maximum="1.0" Height="4" CornerRadius="0"
                      Foreground="{DynamicResource ZuneAccentBrush}" Background="{DynamicResource ZuneSurfaceElevatedBrush}" />
         <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" IsVisible="{Binding HasSyncToast}">
           <Image Source="avares://NotZune.UI/Assets/Zune/Sync/SYNC.ACTIVELYSYNCING.PNG" Width="20" Height="20" VerticalAlignment="Center" />
           <TextBlock Text="{Binding SyncToastInstruction}" Classes="caption" FontSize="9" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
         </StackPanel>
+      </StackPanel>
+
+      <!-- Section: "What will sync" Dry-Run Manifest -->
+      <StackPanel Spacing="8" IsVisible="{Binding HasSyncPlan}">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="WHAT WILL SYNC" Classes="section-header" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <TextBlock Text="{Binding PlanSummaryText}" Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="{Binding PlanFreeSpaceText}" Classes="caption" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+          </StackPanel>
+        </Grid>
+
+        <ScrollViewer MaxHeight="230">
+          <ItemsControl ItemsSource="{Binding PlannedItems}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="models:TransferItem">
+                <Border BorderBrush="{DynamicResource ZuneBorderBrush}" BorderThickness="0,0,0,1" Padding="4,6">
+                  <Grid ColumnDefinitions="64,60,*,110,90">
+                    <TextBlock Grid.Column="0" Text="{Binding Action}" Classes="caption" FontWeight="Bold" FontSize="9"
+                               Foreground="{Binding Action, Converter={x:Static conv:TransferActionColorConverter.Instance}}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Category}" Classes="caption" FontSize="9" Foreground="{DynamicResource ZuneTextDimmedBrush}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding Title}" Classes="body" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Text="{Binding Detail}" Classes="caption" FontSize="9" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                    <TextBlock Grid.Column="4" Text="{Binding SizeBytes, Converter={x:Static conv:BytesToMegabytesConverter.Instance}}" Classes="caption" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+
+      <!-- Section: Device Contents (Reverse Sync) -->
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="ON DEVICE" Classes="section-header" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+            <TextBlock Text="{Binding GuestSessionBadgeText}" Classes="caption" FontWeight="Bold" Foreground="#FFB400" VerticalAlignment="Center" IsVisible="{Binding IsGuestSession}" />
+            <Button Classes="zune-action" Command="{Binding RefreshDeviceContentsCommand}" VerticalAlignment="Center">
+              <TextBlock Text="REFRESH" Classes="caption" FontSize="9" FontWeight="SemiBold" />
+            </Button>
+          </StackPanel>
+        </Grid>
+
+        <ScrollViewer MaxHeight="180">
+          <ItemsControl ItemsSource="{Binding DeviceContents}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="models:DeviceContentItem">
+                <Border BorderBrush="{DynamicResource ZuneBorderBrush}" BorderThickness="0,0,0,1" Padding="4,6">
+                  <Grid ColumnDefinitions="70,*,100,Auto">
+                    <TextBlock Grid.Column="0" Text="{Binding Category}" Classes="caption" FontSize="9" Foreground="{DynamicResource ZuneTextDimmedBrush}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Title}" Classes="body" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding SizeBytes, Converter={x:Static conv:BytesToMegabytesConverter.Instance}}" Classes="caption" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+                    <Button Grid.Column="3" Command="{Binding $parent[UserControl].((vm:DeviceViewModel)DataContext).QueueCopyBackCommand}" CommandParameter="{Binding}"
+                            Background="Transparent" BorderThickness="0" Padding="6,2" ToolTip.Tip="Copy back to collection">
+                      <TextBlock Text="COPY BACK" Classes="caption" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ZuneAccentBrush}" />
+                    </Button>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Text="{Binding PendingImports.Count, StringFormat='{}{0} item(s) queued to copy back to the collection'}"
+                   Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}"
+                   IsVisible="{Binding PendingImports.Count, Converter={x:Static ObjectConverters.IsNotNull}}" />
       </StackPanel>
     </StackPanel>
 

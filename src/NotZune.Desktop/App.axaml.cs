@@ -81,6 +81,8 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IVideoLibraryService, VideoLibraryService>();
         services.AddSingleton<IPhotoLibraryService, PhotoLibraryService>();
         services.AddSingleton<IVideoPlaybackEngine, VideoPlaybackEngine>();
+        services.AddSingleton<ISyncEngine, SyncEngine>();
+        services.AddSingleton<ISyncGroupService, SyncGroupService>();
 
         // 3. Audio & Hardware Subsystems
         services.AddSingleton<AudioEngine>();
@@ -133,6 +135,14 @@ public partial class App : Avalonia.Application
                 TakenDate TEXT,
                 SizeBytes INTEGER NOT NULL,
                 AddedAtUtc TEXT NOT NULL)");
+
+            ctx.Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS SyncGroups (
+                Id TEXT NOT NULL PRIMARY KEY,
+                DeviceSerialNumber TEXT NOT NULL,
+                Name TEXT NOT NULL,
+                IsGuestSession INTEGER NOT NULL,
+                Categories TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL)");
 
             if (!ctx.Tracks.Any())
             {

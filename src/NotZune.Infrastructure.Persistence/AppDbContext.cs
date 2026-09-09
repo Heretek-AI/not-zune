@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<SmartPlaylist> SmartPlaylists => Set<SmartPlaylist>();
     public DbSet<Video> Videos => Set<Video>();
     public DbSet<Photo> Photos => Set<Photo>();
+    public DbSet<SyncGroup> SyncGroups => Set<SyncGroup>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -87,6 +88,16 @@ public class AppDbContext : DbContext
             entity.HasKey(p => p.Id);
             entity.HasIndex(p => p.FilePath);
             entity.HasIndex(p => p.FolderPath);
+        });
+
+        modelBuilder.Entity<SyncGroup>(entity =>
+        {
+            entity.HasKey(g => g.Id);
+            entity.HasIndex(g => g.DeviceSerialNumber);
+            entity.Property(g => g.Categories)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<SyncCategoryRule>>(string.IsNullOrEmpty(v) ? "[]" : v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<SyncCategoryRule>());
         });
     }
 }
