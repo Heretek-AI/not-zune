@@ -78,10 +78,10 @@ public sealed class VideoPlaybackEngine : IVideoPlaybackEngine
 
         lock (_gate)
         {
-            // Windows paths and CI-relative paths are not valid absolute URIs;
-            // resolve to a full path first (nonexistent files still play-fail gracefully).
-            var mediaPath = Path.IsPathRooted(filePath) ? filePath : Path.GetFullPath(filePath);
-            using var media = new Media(_libVlc, new Uri(mediaPath));
+            // Windows paths (including rooted-but-not-drive-qualified ones like /x/y.mp4)
+            // are not valid absolute URIs; resolve to a full path first (nonexistent
+            // files still play-fail gracefully inside libVLC).
+            using var media = new Media(_libVlc, new Uri(Path.GetFullPath(filePath)));
             _mediaPlayer.Play(media);
         }
     }

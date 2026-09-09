@@ -224,7 +224,7 @@ public class ZunePhase3FidelityTests
 
         // Execute Rip
         vm.RipCdCommand.Execute(null);
-        await Task.Delay(3500); // Allow async rip simulation
+        await WaitForCompletionAsync(() => vm.RipProgress);
 
         Assert.Equal(1.0, vm.RipProgress);
         Assert.Equal(1, sound.RipCount);
@@ -235,10 +235,23 @@ public class ZunePhase3FidelityTests
 
         // Execute Burn
         vm.BurnCdCommand.Execute(null);
-        await Task.Delay(3500); // Allow async burn simulation
+        await WaitForCompletionAsync(() => vm.BurnProgress);
 
         Assert.Equal(1.0, vm.BurnProgress);
         Assert.Equal(1, sound.BurnCount);
+    }
+
+    /// <summary>
+    /// Polls until the simulated rip/burn progress completes (or fails the deadline).
+    /// A fixed Task.Delay is flaky on loaded CI runners where scheduler jitter stacks up.
+    /// </summary>
+    private static async Task WaitForCompletionAsync(Func<double> progress)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(60);
+        while (progress() < 1.0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100);
+        }
     }
 
     [Fact]
