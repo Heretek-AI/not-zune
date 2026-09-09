@@ -260,7 +260,8 @@ public class MainShellViewModel : ViewModelBase
         ISettingsStore? settingsStore = null,
         IArtistEnrichmentService? enrichmentService = null,
         IArtworkCacheService? artworkCacheService = null,
-        IExternalMetadataService? metadataService = null)
+        IExternalMetadataService? metadataService = null,
+        IAudioOutputEngine? audioEngine = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -272,7 +273,7 @@ public class MainShellViewModel : ViewModelBase
         // Child ViewModels
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
         CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService);
-        NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService);
+        NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService, audioEngine);
         DeviceVM = new DeviceViewModel(deviceSyncService);
         SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService, settingsStore);
         ZuneCardVM = new ZuneCardViewModel(_userStatsService);

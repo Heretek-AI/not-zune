@@ -254,6 +254,11 @@ public class SettingsViewModel : ViewModelBase
         {
             if (SetProperty(ref _volumeLevelingEnabled, value))
             {
+                if (_playerCoordinator != null)
+                {
+                    _playerCoordinator.VolumeLevelingEnabled = value;
+                }
+
                 SaveCurrentSettings();
             }
         }
@@ -803,6 +808,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _playerCoordinator.CrossfadeDurationSeconds = CrossfadeEnabled ? _crossfadeDurationSeconds : 0.0;
                 _playerCoordinator.GaplessEnabled = settings.GaplessPlaybackEnabled;
+                _playerCoordinator.VolumeLevelingEnabled = settings.VolumeLevelingEnabled;
             }
 
             if (_soundService != null)

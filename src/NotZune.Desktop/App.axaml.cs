@@ -10,8 +10,7 @@ using NotZune.Domain.Models;
 using NotZune.Infrastructure.Audio;
 using NotZune.Infrastructure.Devices;
 using NotZune.Infrastructure.External;
-using NotZune.Infrastructure.Persistence;
-using NotZune.UI.Services;
+using NotZune.Infrastructure.Persistence;using NotZune.UI.Services;
 using NotZune.UI.ViewModels;
 
 namespace NotZune.Desktop;
@@ -61,7 +60,11 @@ public partial class App : Avalonia.Application
         });
 
         // 2. Application Core Services
-        services.AddSingleton<IPlayerCoordinator, PlaybackQueueCoordinator>();
+        services.AddSingleton<IAudioOutputEngine, BassAudioOutputEngine>();
+        services.AddSingleton<IReplayGainService, TagLibReplayGainService>();
+        services.AddSingleton<IPlayerCoordinator>(sp => new PlaybackQueueCoordinator(
+            sp.GetRequiredService<IAudioOutputEngine>(),
+            sp.GetRequiredService<IReplayGainService>()));
         services.AddSingleton<IMediaLibraryService, MediaLibraryService>();
         services.AddSingleton<IDeviceSyncService, ZuneDeviceSyncService>();
         services.AddSingleton<ISmartDJService, SmartDJEngine>();

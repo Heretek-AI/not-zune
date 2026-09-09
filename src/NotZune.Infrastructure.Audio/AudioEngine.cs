@@ -35,7 +35,9 @@ public class AudioEngine : IDisposable
 
     private async void OnPositionTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
-        if (_playerCoordinator.State == PlaybackState.Playing)
+        // Only drive the simulated clock when there is no real audio output
+        // (demo data without file sources, or no available audio device).
+        if (_playerCoordinator.State == PlaybackState.Playing && _playerCoordinator.IsSimulatedPlayback)
         {
             var nextPos = _playerCoordinator.CurrentPosition + TimeSpan.FromMilliseconds(250);
             if (_playerCoordinator.Duration > TimeSpan.Zero && nextPos >= _playerCoordinator.Duration)

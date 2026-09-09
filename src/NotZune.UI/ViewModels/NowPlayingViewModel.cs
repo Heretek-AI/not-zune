@@ -25,6 +25,7 @@ public class NowPlayingViewModel : ViewModelBase
     private readonly IPlayerCoordinator _playerCoordinator;
     private readonly IMediaLibraryService _libraryService;
     private readonly IArtistEnrichmentService? _enrichmentService;
+    private readonly IAudioOutputEngine? _audioEngine;
     private readonly System.Timers.Timer _hudIdleTimer;
     private readonly System.Timers.Timer _slideshowTimer;
     private readonly System.Timers.Timer _visualizerTimer;
@@ -174,11 +175,13 @@ public class NowPlayingViewModel : ViewModelBase
     public NowPlayingViewModel(
         IPlayerCoordinator playerCoordinator,
         IMediaLibraryService libraryService,
-        IArtistEnrichmentService? enrichmentService = null)
+        IArtistEnrichmentService? enrichmentService = null,
+        IAudioOutputEngine? audioEngine = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
         _enrichmentService = enrichmentService;
+        _audioEngine = audioEngine;
 
         _activeBackdrops = new List<string>(_themeBackdrops);
         _currentBackdropImage = _activeBackdrops[0];
@@ -221,6 +224,23 @@ public class NowPlayingViewModel : ViewModelBase
         _visualizerTimer = new System.Timers.Timer(75) { AutoReset = true };
         _visualizerTimer.Elapsed += (s, e) =>
         {
+            if (IsPlaying && _audioEngine is { IsAvailable: true })
+            {
+                // Real spectrum from the live audio output.
+                var bands = _audioEngine.GetFftData();
+                if (bands.Length == VisualizerBars.Count)
+                {
+                    for (int i = 0; i < VisualizerBars.Count; i++)
+                    {
+                        // Peak-weighted so bass bands read taller, matching Zune's energy distribution.
+                        double weight = 1.0 + (1.0 - (i / (double)VisualizerBars.Count)) * 0.9;
+                        VisualizerBars[i] = Math.Clamp(bands[i] * weight * 45.0 + 4.0, 4.0, 49.0);
+                    }
+
+                    return;
+                }
+            }
+
             if (IsPlaying)
             {
                 for (int i = 0; i < VisualizerBars.Count; i++)

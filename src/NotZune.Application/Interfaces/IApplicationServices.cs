@@ -17,6 +17,8 @@ public interface IPlayerCoordinator
     double CrossfadeDurationSeconds { get; set; }
     bool IsCrossfading { get; }
     bool GaplessEnabled { get; set; }
+    bool VolumeLevelingEnabled { get; set; }
+    bool IsSimulatedPlayback { get; }
     IReadOnlyList<Track> Queue { get; }
 
     Task PlayTrackAsync(Track track, IEnumerable<Track>? contextQueue = null);
