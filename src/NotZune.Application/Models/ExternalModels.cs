@@ -18,6 +18,17 @@ public class AlbumArtworkResult
     public string? ArtworkUrl { get; set; }
 }
 
+public class TrackMatchCandidate
+{
+    public Guid TrackId { get; set; }
+    public string OriginalTitle { get; set; } = string.Empty;
+    public string MatchedTitle { get; set; } = string.Empty;
+    public string MatchedArtist { get; set; } = string.Empty;
+    public long? MatchedDurationMs { get; set; }
+    public string? MusicBrainzRecordingId { get; set; }
+    public int Score { get; set; }
+}
+
 public class LyricsResult
 {
     public string TrackName { get; set; } = string.Empty;

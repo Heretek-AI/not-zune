@@ -150,14 +150,14 @@
             BorderThickness="1" 
             CornerRadius="0" 
             Padding="24,12" 
-            MaxWidth="600">
+            MaxWidth="640">
       <Grid ColumnDefinitions="*,Auto">
         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
           <TextBlock Text="{Binding HoveredSubtitle}" Classes="caption" FontWeight="Bold" Foreground="{DynamicResource ZuneAccentBrush}" FontSize="9" />
           <TextBlock Text="{Binding HoveredTitle}" Classes="body" FontWeight="Light" FontSize="16" Foreground="{DynamicResource ZuneTextActiveBrush}" />
         </StackPanel>
 
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
           <Button Command="{Binding PlayNodeCommand}" 
                   CommandParameter="{Binding HoveredNode}" 
                   Classes="zune-action">
@@ -168,8 +168,44 @@
                   Classes="zune-action">
             <TextBlock Text="SMART DJ MIX" Classes="caption" FontWeight="Bold" />
           </Button>
+          <Button Command="{Binding LikeNodeCommand}" CommandParameter="{Binding HoveredNode}" Background="Transparent" BorderThickness="0" Padding="4" ToolTip.Tip="Like it">
+            <Image Source="avares://NotZune.UI/Assets/Zune/Mixview/MIX.LIKEIT.DEFAULT.PNG" Width="17" Height="15" />
+          </Button>
+          <Button Command="{Binding HateNodeCommand}" CommandParameter="{Binding HoveredNode}" Background="Transparent" BorderThickness="0" Padding="4" ToolTip.Tip="Hate it">
+            <Image Source="avares://NotZune.UI/Assets/Zune/Mixview/MIX.HATEIT.DEFAULT.PNG" Width="17" Height="15" />
+          </Button>
+          <Button Command="{Binding InfoNodeCommand}" CommandParameter="{Binding HoveredNode}" Background="Transparent" BorderThickness="0" Padding="4" ToolTip.Tip="Info">
+            <Image Source="avares://NotZune.UI/Assets/Zune/Mixview/MIX.INFO.DEFAULT.PNG" Width="15" Height="15" />
+          </Button>
+          <Button Command="{Binding AddNodeCommand}" CommandParameter="{Binding HoveredNode}" Background="Transparent" BorderThickness="0" Padding="4" ToolTip.Tip="Add to queue">
+            <Image Source="avares://NotZune.UI/Assets/Zune/Mixview/MIX.ADD.DEFAULT.PNG" Width="15" Height="15" />
+          </Button>
         </StackPanel>
       </Grid>
+    </Border>
+
+    <!-- Info Card Overlay -->
+    <Border IsVisible="{Binding HasInfoCard}"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Right"
+            Margin="0,24,24,0"
+            Background="#F0181818"
+            BorderBrush="{DynamicResource ZuneAccentBrush}"
+            BorderThickness="1"
+            CornerRadius="0"
+            Padding="20"
+            MaxWidth="360">
+      <StackPanel Spacing="10" MaxWidth="320">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0" Text="INFO" Classes="section-header" Foreground="{DynamicResource ZuneAccentBrush}" />
+          <Button Grid.Column="1" Command="{Binding CloseInfoCardCommand}" Background="Transparent" BorderThickness="0" Padding="4,0">
+            <TextBlock Text="✕" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          </Button>
+        </Grid>
+        <ScrollViewer MaxHeight="220">
+          <TextBlock Text="{Binding InfoCardText}" Classes="body" TextWrapping="Wrap" LineHeight="18" Foreground="{DynamicResource ZuneTextHoverBrush}" />
+        </ScrollViewer>
+      </StackPanel>
     </Border>
 
   </Grid>

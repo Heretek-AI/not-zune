@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using NotZune.Application.Interfaces;
 using NotZune.Application.Models;
+using NotZune.Domain.Models;
 
 namespace NotZune.Infrastructure.External;
 
@@ -164,6 +165,63 @@ public sealed class ExternalMetadataService : IExternalMetadataService
 
         SetCached(cacheKey, result);
         return result;
+    }
+
+    public async Task<IReadOnlyList<TrackMatchCandidate>> FindTrackMatchesAsync(string artistName, string albumTitle, IReadOnlyList<Track> tracks, CancellationToken cancellationToken = default)
+    {
+        var candidates = new List<TrackMatchCandidate>();
+        if (tracks.Count == 0 || string.IsNullOrWhiteSpace(artistName))
+        {
+            return candidates;
+        }
+
+        foreach (var track in tracks)
+        {
+            var cacheKey = $"recording:{artistName.Trim().ToLowerInvariant()}|{track.Title.Trim().ToLowerInvariant()}";
+            if (TryGetCached<TrackMatchCandidate>(cacheKey, out var cached))
+            {
+                if (cached != null)
+                {
+                    candidates.Add(cached);
+                }
+
+                continue;
+            }
+
+            TrackMatchCandidate? candidate = null;
+            try
+            {
+                var match = await _musicBrainz.SearchRecordingAsync(artistName.Trim(), track.Title.Trim(), cancellationToken).ConfigureAwait(false);
+                if (match is { MbId: not null } recording && recording.Score >= 50)
+                {
+                    candidate = new TrackMatchCandidate
+                    {
+                        TrackId = track.Id,
+                        OriginalTitle = track.Title,
+                        MatchedTitle = recording.Title ?? track.Title,
+                        MatchedArtist = recording.ArtistName ?? artistName,
+                        MatchedDurationMs = recording.LengthMs,
+                        MusicBrainzRecordingId = recording.MbId,
+                        Score = recording.Score
+                    };
+                }
+            }
+            catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+            }
+
+            SetCached(cacheKey, candidate);
+            if (candidate != null)
+            {
+                candidates.Add(candidate);
+            }
+        }
+
+        return candidates;
     }
 
     public async Task<LyricsResult?> FetchLyricsAsync(string artistName, string trackTitle, TimeSpan? duration = null, CancellationToken cancellationToken = default)

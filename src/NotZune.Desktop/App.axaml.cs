@@ -76,6 +76,7 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IArtworkCacheService, ArtworkCacheService>();
         services.AddSingleton<IExternalMetadataService, ExternalMetadataService>();
         services.AddSingleton<IArtistEnrichmentService, ArtistEnrichmentCoordinator>();
+        services.AddSingleton<ISmartPlaylistService, SmartPlaylistService>();
 
         // 3. Audio & Hardware Subsystems
         services.AddSingleton<AudioEngine>();
@@ -92,6 +93,20 @@ public partial class App : Avalonia.Application
             var factory = provider.GetRequiredService<IDbContextFactory<AppDbContext>>();
             using var ctx = factory.CreateDbContext();
             ctx.Database.EnsureCreated();
+
+            // Schema upgrades for databases created before later phases (EnsureCreated
+            // only provisions brand-new databases; it never alters existing ones).
+            ctx.Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS SmartPlaylists (
+                Id TEXT NOT NULL PRIMARY KEY,
+                Name TEXT NOT NULL,
+                Description TEXT,
+                Match INTEGER NOT NULL,
+                TrackLimit INTEGER NOT NULL,
+                SortField TEXT NOT NULL,
+                SortDescending INTEGER NOT NULL,
+                Rules TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL)");
 
             if (!ctx.Tracks.Any())
             {

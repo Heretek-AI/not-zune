@@ -137,17 +137,27 @@
             </Button>
           </StackPanel>
 
-          <!-- Right: Search Box, Now Playing & Settings -->
+          <!-- Right: Back, Search Box, Now Playing & Settings -->
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
-            <!-- Header Search Box -->
-            <Border Background="#1A1A1A" 
-                    BorderBrush="#333333" 
-                    BorderThickness="1" 
-                    Height="26" 
-                    Width="175" 
-                    CornerRadius="0" 
-                    VerticalAlignment="Center">
-              <Grid ColumnDefinitions="*,Auto">
+            <!-- Navigation Back (Zune window back arrow) -->
+            <Button Command="{Binding GoBackCommand}"
+                    IsEnabled="{Binding CanGoBack}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="2"
+                    VerticalAlignment="Center"
+                    ToolTip.Tip="Back">
+              <Image Source="avares://NotZune.UI/Assets/Zune/Window/WINDOW.BACK.PNG" Width="14" Height="15" IsVisible="{Binding CanGoBack}" />
+            </Button>
+
+            <!-- Header Search Box with Autocomplete -->
+            <Panel VerticalAlignment="Center" Width="175">
+              <Border Background="#1A1A1A"
+                      BorderBrush="#333333"
+                      BorderThickness="1"
+                      Height="26"
+                      CornerRadius="0">
+                <Grid ColumnDefinitions="*,Auto">
                 <TextBox Grid.Column="0" 
                          Text="{Binding HeaderSearchQuery, Mode=TwoWay}" 
                          Watermark="search collection" 
@@ -168,6 +178,35 @@
                 </Button>
               </Grid>
             </Border>
+
+              <!-- Autocomplete suggestions dropdown (AUTOCOMPLETEBOX parity) -->
+              <Border IsVisible="{Binding HasSearchSuggestions}"
+                      Background="{DynamicResource ZuneSurfaceElevatedBrush}"
+                      BorderBrush="{DynamicResource ZuneBorderBrush}"
+                      BorderThickness="1"
+                      CornerRadius="0"
+                      Margin="0,28,0,0"
+                      ZIndex="100"
+                      MaxHeight="200">
+                <ScrollViewer>
+                  <ItemsControl ItemsSource="{Binding SearchSuggestions}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Command="{Binding $parent[UserControl].((vm:MainShellViewModel)DataContext).AcceptSuggestionCommand}"
+                                CommandParameter="{Binding}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="8,5">
+                          <TextBlock Text="{Binding}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </Border>
+            </Panel>
 
             <!-- Animated Now Playing Dancing Equalizer Button -->
             <Button Command="{Binding ToggleNowPlayingCommand}" VerticalAlignment="Center">

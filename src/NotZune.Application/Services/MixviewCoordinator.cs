@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NotZune.Application.Interfaces;
+using NotZune.Domain.Enums;
 using NotZune.Domain.Models;
 
 namespace NotZune.Application.Services;
@@ -85,21 +86,39 @@ public class MixviewCoordinator : IMixviewService
             }
         }
 
-        // Add similar artists (same genre or other library artists)
-        var similarArtists = allArtists
+        // Genre-affinity weighted related artists — the local substitute for Zune's
+        // marketplace-backed MixQuery. Artists sharing the seed's genres and holding
+        // favorited tracks rank higher in the constellation.
+        var seedGenreSet = seedTracks
+            .Select(t => t.Genre)
+            .Where(g => !string.IsNullOrEmpty(g))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var relatedArtistScores = allArtists
             .Where(a => !a.Name.Equals(seedName, StringComparison.OrdinalIgnoreCase))
+            .Select(a =>
+            {
+                var artistTracks = allTracks
+                    .Where(t => t.ArtistName.Equals(a.Name, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                var sharedGenres = artistTracks.Count(t => !string.IsNullOrEmpty(t.Genre) && seedGenreSet.Contains(t.Genre));
+                var favorites = artistTracks.Count(t => t.Rating == HeartRating.Favorite);
+                return (Artist: a, Score: (sharedGenres * 3) + (favorites * 2) + Math.Min(artistTracks.Count, 10));
+            })
+            .Where(x => x.Score > 0)
+            .OrderByDescending(x => x.Score)
             .Take(4)
             .ToList();
 
-        foreach (var simArt in similarArtists)
+        foreach (var (artist, _) in relatedArtistScores)
         {
             satellites.Add(new MixNode
             {
-                Id = simArt.Id,
-                Title = simArt.Name,
-                Subtitle = "RELATED ARTIST",
+                Id = artist.Id,
+                Title = artist.Name,
+                Subtitle = seedGenreSet.Count == 0 ? "RELATED ARTIST" : "GENRE AFFINITY",
                 NodeType = MixNodeType.Artist,
-                EntityId = simArt.Id
+                EntityId = artist.Id
             });
         }
 

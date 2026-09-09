@@ -105,6 +105,11 @@ public partial class MainWindow : Window
                         vm.ActivePivot = NavigationPivot.Collection;
                         e.Handled = true;
                     }
+                    else if (vm.CanGoBack)
+                    {
+                        vm.GoBack();
+                        e.Handled = true;
+                    }
                     else if (vm.HasHeaderSearchQuery)
                     {
                         vm.HeaderSearchQuery = string.Empty;

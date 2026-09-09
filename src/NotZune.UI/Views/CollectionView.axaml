@@ -402,5 +402,15 @@
   <Grid IsVisible="{Binding IsEditMetadataOpen}" Background="#D9000000">
     <views:MetadataEditView DataContext="{Binding ActiveEditMetadataVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
   </Grid>
+
+  <!-- 8. SMART PLAYLIST EDITOR MODAL OVERLAY -->
+  <Grid IsVisible="{Binding PlaylistsVM.IsSmartEditorOpen}" Background="#D9000000">
+    <views:SmartPlaylistEditorView DataContext="{Binding PlaylistsVM.ActiveSmartEditorVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </Grid>
+
+  <!-- 9. TRACK MATCH REVIEW MODAL OVERLAY -->
+  <Grid IsVisible="{Binding IsTrackMatchReviewOpen}" Background="#D9000000">
+    <views:TrackMatchReviewView DataContext="{Binding ActiveTrackMatchReviewVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </Grid>
 </Panel>
 </UserControl>

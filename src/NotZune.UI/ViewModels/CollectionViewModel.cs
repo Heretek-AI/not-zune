@@ -161,7 +161,8 @@ public class CollectionViewModel : ViewModelBase
         IPodcastService? podcastService = null,
         ISmartDJService? smartDJService = null,
         IArtworkCacheService? artworkCache = null,
-        IExternalMetadataService? metadataService = null)
+        IExternalMetadataService? metadataService = null,
+        ISmartPlaylistService? smartPlaylistService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -170,7 +171,7 @@ public class CollectionViewModel : ViewModelBase
         _metadataService = metadataService;
         var podService = podcastService ?? new NotZune.Application.Services.PodcastService(playerCoordinator);
         PodcastsVM = new PodcastsViewModel(podService);
-        PlaylistsVM = new PlaylistsViewModel(libraryService, playerCoordinator);
+        PlaylistsVM = new PlaylistsViewModel(libraryService, playerCoordinator, smartPlaylistService);
 
         OpenEditMetadataCommand = new RelayCommand<Track>(track =>
         {
@@ -219,6 +220,21 @@ public class CollectionViewModel : ViewModelBase
         _ = RefreshDataAsync();
     }
 
+    private TrackMatchReviewViewModel? _activeTrackMatchReviewVM;
+    public TrackMatchReviewViewModel? ActiveTrackMatchReviewVM
+    {
+        get => _activeTrackMatchReviewVM;
+        set
+        {
+            if (SetProperty(ref _activeTrackMatchReviewVM, value))
+            {
+                OnPropertyChanged(nameof(IsTrackMatchReviewOpen));
+            }
+        }
+    }
+
+    public bool IsTrackMatchReviewOpen => ActiveTrackMatchReviewVM != null;
+
     private async System.Threading.Tasks.Task OnFindAlbumInfoAsync(Album? album)
     {
         if (album == null || _metadataService == null || _artworkCache == null)
@@ -242,34 +258,62 @@ public class CollectionViewModel : ViewModelBase
             if (match?.ArtworkUrl == null)
             {
                 FindAlbumInfoStatusText = $"No matching release found for \"{album.Title}\".";
-                return;
+            }
+            else
+            {
+                var localPath = await _artworkCache.GetOrDownloadAsync(match.ArtworkUrl);
+                if (string.IsNullOrEmpty(localPath))
+                {
+                    FindAlbumInfoStatusText = $"Cover art not yet available on the Cover Art Archive for \"{album.Title}\".";
+                }
+                else
+                {
+                    await _libraryService.SetAlbumArtworkAsync(album.Id, localPath);
+
+                    var updated = new Album
+                    {
+                        Id = album.Id,
+                        Title = album.Title,
+                        ArtistId = album.ArtistId,
+                        ArtistName = album.ArtistName,
+                        Year = album.Year,
+                        Genre = album.Genre,
+                        ArtworkUri = localPath,
+                        TrackCount = album.TrackCount,
+                        IsPinned = album.IsPinned,
+                        PinnedAtUtc = album.PinnedAtUtc,
+                        Tracks = album.Tracks
+                    };
+                    ReplaceAlbumEverywhere(album, updated);
+                    FindAlbumInfoStatusText = $"Cover art applied to \"{updated.Title}\".";
+                }
             }
 
-            var localPath = await _artworkCache.GetOrDownloadAsync(match.ArtworkUrl);
-            if (string.IsNullOrEmpty(localPath))
+            // Track matching review (Zune's per-song "Find Album Info" flow)
+            if (album.Tracks.Count > 0)
             {
-                FindAlbumInfoStatusText = $"Cover art not yet available on the Cover Art Archive for \"{album.Title}\".";
-                return;
+                FindAlbumInfoStatusText = $"Matching {album.Tracks.Count} tracks on MusicBrainz...";
+                var candidates = await _metadataService.FindTrackMatchesAsync(album.ArtistName, album.Title, album.Tracks);
+                if (candidates.Count > 0)
+                {
+                    var review = new TrackMatchReviewViewModel(album.Title, album.ArtistName, candidates, album.Tracks, _libraryService);
+                    review.RequestClose += async (_, _) =>
+                    {
+                        ActiveTrackMatchReviewVM = null;
+                        var changed = review.Rows.Count(r => r.Accepted && !r.Candidate.MatchedTitle.Equals(r.OriginalTrack.Title, StringComparison.OrdinalIgnoreCase));
+                        if (changed > 0)
+                        {
+                            await RefreshDataAsync();
+                            FindAlbumInfoStatusText = $"Updated {changed} track title{(changed == 1 ? string.Empty : "s")} from MusicBrainz.";
+                        }
+                    };
+                    ActiveTrackMatchReviewVM = review;
+                }
+                else
+                {
+                    FindAlbumInfoStatusText += " All track titles already match.";
+                }
             }
-
-            await _libraryService.SetAlbumArtworkAsync(album.Id, localPath);
-
-            var updated = new Album
-            {
-                Id = album.Id,
-                Title = album.Title,
-                ArtistId = album.ArtistId,
-                ArtistName = album.ArtistName,
-                Year = album.Year,
-                Genre = album.Genre,
-                ArtworkUri = localPath,
-                TrackCount = album.TrackCount,
-                IsPinned = album.IsPinned,
-                PinnedAtUtc = album.PinnedAtUtc,
-                Tracks = album.Tracks
-            };
-            ReplaceAlbumEverywhere(album, updated);
-            FindAlbumInfoStatusText = $"Cover art applied to \"{updated.Title}\".";
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidOperationException)
         {

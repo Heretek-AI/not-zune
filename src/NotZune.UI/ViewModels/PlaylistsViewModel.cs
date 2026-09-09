@@ -14,9 +14,12 @@ public class PlaylistsViewModel : ViewModelBase
 {
     private readonly IMediaLibraryService _libraryService;
     private readonly IPlayerCoordinator _playerCoordinator;
+    private readonly ISmartPlaylistService? _smartPlaylistService;
 
     public ObservableCollection<Playlist> Playlists { get; } = new();
     public ObservableCollection<Track> SelectedPlaylistTracks { get; } = new();
+    public ObservableCollection<SmartPlaylist> SmartPlaylists { get; } = new();
+    public ObservableCollection<Track> SelectedSmartPlaylistTracks { get; } = new();
 
     private Playlist? _selectedPlaylist;
     public Playlist? SelectedPlaylist
@@ -27,6 +30,8 @@ public class PlaylistsViewModel : ViewModelBase
             if (SetProperty(ref _selectedPlaylist, value))
             {
                 OnPropertyChanged(nameof(HasSelectedPlaylist));
+                OnPropertyChanged(nameof(ShowStaticPlaylistPane));
+                OnPropertyChanged(nameof(ShowEmptyPlaylistPane));
                 OnPropertyChanged(nameof(PlaylistTitle));
                 OnPropertyChanged(nameof(PlaylistStatsText));
                 _ = LoadSelectedPlaylistTracksAsync(value);
@@ -34,8 +39,30 @@ public class PlaylistsViewModel : ViewModelBase
         }
     }
 
+    private SmartPlaylist? _selectedSmartPlaylist;
+    public SmartPlaylist? SelectedSmartPlaylist
+    {
+        get => _selectedSmartPlaylist;
+        set
+        {
+            if (SetProperty(ref _selectedSmartPlaylist, value))
+            {
+                OnPropertyChanged(nameof(HasSelectedSmartPlaylist));
+                OnPropertyChanged(nameof(ShowStaticPlaylistPane));
+                OnPropertyChanged(nameof(ShowEmptyPlaylistPane));
+                OnPropertyChanged(nameof(SmartPlaylistTitle));
+                OnPropertyChanged(nameof(SmartPlaylistStatsText));
+                _ = EvaluateSelectedSmartPlaylistAsync();
+            }
+        }
+    }
+
     public bool HasSelectedPlaylist => SelectedPlaylist != null;
+    public bool HasSelectedSmartPlaylist => SelectedSmartPlaylist != null;
+    public bool ShowStaticPlaylistPane => HasSelectedPlaylist && !HasSelectedSmartPlaylist;
+    public bool ShowEmptyPlaylistPane => !HasSelectedPlaylist && !HasSelectedSmartPlaylist;
     public string PlaylistTitle => SelectedPlaylist?.Name ?? "Select a Playlist";
+    public string SmartPlaylistTitle => SelectedSmartPlaylist?.Name ?? "Select a Smart Playlist";
 
     public string PlaylistStatsText
     {
@@ -45,6 +72,18 @@ public class PlaylistsViewModel : ViewModelBase
             int count = SelectedPlaylistTracks.Count;
             var totalDuration = TimeSpan.FromSeconds(SelectedPlaylistTracks.Sum(t => t.Duration.TotalSeconds));
             return $"{count} {(count == 1 ? "song" : "songs")} • {totalDuration.Hours * 60 + totalDuration.Minutes} mins";
+        }
+    }
+
+    public string SmartPlaylistStatsText
+    {
+        get
+        {
+            if (SelectedSmartPlaylist == null) return string.Empty;
+            int count = SelectedSmartPlaylistTracks.Count;
+            var totalDuration = TimeSpan.FromSeconds(SelectedSmartPlaylistTracks.Sum(t => t.Duration.TotalSeconds));
+            var ruleText = SelectedSmartPlaylist.Match == Domain.Models.SmartPlaylistMatch.All ? "all" : "any";
+            return $"{count} {(count == 1 ? "song" : "songs")} • matches {ruleText} of {SelectedSmartPlaylist.Rules.Count} rule{((SelectedSmartPlaylist.Rules.Count == 1) ? string.Empty : "s")}";
         }
     }
 
@@ -62,17 +101,41 @@ public class PlaylistsViewModel : ViewModelBase
         set => SetProperty(ref _statusMessage, value);
     }
 
+    private SmartPlaylistEditorViewModel? _activeSmartEditorVM;
+    public SmartPlaylistEditorViewModel? ActiveSmartEditorVM
+    {
+        get => _activeSmartEditorVM;
+        set
+        {
+            if (SetProperty(ref _activeSmartEditorVM, value))
+            {
+                OnPropertyChanged(nameof(IsSmartEditorOpen));
+            }
+        }
+    }
+
+    public bool IsSmartEditorOpen => ActiveSmartEditorVM != null;
+
     public ICommand CreatePlaylistCommand { get; }
     public ICommand DeletePlaylistCommand { get; }
     public ICommand PlayPlaylistCommand { get; }
     public ICommand PlayTrackCommand { get; }
     public ICommand RemoveTrackCommand { get; }
     public ICommand ExportZplCommand { get; }
+    public ICommand NewSmartPlaylistCommand { get; }
+    public ICommand EditSmartPlaylistCommand { get; }
+    public ICommand DeleteSmartPlaylistCommand { get; }
+    public ICommand PlaySmartPlaylistCommand { get; }
+    public ICommand RefreshSmartPlaylistCommand { get; }
 
-    public PlaylistsViewModel(IMediaLibraryService libraryService, IPlayerCoordinator playerCoordinator)
+    public PlaylistsViewModel(
+        IMediaLibraryService libraryService,
+        IPlayerCoordinator playerCoordinator,
+        ISmartPlaylistService? smartPlaylistService = null)
     {
         _libraryService = libraryService;
         _playerCoordinator = playerCoordinator;
+        _smartPlaylistService = smartPlaylistService;
 
         CreatePlaylistCommand = new AsyncRelayCommand(OnCreatePlaylistAsync);
         DeletePlaylistCommand = new AsyncRelayCommand<Playlist>(OnDeletePlaylistAsync);
@@ -80,6 +143,11 @@ public class PlaylistsViewModel : ViewModelBase
         PlayTrackCommand = new AsyncRelayCommand<Track>(OnPlayTrackAsync);
         RemoveTrackCommand = new AsyncRelayCommand<Track>(OnRemoveTrackAsync);
         ExportZplCommand = new AsyncRelayCommand(OnExportZplAsync);
+        NewSmartPlaylistCommand = new RelayCommand(OnNewSmartPlaylist);
+        EditSmartPlaylistCommand = new RelayCommand<SmartPlaylist>(OnEditSmartPlaylist);
+        DeleteSmartPlaylistCommand = new AsyncRelayCommand<SmartPlaylist>(OnDeleteSmartPlaylistAsync);
+        PlaySmartPlaylistCommand = new AsyncRelayCommand(OnPlaySmartPlaylistAsync);
+        RefreshSmartPlaylistCommand = new AsyncRelayCommand(OnRefreshSmartPlaylistAsync);
 
         _ = LoadPlaylistsAsync();
     }
@@ -91,6 +159,21 @@ public class PlaylistsViewModel : ViewModelBase
         foreach (var p in list)
         {
             Playlists.Add(p);
+        }
+
+        if (_smartPlaylistService != null)
+        {
+            var smart = await _smartPlaylistService.GetAllAsync();
+            SmartPlaylists.Clear();
+            foreach (var sp in smart)
+            {
+                SmartPlaylists.Add(sp);
+            }
+
+            if (SelectedSmartPlaylist != null && SmartPlaylists.Any(sp => sp.Id == SelectedSmartPlaylist.Id))
+            {
+                await EvaluateSelectedSmartPlaylistAsync();
+            }
         }
 
         if (SelectedPlaylist == null || !Playlists.Any(p => p.Id == SelectedPlaylist.Id))
@@ -182,5 +265,101 @@ public class PlaylistsViewModel : ViewModelBase
         {
             StatusMessage = $"Export failed: {ex.Message}";
         }
+    }
+
+    // ==========================================
+    // SMART PLAYLISTS (AUTO PLAYLISTS)
+    // ==========================================
+    private void OnNewSmartPlaylist()
+    {
+        if (_smartPlaylistService == null)
+        {
+            StatusMessage = "Smart playlists are unavailable in this configuration.";
+            return;
+        }
+
+        OpenSmartEditor(new SmartPlaylist { Name = string.Empty });
+    }
+
+    private void OnEditSmartPlaylist(SmartPlaylist? playlist)
+    {
+        if (_smartPlaylistService == null || playlist == null)
+        {
+            return;
+        }
+
+        OpenSmartEditor(playlist);
+    }
+
+    private void OpenSmartEditor(SmartPlaylist playlist)
+    {
+        var editor = new SmartPlaylistEditorViewModel(
+            playlist,
+            _smartPlaylistService!,
+            _libraryService,
+            async saved =>
+            {
+                await LoadPlaylistsAsync();
+                SelectedSmartPlaylist = SmartPlaylists.FirstOrDefault(sp => sp.Id == saved.Id);
+                StatusMessage = $"Saved smart playlist '{saved.Name}'";
+            });
+        editor.RequestClose += (_, _) => ActiveSmartEditorVM = null;
+        ActiveSmartEditorVM = editor;
+    }
+
+    private async Task OnDeleteSmartPlaylistAsync(SmartPlaylist? playlist)
+    {
+        if (_smartPlaylistService == null || playlist == null)
+        {
+            return;
+        }
+
+        await _smartPlaylistService.DeleteAsync(playlist.Id);
+        await LoadPlaylistsAsync();
+        SelectedSmartPlaylist = SmartPlaylists.FirstOrDefault();
+        StatusMessage = $"Deleted smart playlist '{playlist.Name}'";
+    }
+
+    private async Task EvaluateSelectedSmartPlaylistAsync()
+    {
+        SelectedSmartPlaylistTracks.Clear();
+        OnPropertyChanged(nameof(SmartPlaylistStatsText));
+        if (_smartPlaylistService == null || SelectedSmartPlaylist == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var libraryTracks = await _libraryService.GetAllTracksAsync();
+            var matches = _smartPlaylistService.Evaluate(SelectedSmartPlaylist, libraryTracks);
+            foreach (var t in matches)
+            {
+                SelectedSmartPlaylistTracks.Add(t);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Smart playlist evaluation failed: {ex.Message}";
+        }
+
+        OnPropertyChanged(nameof(SmartPlaylistStatsText));
+    }
+
+    private async Task OnRefreshSmartPlaylistAsync()
+    {
+        await EvaluateSelectedSmartPlaylistAsync();
+        StatusMessage = SelectedSmartPlaylist != null ? $"Refreshed '{SelectedSmartPlaylist.Name}'" : string.Empty;
+    }
+
+    private async Task OnPlaySmartPlaylistAsync()
+    {
+        if (SelectedSmartPlaylistTracks.Count == 0)
+        {
+            return;
+        }
+
+        var tracks = SelectedSmartPlaylistTracks.ToList();
+        await _playerCoordinator.PlayTrackAsync(tracks[0], tracks);
     }
 }

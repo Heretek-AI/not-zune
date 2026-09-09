@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Artist> Artists => Set<Artist>();
     public DbSet<Playlist> Playlists => Set<Playlist>();
     public DbSet<PlayHistoryEntry> PlayHistory => Set<PlayHistoryEntry>();
+    public DbSet<SmartPlaylist> SmartPlaylists => Set<SmartPlaylist>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -61,6 +62,15 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(h => h.Id);
             entity.HasIndex(h => h.PlayedAtUtc);
+        });
+
+        modelBuilder.Entity<SmartPlaylist>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Rules)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<SmartPlaylistRule>>(string.IsNullOrEmpty(v) ? "[]" : v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<SmartPlaylistRule>());
         });
     }
 }

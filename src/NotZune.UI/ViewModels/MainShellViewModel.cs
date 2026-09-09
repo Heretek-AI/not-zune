@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Threading;
@@ -33,6 +36,8 @@ public class MainShellViewModel : ViewModelBase
     private readonly IUserStatsService? _userStatsService;
 
     private NavigationPivot _activePivot = NavigationPivot.Quickplay;
+    private readonly Stack<NavigationPivot> _navigationHistory = new();
+    private bool _isNavigatingBack;
     private ViewModelBase _currentView;
 
     private bool _isCompactMode;
@@ -96,6 +101,7 @@ public class MainShellViewModel : ViewModelBase
             {
                 CollectionVM.SearchQuery = value;
                 OnPropertyChanged(nameof(HasHeaderSearchQuery));
+                UpdateSearchSuggestions(value);
                 if (!string.IsNullOrWhiteSpace(value) && ActivePivot != NavigationPivot.Collection)
                 {
                     ActivePivot = NavigationPivot.Collection;
@@ -105,6 +111,45 @@ public class MainShellViewModel : ViewModelBase
     }
 
     public bool HasHeaderSearchQuery => !string.IsNullOrWhiteSpace(HeaderSearchQuery);
+
+    public ObservableCollection<string> SearchSuggestions { get; } = new();
+
+    public bool HasSearchSuggestions => SearchSuggestions.Count > 0 && !string.IsNullOrWhiteSpace(HeaderSearchQuery);
+
+    private void UpdateSearchSuggestions(string query)
+    {
+        SearchSuggestions.Clear();
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+        {
+            OnPropertyChanged(nameof(HasSearchSuggestions));
+            return;
+        }
+
+        var lower = query.Trim().ToLowerInvariant();
+        var suggestions = new List<string>();
+
+        suggestions.AddRange(CollectionVM.Artists
+            .Where(a => a.Name.ToLowerInvariant().Contains(lower))
+            .Take(3)
+            .Select(a => a.Name));
+
+        suggestions.AddRange(CollectionVM.Albums
+            .Where(a => a.Title.ToLowerInvariant().Contains(lower))
+            .Take(3)
+            .Select(a => a.Title));
+
+        suggestions.AddRange(CollectionVM.Songs
+            .Where(s => s.Title.ToLowerInvariant().Contains(lower))
+            .Take(3)
+            .Select(s => s.Title));
+
+        foreach (var suggestion in suggestions.Distinct().Take(8))
+        {
+            SearchSuggestions.Add(suggestion);
+        }
+
+        OnPropertyChanged(nameof(HasSearchSuggestions));
+    }
 
     public bool IsQuickDockVisible => !IsNowPlayingActive && !IsCompactMode;
     public string QuickDockDeviceName => DeviceVM.HasDevice ? DeviceVM.DeviceName.ToUpperInvariant() : "NO DEVICE";
@@ -119,8 +164,15 @@ public class MainShellViewModel : ViewModelBase
         get => _activePivot;
         set
         {
+            var previous = _activePivot;
             if (SetProperty(ref _activePivot, value))
             {
+                if (!_isNavigatingBack && previous != value)
+                {
+                    _navigationHistory.Push(previous);
+                    OnPropertyChanged(nameof(CanGoBack));
+                }
+
                 OnPropertyChanged(nameof(IsQuickplayActive));
                 OnPropertyChanged(nameof(IsCollectionActive));
                 OnPropertyChanged(nameof(IsNowPlayingActive));
@@ -247,6 +299,9 @@ public class MainShellViewModel : ViewModelBase
     public ICommand OpenPlaylistsCommand { get; }
     public ICommand NavigateToMixviewCommand { get; }
     public ICommand OpenCDCommand { get; }
+    public ICommand AcceptSuggestionCommand { get; }
+    public ICommand GoBackCommand { get; }
+    public bool CanGoBack => _navigationHistory.Count > 0;
 
     public MainShellViewModel(
         IPlayerCoordinator playerCoordinator,
@@ -261,7 +316,8 @@ public class MainShellViewModel : ViewModelBase
         IArtistEnrichmentService? enrichmentService = null,
         IArtworkCacheService? artworkCacheService = null,
         IExternalMetadataService? metadataService = null,
-        IAudioOutputEngine? audioEngine = null)
+        IAudioOutputEngine? audioEngine = null,
+        ISmartPlaylistService? smartPlaylistService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -272,7 +328,7 @@ public class MainShellViewModel : ViewModelBase
 
         // Child ViewModels
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
-        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService);
+        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService, smartPlaylistService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService, audioEngine);
         DeviceVM = new DeviceViewModel(deviceSyncService);
         SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService, settingsStore);
@@ -299,6 +355,16 @@ public class MainShellViewModel : ViewModelBase
         {
             ActivePivot = NavigationPivot.Disc;
         });
+
+        AcceptSuggestionCommand = new RelayCommand<string>(suggestion =>
+        {
+            if (!string.IsNullOrWhiteSpace(suggestion))
+            {
+                HeaderSearchQuery = suggestion;
+            }
+        });
+
+        GoBackCommand = new RelayCommand(GoBack);
 
         _currentView = QuickplayVM;
 
@@ -390,6 +456,30 @@ public class MainShellViewModel : ViewModelBase
         {
             // Fallback for headless test environments where Dispatcher is unavailable
         }
+    }
+
+    /// <summary>
+    /// Pops the most recent pivot off the navigation history (global back behavior, PAGESTACK parity).
+    /// </summary>
+    public void GoBack()
+    {
+        if (_navigationHistory.Count == 0)
+        {
+            return;
+        }
+
+        var previous = _navigationHistory.Pop();
+        _isNavigatingBack = true;
+        try
+        {
+            ActivePivot = previous;
+        }
+        finally
+        {
+            _isNavigatingBack = false;
+        }
+
+        OnPropertyChanged(nameof(CanGoBack));
     }
 
     private async Task OnToggleFavoriteAsync()

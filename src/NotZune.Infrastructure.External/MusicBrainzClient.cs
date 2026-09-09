@@ -79,6 +79,52 @@ public sealed class MusicBrainzClient
         return best.MbId == null ? null : best;
     }
 
+    public async Task<(string? MbId, string? Title, string? ArtistName, long? LengthMs, int Score)?> SearchRecordingAsync(string artistName, string trackTitle, CancellationToken cancellationToken)
+    {
+        var query = $"recording:%22{Uri.EscapeDataString(trackTitle)}%22%20AND%20artist:%22{Uri.EscapeDataString(artistName)}%22";
+        var url = $"https://musicbrainz.org/ws/2/recording/?query={query}&fmt=json&limit=3";
+        using var document = await GetJsonDocumentAsync(url, cancellationToken).ConfigureAwait(false);
+        if (document == null)
+        {
+            return null;
+        }
+
+        if (!document.RootElement.TryGetProperty("recordings", out var recordings) || recordings.GetArrayLength() == 0)
+        {
+            return null;
+        }
+
+        (string MbId, string Title, string ArtistName, long? LengthMs, int Score) best = default;
+        foreach (var recording in recordings.EnumerateArray())
+        {
+            var id = recording.TryGetProperty("id", out var idElement) && idElement.ValueKind == JsonValueKind.String ? idElement.GetString() : null;
+            if (string.IsNullOrEmpty(id))
+            {
+                continue;
+            }
+
+            var title = recording.TryGetProperty("title", out var titleElement) && titleElement.ValueKind == JsonValueKind.String ? titleElement.GetString() : null;
+            var length = recording.TryGetProperty("length", out var lengthElement) && lengthElement.TryGetInt64(out var ms) ? ms : (long?)null;
+            var score = recording.TryGetProperty("score", out var scoreElement) && scoreElement.TryGetInt32(out var parsedScore) ? parsedScore : 0;
+            var creditArtistName = string.Empty;
+            if (recording.TryGetProperty("artist-credit", out var credit) && credit.GetArrayLength() > 0)
+            {
+                var first = credit[0];
+                if (first.TryGetProperty("artist", out var artistElement) && artistElement.TryGetProperty("name", out var nameElement) && nameElement.ValueKind == JsonValueKind.String)
+                {
+                    creditArtistName = nameElement.GetString() ?? string.Empty;
+                }
+            }
+
+            if (best.MbId == null || score > best.Score)
+            {
+                best = (id, title ?? string.Empty, creditArtistName, length, score);
+            }
+        }
+
+        return best.MbId == null ? null : best;
+    }
+
     private async Task<JsonDocument?> GetJsonDocumentAsync(string url, CancellationToken cancellationToken)
     {
         try
