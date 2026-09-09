@@ -303,6 +303,36 @@ public class MainShellViewModel : ViewModelBase
     public ICommand GoBackCommand { get; }
     public bool CanGoBack => _navigationHistory.Count > 0;
 
+    private FirstLaunchWizardViewModel? _firstLaunchWizardVM;
+    public FirstLaunchWizardViewModel? FirstLaunchWizardVM
+    {
+        get => _firstLaunchWizardVM;
+        set
+        {
+            if (SetProperty(ref _firstLaunchWizardVM, value))
+            {
+                OnPropertyChanged(nameof(IsFirstLaunchWizardOpen));
+            }
+        }
+    }
+
+    public bool IsFirstLaunchWizardOpen => FirstLaunchWizardVM != null;
+
+    private WhatsNewViewModel? _whatsNewVM;
+    public WhatsNewViewModel? WhatsNewVM
+    {
+        get => _whatsNewVM;
+        set
+        {
+            if (SetProperty(ref _whatsNewVM, value))
+            {
+                OnPropertyChanged(nameof(IsWhatsNewOpen));
+            }
+        }
+    }
+
+    public bool IsWhatsNewOpen => WhatsNewVM != null;
+
     public MainShellViewModel(
         IPlayerCoordinator playerCoordinator,
         IMediaLibraryService libraryService,
@@ -330,8 +360,29 @@ public class MainShellViewModel : ViewModelBase
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
         CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService, smartPlaylistService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService, audioEngine);
-        DeviceVM = new DeviceViewModel(deviceSyncService);
+        DeviceVM = new DeviceViewModel(deviceSyncService, libraryService);
         SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService, settingsStore);
+
+        // Onboarding (FIRSTLAUNCH + WHATSNEW parity): wizard on first run, What's New on version change.
+        var startupSettings = settingsStore?.Load();
+        if (startupSettings != null && !startupSettings.FirstLaunchCompleted)
+        {
+            FirstLaunchWizardVM = new FirstLaunchWizardViewModel(
+                libraryService,
+                folderPickerService,
+                settingsStore,
+                _soundEffectService,
+                string.IsNullOrWhiteSpace(startupSettings.MusicFolderPath) ? null : startupSettings.MusicFolderPath);
+            FirstLaunchWizardVM.RequestClose += (_, _) =>
+            {
+                FirstLaunchWizardVM = null;
+                MaybeShowWhatsNew(settingsStore);
+            };
+        }
+        else
+        {
+            MaybeShowWhatsNew(settingsStore);
+        }
         ZuneCardVM = new ZuneCardViewModel(_userStatsService);
 
         var mixService = new MixviewCoordinator(libraryService);
@@ -480,6 +531,28 @@ public class MainShellViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(CanGoBack));
+    }
+
+    private void MaybeShowWhatsNew(ISettingsStore? settingsStore)
+    {
+        if (settingsStore == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var settings = settingsStore.Load();
+            if (settings.WhatsNewSeenVersion != NotZune.Application.AppInfo.Version)
+            {
+                WhatsNewVM = new WhatsNewViewModel(settingsStore);
+                WhatsNewVM.RequestClose += (_, _) => WhatsNewVM = null;
+            }
+        }
+        catch
+        {
+            // Never block startup on the What's New dialog.
+        }
     }
 
     private async Task OnToggleFavoriteAsync()

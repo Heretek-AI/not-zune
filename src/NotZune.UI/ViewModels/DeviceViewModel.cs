@@ -10,6 +10,7 @@ namespace NotZune.UI.ViewModels;
 public class DeviceViewModel : ViewModelBase
 {
     private readonly IDeviceSyncService _deviceSyncService;
+    private readonly IMediaLibraryService? _libraryService;
 
     public ObservableCollection<ZuneDevice> Devices { get; } = new();
 
@@ -121,21 +122,62 @@ public class DeviceViewModel : ViewModelBase
     public bool IsSyncing
     {
         get => _isSyncing;
-        set => SetProperty(ref _isSyncing, value);
+        set
+        {
+            if (SetProperty(ref _isSyncing, value))
+            {
+                OnPropertyChanged(nameof(HasSyncToast));
+                OnPropertyChanged(nameof(SyncToastInstruction));
+            }
+        }
     }
 
     private double _syncProgress;
     public double SyncProgress
     {
         get => _syncProgress;
-        set => SetProperty(ref _syncProgress, value);
+        set
+        {
+            if (SetProperty(ref _syncProgress, value))
+            {
+                OnPropertyChanged(nameof(SyncProgressPercent));
+                OnPropertyChanged(nameof(SyncToastText));
+            }
+        }
     }
+
+    public double SyncProgressPercent => Math.Round(SyncProgress * 100);
+
+    private int _syncItemCount;
+    public int SyncItemCount
+    {
+        get => _syncItemCount;
+        set
+        {
+            if (SetProperty(ref _syncItemCount, value))
+            {
+                OnPropertyChanged(nameof(SyncToastText));
+            }
+        }
+    }
+
+    /// <summary>SYNCANIMATION / SYNCINSTRUCTIONTOAST / SYNCNOTIFICATION parity.</summary>
+    public bool HasSyncToast => IsSyncing;
+
+    public string SyncToastText => IsSyncing
+        ? $"SYNCING {SyncItemCount} ITEM{(SyncItemCount == 1 ? string.Empty : "S")} — {SyncProgressPercent}% COMPLETE"
+        : string.Empty;
+
+    public string SyncToastInstruction => "Keep your Zune connected via USB. Wireless sync can be enabled in Settings → Device.";
+
+    public string SyncStatusText => IsSyncing ? "SYNCING..." : (HasDevice ? "CONNECTED" : "CONNECT USB");
 
     public ICommand SyncCommand { get; }
 
-    public DeviceViewModel(IDeviceSyncService deviceSyncService)
+    public DeviceViewModel(IDeviceSyncService deviceSyncService, IMediaLibraryService? libraryService = null)
     {
         _deviceSyncService = deviceSyncService;
+        _libraryService = libraryService;
 
         _deviceSyncService.DeviceConnected += OnDeviceConnected;
         _deviceSyncService.DeviceDisconnected += OnDeviceDisconnected;
@@ -174,6 +216,13 @@ public class DeviceViewModel : ViewModelBase
         try
         {
             IsSyncing = true;
+            SyncProgress = 0.0;
+            if (_libraryService != null)
+            {
+                var tracks = await _libraryService.GetAllTracksAsync();
+                SyncItemCount = tracks.Count;
+            }
+
             var progressReporter = new Progress<double>(p => SyncProgress = p);
             await _deviceSyncService.SyncDeviceAsync(SelectedDevice.SerialNumber, progressReporter);
             SyncProgress = 1.0;

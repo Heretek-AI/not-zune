@@ -105,6 +105,10 @@
         </Button>
         <ProgressBar Value="{Binding SyncProgress}" Maximum="1.0" Height="4" CornerRadius="0"
                      Foreground="{DynamicResource ZuneAccentBrush}" Background="{DynamicResource ZuneSurfaceElevatedBrush}" />
+        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" IsVisible="{Binding HasSyncToast}">
+          <Image Source="avares://NotZune.UI/Assets/Zune/Sync/SYNC.ACTIVELYSYNCING.PNG" Width="20" Height="20" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding SyncToastInstruction}" Classes="caption" FontSize="9" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+        </StackPanel>
       </StackPanel>
     </StackPanel>
 

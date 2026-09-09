@@ -47,6 +47,34 @@ public class SettingsViewModel : ViewModelBase
     private readonly IDeviceSyncService? _deviceSyncService;
     private readonly ISettingsStore? _settingsStore;
     private bool _isRestoringSettings = true;
+    private bool _firstLaunchCompleted;
+    private string _whatsNewSeenVersion = string.Empty;
+
+    /// <summary>Set once the first-launch wizard (or a manual skip) has completed.</summary>
+    public bool FirstLaunchCompleted
+    {
+        get => _firstLaunchCompleted;
+        set
+        {
+            if (SetProperty(ref _firstLaunchCompleted, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    /// <summary>The last application version whose What's New dialog was acknowledged.</summary>
+    public string WhatsNewSeenVersion
+    {
+        get => _whatsNewSeenVersion;
+        set
+        {
+            if (SetProperty(ref _whatsNewSeenVersion, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
 
     public event EventHandler<string?>? BackgroundArtChanged;
 
@@ -699,7 +727,7 @@ public class SettingsViewModel : ViewModelBase
     }
 
     public string PlatformInfo => $"{System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture})";
-    public string VersionInfo => "Not-Zune v1.0.0 (Phase 3 Fidelity Engine)";
+    public string VersionInfo => NotZune.Application.AppInfo.VersionDisplay;
 
     // ==========================================
     // COMMANDS
@@ -866,6 +894,11 @@ public class SettingsViewModel : ViewModelBase
             _networkName = settings.NetworkName;
             OnPropertyChanged(nameof(NetworkName));
 
+            _firstLaunchCompleted = settings.FirstLaunchCompleted;
+            OnPropertyChanged(nameof(FirstLaunchCompleted));
+            _whatsNewSeenVersion = settings.WhatsNewSeenVersion;
+            OnPropertyChanged(nameof(WhatsNewSeenVersion));
+
             if (!string.IsNullOrWhiteSpace(settings.SelectedAccentName))
             {
                 var accent = AccentColors.FirstOrDefault(a => a.Name == settings.SelectedAccentName);
@@ -933,7 +966,9 @@ public class SettingsViewModel : ViewModelBase
             WirelessSyncEnabled = WirelessSyncEnabled,
             NetworkName = NetworkName,
             SelectedAccentName = SelectedAccent.Name,
-            SelectedBackgroundName = SelectedBackground.Name
+            SelectedBackgroundName = SelectedBackground.Name,
+            FirstLaunchCompleted = _firstLaunchCompleted,
+            WhatsNewSeenVersion = _whatsNewSeenVersion
         });
     }
 

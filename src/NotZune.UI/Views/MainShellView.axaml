@@ -418,6 +418,37 @@
           </Grid>
         </Grid>
       </Border>
+
+      <!-- Sync Instruction Toast (SYNCANIMATION / SYNCINSTRUCTIONTOAST parity) -->
+      <Border IsVisible="{Binding DeviceVM.HasSyncToast}"
+              VerticalAlignment="Bottom"
+              HorizontalAlignment="Right"
+              Margin="0,0,24,72"
+              Background="#F0181818"
+              BorderBrush="{DynamicResource ZuneAccentBrush}"
+              BorderThickness="1"
+              CornerRadius="0"
+              Padding="16,12"
+              ZIndex="90">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <Image Source="avares://NotZune.UI/Assets/Zune/Sync/SYNC.ACTIVELYSYNCING.PNG" Width="24" Height="24" VerticalAlignment="Center" />
+          <StackPanel Spacing="4" VerticalAlignment="Center">
+            <TextBlock Text="{Binding DeviceVM.SyncToastText}" Classes="caption" FontWeight="Bold" LetterSpacing="1" Foreground="{DynamicResource ZuneAccentBrush}" />
+            <ProgressBar Minimum="0" Maximum="1" Value="{Binding DeviceVM.SyncProgress}" Height="3" CornerRadius="0" Foreground="{DynamicResource ZuneAccentBrush}" Width="240" />
+            <TextBlock Text="{Binding DeviceVM.SyncToastInstruction}" Classes="caption" FontSize="9" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- First-Launch Wizard Overlay (FIRSTLAUNCH parity) -->
+      <Grid IsVisible="{Binding IsFirstLaunchWizardOpen}" Background="#E8000000" ZIndex="110">
+        <views:FirstLaunchWizardView DataContext="{Binding FirstLaunchWizardVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Grid>
+
+      <!-- What's New Overlay (WHATSNEW parity) -->
+      <Grid IsVisible="{Binding IsWhatsNewOpen}" Background="#D9000000" ZIndex="105">
+        <views:WhatsNewView DataContext="{Binding WhatsNewVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Grid>
     </Grid>
   </Panel>
 </UserControl>
