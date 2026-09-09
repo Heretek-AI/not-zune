@@ -32,6 +32,16 @@ public partial class MainShellView : UserControl
         }
     }
 
+    private void OnPivotStripPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        if (sender is not ScrollViewer strip || e.Delta.Y == 0)
+            return;
+
+        var nextX = Math.Max(0, strip.Offset.X - e.Delta.Y * 48);
+        strip.Offset = new Avalonia.Vector(nextX, 0);
+        e.Handled = true;
+    }
+
     private void OnMinimizeClicked(object? sender, RoutedEventArgs e)
     {
         var window = TopLevel.GetTopLevel(this) as Window;

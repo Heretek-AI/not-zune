@@ -119,24 +119,29 @@
 
         <!-- Second Row: Primary Panoramic Pivots & Search / Mode Toggles -->
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,0,16,0">
-          <!-- Left: Iconic Zune Metro Panoramic Pivots -->
-          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
-            <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Quickplay}">
-              <TextBlock Text="QUICKPLAY" Classes="pivot-header" Classes.active="{Binding IsQuickplayActive}" />
-            </Button>
-            <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Collection}">
-              <TextBlock Text="COLLECTION" Classes="pivot-header" Classes.active="{Binding IsCollectionActive}" />
-            </Button>
-            <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Device}">
-              <TextBlock Text="DEVICE" Classes="pivot-header" Classes.active="{Binding IsDeviceActive}" />
-            </Button>
-            <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Disc}">
-              <TextBlock Text="DISC" Classes="pivot-header" Classes.active="{Binding IsDiscActive}" />
-            </Button>
-            <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Social}">
-              <TextBlock Text="SOCIAL" Classes="pivot-header" Classes.active="{Binding IsSocialActive}" />
-            </Button>
-          </StackPanel>
+          <!-- Left: Iconic Zune Metro Panoramic Pivots (pannable at narrow widths — content bleeds off the right edge) -->
+          <ScrollViewer Grid.Column="0"
+                        HorizontalScrollBarVisibility="Hidden"
+                        VerticalScrollBarVisibility="Disabled"
+                        PointerWheelChanged="OnPivotStripPointerWheelChanged">
+            <StackPanel Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
+              <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Quickplay}">
+                <TextBlock Text="QUICKPLAY" Classes="pivot-header" Classes.active="{Binding IsQuickplayActive}" />
+              </Button>
+              <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Collection}">
+                <TextBlock Text="COLLECTION" Classes="pivot-header" Classes.active="{Binding IsCollectionActive}" />
+              </Button>
+              <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Device}">
+                <TextBlock Text="DEVICE" Classes="pivot-header" Classes.active="{Binding IsDeviceActive}" />
+              </Button>
+              <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Disc}">
+                <TextBlock Text="DISC" Classes="pivot-header" Classes.active="{Binding IsDiscActive}" />
+              </Button>
+              <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Social}">
+                <TextBlock Text="SOCIAL" Classes="pivot-header" Classes.active="{Binding IsSocialActive}" />
+              </Button>
+            </StackPanel>
+          </ScrollViewer>
 
           <!-- Right: Back, Search Box, Now Playing & Settings -->
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
@@ -148,7 +153,7 @@
                     Padding="2"
                     VerticalAlignment="Center"
                     ToolTip.Tip="Back">
-              <Image Source="avares://NotZune.UI/Assets/Zune/Window/WINDOW.BACK.PNG" Width="14" Height="15" IsVisible="{Binding CanGoBack}" />
+              <Image Source="avares://NotZune.UI/Assets/Zune/Window/WINDOW.BACK.PNG" Width="24" Height="24" IsVisible="{Binding CanGoBack}" />
             </Button>
 
             <!-- Header Search Box with Autocomplete (hidden on quickplay/now playing/settings, ShowSearch parity) -->
@@ -319,8 +324,8 @@
                        Foreground="{DynamicResource ZuneAccentBrush}" 
                        Background="#1A1A1A" />
 
-          <!-- Controls Row -->
-          <Grid Grid.Row="1" ColumnDefinitions="340,*,340" Margin="28,0,28,0" VerticalAlignment="Center">
+          <!-- Controls Row (Auto columns keep the HUD intact down to the authentic 734px minimum) -->
+          <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="28,0,28,0" VerticalAlignment="Center">
             <!-- Left: Track Metadata & Heart / Broken Heart Rating -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
               <!-- Sharp Square Artwork Box -->
@@ -329,16 +334,16 @@
               </Border>
 
               <StackPanel VerticalAlignment="Center" Spacing="3">
-                <TextBlock Text="{Binding CurrentTrack.Title, FallbackValue='Not Playing'}" 
-                           Classes="body" 
-                           FontWeight="SemiBold" 
-                           TextTrimming="CharacterEllipsis" 
-                           MaxWidth="190" />
-                <TextBlock Text="{Binding CurrentTrack.ArtistName, FallbackValue='Zune Player'}" 
-                           Classes="caption" 
-                           Foreground="{DynamicResource ZuneTextSecondaryBrush}" 
-                           TextTrimming="CharacterEllipsis" 
-                           MaxWidth="190" />
+                <TextBlock Text="{Binding CurrentTrack.Title, FallbackValue='Not Playing'}"
+                           Classes="body"
+                           FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="150" />
+                <TextBlock Text="{Binding CurrentTrack.ArtistName, FallbackValue='Zune Player'}"
+                           Classes="caption"
+                           Foreground="{DynamicResource ZuneTextSecondaryBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="150" />
               </StackPanel>
 
               <!-- Zune Signature Tri-State Rating (Heart & Broken Heart) -->
@@ -362,7 +367,7 @@
             </StackPanel>
 
             <!-- Center: Complete Transport Controls -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
               <!-- Shuffle -->
               <Button Command="{Binding ToggleShuffleCommand}" Padding="6" ToolTip.Tip="Shuffle">
                 <Panel Width="23" Height="23">
@@ -399,7 +404,7 @@
             </StackPanel>
 
             <!-- Right: Scrub Timers & Volume Slider -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="14" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
               <TextBlock Text="{Binding ElapsedTimeText}" Classes="caption" VerticalAlignment="Center" />
               <TextBlock Text="/" Classes="caption" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
               <TextBlock Text="{Binding RemainingTimeText}" Classes="caption" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
@@ -407,7 +412,7 @@
               <!-- Volume Control -->
               <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="10,0,0,0">
                 <Image Source="avares://NotZune.UI/Assets/Zune/Transport/TRANSPORT.MUTE.OFF.PNG" Width="19" Height="16" VerticalAlignment="Center" />
-                <Slider Width="90" 
+                <Slider Width="70"
                         Value="{Binding Volume}" 
                         Minimum="0" 
                         Maximum="100" 

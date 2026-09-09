@@ -165,8 +165,8 @@ public class SettingsViewModel : ViewModelBase
     // ==========================================
     public ObservableCollection<AccentColorOption> AccentColors { get; } = new()
     {
-        new("Zune Pink (Signature)", "#FA2A55"),
-        new("Zune Orange", "#F09609"),
+        new("Zune Pink (Signature)", "#F10DA2"),
+        new("Zune Orange", "#EC6922"),
         new("Zune Electric Cyan", "#1BA1E2"),
         new("Zune Vivid Lime", "#339933"),
         new("Zune Deep Purple", "#A200FF")
@@ -1115,6 +1115,7 @@ public class SettingsViewModel : ViewModelBase
             if (Avalonia.Media.Color.TryParse(accent.HexCode, out var color))
             {
                 Avalonia.Application.Current.Resources["ZuneAccentBrush"] = new Avalonia.Media.SolidColorBrush(color);
+                Avalonia.Application.Current.Resources["SystemAccentColor"] = color;
                 var hoverColor = Avalonia.Media.Color.FromArgb(
                     255, 
                     (byte)Math.Min(255, color.R + 25), 

@@ -2,20 +2,21 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <Styles.Resources>
-    <!-- Zune Metro Palette -->
-    <Color x:Key="ZuneBackgroundColor">#111111</Color>
+    <!-- Zune Metro Palette (authentic 4.8 values: Shell.WindowColorFromRGB → #11090F / #F3EFF1) -->
+    <Color x:Key="ZuneBackgroundColor">#11090F</Color>
     <Color x:Key="ZuneSurfaceElevatedColor">#181818</Color>
     <Color x:Key="ZuneCardColor">#202020</Color>
     <Color x:Key="ZuneCardHoverColor">#282828</Color>
     <Color x:Key="ZuneBorderColor">#252525</Color>
-    
-    <!-- Signature Accent Defaults (Pink / Magenta) -->
-    <Color x:Key="ZuneAccentColor">#FA2A55</Color>
-    <Color x:Key="ZuneAccentHoverColor">#FF4D79</Color>
+
+    <!-- Signature Accent (authentic 4.8 magenta: TRANSPORT.*.ON #F10DA2, hover #FA6EC9, pressed #B9077B) -->
+    <Color x:Key="ZuneAccentColor">#F10DA2</Color>
+    <Color x:Key="ZuneAccentHoverColor">#FA6EC9</Color>
+    <Color x:Key="ZuneAccentPressedColor">#B9077B</Color>
 
     <!-- Optional Signature Accents -->
-    <Color x:Key="ZunePinkColor">#FA2A55</Color>
-    <Color x:Key="ZuneOrangeColor">#F09609</Color>
+    <Color x:Key="ZunePinkColor">#F10DA2</Color>
+    <Color x:Key="ZuneOrangeColor">#EC6922</Color>
     <Color x:Key="ZuneCyanColor">#1BA1E2</Color>
     <Color x:Key="ZuneLimeColor">#339933</Color>
     <Color x:Key="ZunePurpleColor">#A200FF</Color>
@@ -28,6 +29,7 @@
     <SolidColorBrush x:Key="ZuneBorderBrush" Color="{StaticResource ZuneBorderColor}" />
     <SolidColorBrush x:Key="ZuneAccentBrush" Color="{StaticResource ZuneAccentColor}" />
     <SolidColorBrush x:Key="ZuneAccentHoverBrush" Color="{StaticResource ZuneAccentHoverColor}" />
+    <SolidColorBrush x:Key="ZuneAccentPressedBrush" Color="{StaticResource ZuneAccentPressedColor}" />
 
     <!-- Typography Brushes: Opacity establishes visual depth -->
     <SolidColorBrush x:Key="ZuneTextActiveBrush" Color="#FFFFFF" />
@@ -62,7 +64,7 @@
 
   <Style Selector="TextBlock.pivot-header">
     <Setter Property="FontFamily" Value="{StaticResource ZunePivotFontFamily}" />
-    <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontSize" Value="32" />
     <Setter Property="FontWeight" Value="Light" />
     <Setter Property="Foreground" Value="{StaticResource ZuneTextDimmedBrush}" />
     <Setter Property="Cursor" Value="Hand" />

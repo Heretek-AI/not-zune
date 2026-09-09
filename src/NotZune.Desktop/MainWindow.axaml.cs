@@ -162,10 +162,10 @@ public partial class MainWindow : Window
         }
         else
         {
-            MinWidth = 1100;
-            MinHeight = 560;
-            Width = _preCompactWidth >= 1100 ? _preCompactWidth : 1360;
-            Height = _preCompactHeight >= 560 ? _preCompactHeight : 780;
+            MinWidth = 734;
+            MinHeight = 500;
+            Width = _preCompactWidth >= 734 ? _preCompactWidth : 1012;
+            Height = _preCompactHeight >= 500 ? _preCompactHeight : 693;
             Topmost = false;
             CanResize = true;
         }

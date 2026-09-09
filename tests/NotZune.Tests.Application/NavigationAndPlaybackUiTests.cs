@@ -64,7 +64,7 @@ public class NavigationAndPlaybackUiTests
     public void SettingsViewModel_SelectAccentCommand_UpdatesAccentColor()
     {
         var vm = new SettingsViewModel();
-        Assert.Equal("#FA2A55", vm.SelectedAccent.HexCode);
+        Assert.Equal("#F10DA2", vm.SelectedAccent.HexCode);
 
         var cyan = vm.AccentColors.First(a => a.HexCode == "#1BA1E2");
         vm.SelectAccentCommand.Execute(cyan);
