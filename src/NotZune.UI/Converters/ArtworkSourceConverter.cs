@@ -1,0 +1,53 @@
+using System;
+using System.Globalization;
+using System.IO;
+using Avalonia;
+using Avalonia.Data.Converters;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+
+namespace NotZune.UI.Converters;
+
+/// <summary>
+/// Converts a local cached artwork file path (or avares:// asset URI) into an IImage for XAML bindings.
+/// Returns null for missing sources so typographic fallback tiles remain visible.
+/// </summary>
+public class ArtworkSourceConverter : IValueConverter
+{
+    public static readonly ArtworkSourceConverter Instance = new();
+
+    public int DecodeWidth { get; set; } = 300;
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string source || string.IsNullOrWhiteSpace(source))
+        {
+            return null;
+        }
+
+        try
+        {
+            if (source.StartsWith("avares://", StringComparison.OrdinalIgnoreCase))
+            {
+                return new Bitmap(AssetLoader.Open(new Uri(source)));
+            }
+
+            if (File.Exists(source))
+            {
+                using var stream = File.OpenRead(source);
+                return Bitmap.DecodeToWidth(stream, DecodeWidth);
+            }
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException();
+    }
+}

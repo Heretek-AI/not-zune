@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Timers;
 using System.Windows.Input;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using NotZune.Application.Events;
 using NotZune.Application.Interfaces;
+using NotZune.Application.Models;
 using NotZune.Domain.Enums;
 using NotZune.Domain.Models;
 
@@ -20,6 +24,7 @@ public class NowPlayingViewModel : ViewModelBase
 {
     private readonly IPlayerCoordinator _playerCoordinator;
     private readonly IMediaLibraryService _libraryService;
+    private readonly IArtistEnrichmentService? _enrichmentService;
     private readonly System.Timers.Timer _hudIdleTimer;
     private readonly System.Timers.Timer _slideshowTimer;
     private readonly System.Timers.Timer _visualizerTimer;
@@ -36,7 +41,7 @@ public class NowPlayingViewModel : ViewModelBase
     public ObservableCollection<Track> UpcomingQueue { get; } = new();
     public ObservableCollection<double> VisualizerBars { get; } = new();
 
-    private readonly string[] _backdrops = new[]
+    private readonly string[] _themeBackdrops = new[]
     {
         "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-10.JPG",
         "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-15.JPG",
@@ -49,8 +54,14 @@ public class NowPlayingViewModel : ViewModelBase
         "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-47.JPG"
     };
 
+    private List<string> _activeBackdrops;
+    private string? _activeBackdropArtist;
     private int _backdropIndex = 0;
     private string _currentBackdropImage;
+
+    private string? _enrichedBiography;
+    private string? _biographySource;
+    private string? _lyrics;
     public string CurrentBackdropImage
     {
         get => _currentBackdropImage;
@@ -140,8 +151,13 @@ public class NowPlayingViewModel : ViewModelBase
         }
     }
 
-    public string BiographyText => $"Formed in Toronto, Canada, {ArtistName} has created a prolific catalog blending intricate rhythms and visionary songwriting. Their critically acclaimed works continue to inspire generations of listeners across the globe.";
-    public string LyricsText => $"[Verse 1]\nSprawling on the fringes of the city in geometric order\nAn insulated border in between the bright light and the far unlit unknown\n\n[Chorus]\nSubdivisions in the high school halls\nIn the shopping malls, conform or be cast out\nSubdivisions in the basement bars\nIn the backs of cars, be cool or be cast out";
+    public string BiographyText => _enrichedBiography
+        ?? $"{ArtistName} is cataloged in your Not-Zune collection. Enable online metadata services in Settings to display the full artist biography here.";
+
+    public string? BiographySource => _biographySource;
+
+    public string LyricsText => _lyrics
+        ?? "No lyrics found for this track. Online lyric lookup runs through LRCLIB when enabled in Settings > Software > Metadata.";
 
     public ICommand ToggleModeCommand { get; }
     public ICommand ToggleBioDrawerCommand { get; }
@@ -157,12 +173,20 @@ public class NowPlayingViewModel : ViewModelBase
 
     public NowPlayingViewModel(
         IPlayerCoordinator playerCoordinator,
-        IMediaLibraryService libraryService)
+        IMediaLibraryService libraryService,
+        IArtistEnrichmentService? enrichmentService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
+        _enrichmentService = enrichmentService;
 
-        _currentBackdropImage = _backdrops[0];
+        _activeBackdrops = new List<string>(_themeBackdrops);
+        _currentBackdropImage = _activeBackdrops[0];
+
+        if (_enrichmentService != null)
+        {
+            _enrichmentService.EnrichmentCompleted += OnEnrichmentCompleted;
+        }
 
         // Initialize 24 ambient visualizer bars
         for (int i = 0; i < 24; i++)
@@ -184,8 +208,9 @@ public class NowPlayingViewModel : ViewModelBase
         _slideshowTimer = new System.Timers.Timer(8000) { AutoReset = true };
         _slideshowTimer.Elapsed += (s, e) =>
         {
-            _backdropIndex = (_backdropIndex + 1) % _backdrops.Length;
-            CurrentBackdropImage = _backdrops[_backdropIndex];
+            if (_activeBackdrops.Count == 0) return;
+            _backdropIndex = (_backdropIndex + 1) % _activeBackdrops.Count;
+            CurrentBackdropImage = _activeBackdrops[_backdropIndex];
             KenBurnsScale = 1.05 + (_random.NextDouble() * 0.12);
             KenBurnsTranslateX = (_random.NextDouble() * 40) - 20;
             KenBurnsTranslateY = (_random.NextDouble() * 30) - 15;
@@ -349,9 +374,143 @@ public class NowPlayingViewModel : ViewModelBase
         OnPropertyChanged(nameof(RemainingTimeText));
         OnPropertyChanged(nameof(IsFavorite));
         OnPropertyChanged(nameof(IsDisliked));
-        OnPropertyChanged(nameof(BiographyText));
         UpdateUpcomingQueue();
         TriggerHudActivity();
+
+        BeginArtistEnrichment();
+        _ = LoadLyricsForCurrentTrackAsync();
+    }
+
+    private void BeginArtistEnrichment()
+    {
+        if (_enrichmentService == null)
+        {
+            return;
+        }
+
+        var artist = ArtistName;
+        if (string.IsNullOrWhiteSpace(artist))
+        {
+            return;
+        }
+
+        var cached = _enrichmentService.GetCached(artist);
+        if (cached != null)
+        {
+            ApplyEnrichmentSnapshot(cached);
+            return;
+        }
+
+        if (_activeBackdropArtist != artist)
+        {
+            ResetBackdropsToTheme();
+            _enrichedBiography = null;
+            _biographySource = null;
+            OnPropertyChanged(nameof(BiographyText));
+            OnPropertyChanged(nameof(BiographySource));
+        }
+
+        _ = LoadPersistedBiographyAsync(artist);
+        _enrichmentService.RequestEnrichment(artist);
+    }
+
+    private async System.Threading.Tasks.Task LoadPersistedBiographyAsync(string artistName)
+    {
+        try
+        {
+            var artists = await _libraryService.GetAllArtistsAsync();
+            var match = artists.FirstOrDefault(a => a.Name.Equals(artistName, StringComparison.OrdinalIgnoreCase));
+            if (match == null || string.IsNullOrWhiteSpace(match.Biography))
+            {
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!ArtistName.Equals(artistName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                if (_enrichedBiography == null && _enrichmentService?.GetCached(artistName) == null)
+                {
+                    _enrichedBiography = match.Biography;
+                    _biographySource = "Library";
+                    OnPropertyChanged(nameof(BiographyText));
+                    OnPropertyChanged(nameof(BiographySource));
+                }
+            });
+        }
+        catch (Exception)
+        {
+            // Persisted biography load is best-effort.
+        }
+    }
+
+    private async System.Threading.Tasks.Task LoadLyricsForCurrentTrackAsync()
+    {
+        if (_enrichmentService == null)
+        {
+            return;
+        }
+
+        var artist = ArtistName;
+        var title = TrackTitle;
+        var duration = CurrentTrack?.Duration;
+
+        var result = await _enrichmentService.GetLyricsAsync(artist, title, duration);
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (!ArtistName.Equals(artist, StringComparison.OrdinalIgnoreCase) || !TrackTitle.Equals(title, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _lyrics = result is { Found: true }
+                ? (!string.IsNullOrWhiteSpace(result.PlainLyrics) ? result.PlainLyrics : LrcLibStrip(result.SyncedLyrics))
+                : null;
+            OnPropertyChanged(nameof(LyricsText));
+        });
+    }
+
+    private static string? LrcLibStrip(string? syncedLyrics) => string.IsNullOrWhiteSpace(syncedLyrics) ? null : syncedLyrics;
+
+    private void OnEnrichmentCompleted(object? sender, ArtistEnrichmentSnapshot snapshot)
+    {
+        Dispatcher.UIThread.Post(() => ApplyEnrichmentSnapshot(snapshot));
+    }
+
+    private void ApplyEnrichmentSnapshot(ArtistEnrichmentSnapshot snapshot)
+    {
+        if (!ArtistName.Equals(snapshot.ArtistName, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _enrichedBiography = snapshot.Biography;
+        _biographySource = snapshot.BiographySource;
+        OnPropertyChanged(nameof(BiographyText));
+        OnPropertyChanged(nameof(BiographySource));
+
+        if (snapshot.BackdropLocalPaths.Count > 0)
+        {
+            _activeBackdropArtist = snapshot.ArtistName;
+            _activeBackdrops = snapshot.BackdropLocalPaths.ToList();
+            _backdropIndex = 0;
+            CurrentBackdropImage = _activeBackdrops[0];
+            KenBurnsScale = 1.05 + (_random.NextDouble() * 0.12);
+            KenBurnsTranslateX = (_random.NextDouble() * 40) - 20;
+            KenBurnsTranslateY = (_random.NextDouble() * 30) - 15;
+        }
+    }
+
+    private void ResetBackdropsToTheme()
+    {
+        _activeBackdropArtist = null;
+        _activeBackdrops = new List<string>(_themeBackdrops);
+        _backdropIndex = 0;
+        CurrentBackdropImage = _activeBackdrops[0];
     }
 
     private void OnStateChanged(object? sender, PlaybackStateChangedEventArgs e)

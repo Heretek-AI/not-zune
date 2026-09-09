@@ -22,6 +22,9 @@ public class CollectionViewModel : ViewModelBase
     private readonly IPlayerCoordinator _playerCoordinator;
     private readonly IMediaLibraryService _libraryService;
     private readonly ISmartDJService _smartDJService;
+    private readonly IArtworkCacheService? _artworkCache;
+    private readonly IExternalMetadataService? _metadataService;
+    private readonly HashSet<Guid> _artworkLookupsInFlight = new();
 
     private CollectionSubPivot _activeSubPivot = CollectionSubPivot.Artists;
     private string _searchQuery = string.Empty;
@@ -135,15 +138,36 @@ public class CollectionViewModel : ViewModelBase
 
     public bool IsEditMetadataOpen => ActiveEditMetadataVM != null;
 
+    private string? _findAlbumInfoStatusText;
+    public string? FindAlbumInfoStatusText
+    {
+        get => _findAlbumInfoStatusText;
+        set
+        {
+            if (SetProperty(ref _findAlbumInfoStatusText, value))
+            {
+                OnPropertyChanged(nameof(HasFindAlbumInfoStatus));
+            }
+        }
+    }
+
+    public bool HasFindAlbumInfoStatus => !string.IsNullOrEmpty(FindAlbumInfoStatusText);
+
+    public ICommand FindAlbumInfoCommand { get; }
+
     public CollectionViewModel(
         IPlayerCoordinator playerCoordinator,
         IMediaLibraryService libraryService,
         IPodcastService? podcastService = null,
-        ISmartDJService? smartDJService = null)
+        ISmartDJService? smartDJService = null,
+        IArtworkCacheService? artworkCache = null,
+        IExternalMetadataService? metadataService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
         _smartDJService = smartDJService ?? new NotZune.Application.Services.SmartDJEngine();
+        _artworkCache = artworkCache;
+        _metadataService = metadataService;
         var podService = podcastService ?? new NotZune.Application.Services.PodcastService(playerCoordinator);
         PodcastsVM = new PodcastsViewModel(podService);
         PlaylistsVM = new PlaylistsViewModel(libraryService, playerCoordinator);
@@ -190,7 +214,97 @@ public class CollectionViewModel : ViewModelBase
         StartSmartDjFromAlbumCommand = new AsyncRelayCommand<Album>(OnStartSmartDjFromAlbumAsync);
         StartSmartDjFromArtistCommand = new AsyncRelayCommand<Artist>(OnStartSmartDjFromArtistAsync);
 
+        FindAlbumInfoCommand = new AsyncRelayCommand<Album>(OnFindAlbumInfoAsync);
+
         _ = RefreshDataAsync();
+    }
+
+    private async System.Threading.Tasks.Task OnFindAlbumInfoAsync(Album? album)
+    {
+        if (album == null || _metadataService == null || _artworkCache == null)
+        {
+            FindAlbumInfoStatusText = "Online metadata services are unavailable.";
+            return;
+        }
+
+        lock (_artworkLookupsInFlight)
+        {
+            if (!_artworkLookupsInFlight.Add(album.Id))
+            {
+                return;
+            }
+        }
+
+        FindAlbumInfoStatusText = $"Searching MusicBrainz for \"{album.Title}\"...";
+        try
+        {
+            var match = await _metadataService.FindAlbumArtworkAsync(album.ArtistName, album.Title, album.Year);
+            if (match?.ArtworkUrl == null)
+            {
+                FindAlbumInfoStatusText = $"No matching release found for \"{album.Title}\".";
+                return;
+            }
+
+            var localPath = await _artworkCache.GetOrDownloadAsync(match.ArtworkUrl);
+            if (string.IsNullOrEmpty(localPath))
+            {
+                FindAlbumInfoStatusText = $"Cover art not yet available on the Cover Art Archive for \"{album.Title}\".";
+                return;
+            }
+
+            await _libraryService.SetAlbumArtworkAsync(album.Id, localPath);
+
+            var updated = new Album
+            {
+                Id = album.Id,
+                Title = album.Title,
+                ArtistId = album.ArtistId,
+                ArtistName = album.ArtistName,
+                Year = album.Year,
+                Genre = album.Genre,
+                ArtworkUri = localPath,
+                TrackCount = album.TrackCount,
+                IsPinned = album.IsPinned,
+                PinnedAtUtc = album.PinnedAtUtc,
+                Tracks = album.Tracks
+            };
+            ReplaceAlbumEverywhere(album, updated);
+            FindAlbumInfoStatusText = $"Cover art applied to \"{updated.Title}\".";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidOperationException)
+        {
+            FindAlbumInfoStatusText = $"Album lookup failed: {ex.Message}";
+        }
+        finally
+        {
+            lock (_artworkLookupsInFlight)
+            {
+                _artworkLookupsInFlight.Remove(album.Id);
+            }
+        }
+    }
+
+    private void ReplaceAlbumEverywhere(Album oldAlbum, Album updatedAlbum)
+    {
+        ReplaceAlbumInCollection(Albums, oldAlbum, updatedAlbum);
+        ReplaceAlbumInCollection(SelectedArtistAlbums, oldAlbum, updatedAlbum);
+        var index = _allAlbums.FindIndex(a => a.Id == oldAlbum.Id);
+        if (index >= 0)
+        {
+            _allAlbums[index] = updatedAlbum;
+        }
+    }
+
+    private static void ReplaceAlbumInCollection(ObservableCollection<Album> collection, Album oldAlbum, Album updatedAlbum)
+    {
+        for (int i = 0; i < collection.Count; i++)
+        {
+            if (collection[i].Id == oldAlbum.Id)
+            {
+                collection[i] = updatedAlbum;
+                return;
+            }
+        }
     }
 
     public void FilterQuery(string query)

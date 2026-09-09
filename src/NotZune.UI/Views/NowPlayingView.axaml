@@ -108,6 +108,7 @@
             <StackPanel Spacing="8">
               <TextBlock Text="BIOGRAPHY" Classes="caption" FontWeight="Bold" Foreground="{DynamicResource ZuneAccentBrush}" LetterSpacing="2" />
               <TextBlock Text="{Binding BiographyText}" Classes="body" TextWrapping="Wrap" LineHeight="18" Foreground="{DynamicResource ZuneTextHoverBrush}" />
+              <TextBlock Text="{Binding BiographySource, StringFormat=Source: {0}}" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" IsVisible="{Binding BiographySource, Converter={x:Static ObjectConverters.IsNotNull}}" />
             </StackPanel>
 
             <!-- Lyrics Section -->

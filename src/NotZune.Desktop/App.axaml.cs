@@ -9,6 +9,7 @@ using NotZune.Domain.Enums;
 using NotZune.Domain.Models;
 using NotZune.Infrastructure.Audio;
 using NotZune.Infrastructure.Devices;
+using NotZune.Infrastructure.External;
 using NotZune.Infrastructure.Persistence;
 using NotZune.UI.Services;
 using NotZune.UI.ViewModels;
@@ -68,6 +69,10 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IUserStatsService, UserStatsService>();
         services.AddSingleton<IPodcastService, PodcastService>();
         services.AddSingleton<IFolderPickerService, AvaloniaFolderPickerService>();
+        services.AddSingleton<ISettingsStore, JsonSettingsStore>();
+        services.AddSingleton<IArtworkCacheService, ArtworkCacheService>();
+        services.AddSingleton<IExternalMetadataService, ExternalMetadataService>();
+        services.AddSingleton<IArtistEnrichmentService, ArtistEnrichmentCoordinator>();
 
         // 3. Audio & Hardware Subsystems
         services.AddSingleton<AudioEngine>();

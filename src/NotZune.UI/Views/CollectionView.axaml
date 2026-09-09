@@ -5,6 +5,7 @@
              xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
              xmlns:views="clr-namespace:NotZune.UI.Views;assembly=NotZune.UI"
              xmlns:models="clr-namespace:NotZune.Domain.Models;assembly=NotZune.Domain"
+             xmlns:conv="clr-namespace:NotZune.UI.Converters;assembly=NotZune.UI"
              mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
              x:Class="NotZune.UI.Views.CollectionView"
              x:DataType="vm:CollectionViewModel">
@@ -135,16 +136,21 @@
                                         Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).StartSmartDjFromAlbumCommand}" 
                                         CommandParameter="{Binding}" />
                               <Separator Background="{DynamicResource ZuneBorderBrush}" />
-                              <MenuItem Header="Pin to Quickplay" 
-                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PinAlbumCommand}" 
+                              <MenuItem Header="Pin to Quickplay"
+                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PinAlbumCommand}"
                                         CommandParameter="{Binding}" />
-                              <MenuItem Header="Unpin from Quickplay" 
-                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).UnpinAlbumCommand}" 
+                              <MenuItem Header="Unpin from Quickplay"
+                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).UnpinAlbumCommand}"
+                                        CommandParameter="{Binding}" />
+                              <Separator Background="{DynamicResource ZuneBorderBrush}" />
+                              <MenuItem Header="Find Album Info..."
+                                        Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).FindAlbumInfoCommand}"
                                         CommandParameter="{Binding}" />
                             </ContextMenu>
                           </Border.ContextMenu>
                           <Grid>
-                            <TextBlock Text="♫" FontSize="44" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                            <Image Source="{Binding ArtworkUri, Converter={x:Static conv:ArtworkSourceConverter.Instance}}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="♫" FontSize="44" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" IsVisible="{Binding ArtworkUri, Converter={x:Static ObjectConverters.IsNull}}" />
                           </Grid>
                         </Border>
                         <TextBlock Text="{Binding Title}" Classes="album-title" TextWrapping="Wrap" />
@@ -205,7 +211,14 @@
       </Grid>
 
       <!-- 2. ALBUMS SUB-PIVOT: Interactive Grid -->
-      <ScrollViewer IsVisible="{Binding IsAlbumsActive}">
+      <Grid IsVisible="{Binding IsAlbumsActive}" RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0"
+                   Text="{Binding FindAlbumInfoStatusText}"
+                   Classes="caption"
+                   Foreground="{DynamicResource ZuneTextSecondaryBrush}"
+                   Margin="0,0,0,12"
+                   IsVisible="{Binding HasFindAlbumInfoStatus}" />
+        <ScrollViewer Grid.Row="1">
         <ItemsControl ItemsSource="{Binding Albums}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -227,24 +240,31 @@
                               Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).StartSmartDjFromAlbumCommand}" 
                               CommandParameter="{Binding}" />
                     <Separator Background="{DynamicResource ZuneBorderBrush}" />
-                    <MenuItem Header="Pin to Quickplay" 
-                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PinAlbumCommand}" 
+                    <MenuItem Header="Pin to Quickplay"
+                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).PinAlbumCommand}"
                               CommandParameter="{Binding}" />
-                    <MenuItem Header="Unpin from Quickplay" 
-                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).UnpinAlbumCommand}" 
+                    <MenuItem Header="Unpin from Quickplay"
+                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).UnpinAlbumCommand}"
+                              CommandParameter="{Binding}" />
+                    <Separator Background="{DynamicResource ZuneBorderBrush}" />
+                    <MenuItem Header="Find Album Info..."
+                              Command="{Binding $parent[UserControl].((vm:CollectionViewModel)DataContext).FindAlbumInfoCommand}"
                               CommandParameter="{Binding}" />
                   </ContextMenu>
                 </Button.ContextMenu>
-                <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
-                        BorderBrush="{DynamicResource ZuneBorderBrush}" 
-                        BorderThickness="1" 
-                        CornerRadius="0" 
-                        Width="180" 
-                        Height="240" 
+                <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}"
+                        BorderBrush="{DynamicResource ZuneBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="0"
+                        Width="180"
+                        Height="240"
                         Padding="12">
                   <Grid RowDefinitions="156,Auto,Auto">
                     <Border Grid.Row="0" Background="{DynamicResource ZuneCardBrush}" CornerRadius="0">
-                      <TextBlock Text="♫" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                      <Grid>
+                        <Image Source="{Binding ArtworkUri, Converter={x:Static conv:ArtworkSourceConverter.Instance}}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock Text="♫" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ZuneTextDimmedBrush}" IsVisible="{Binding ArtworkUri, Converter={x:Static ObjectConverters.IsNull}}" />
+                      </Grid>
                     </Border>
                     <TextBlock Grid.Row="1" Text="{Binding Title}" Classes="body" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,10,0,2" />
                     <TextBlock Grid.Row="2" Text="{Binding ArtistName}" Classes="caption" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
@@ -254,7 +274,8 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-      </ScrollViewer>
+        </ScrollViewer>
+      </Grid>
 
       <!-- 3. SONGS SUB-PIVOT: Exhaustive Data Table -->
       <Grid IsVisible="{Binding IsSongsActive}" RowDefinitions="Auto,*">

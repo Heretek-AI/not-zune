@@ -1,10 +1,12 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using NotZune.Application.Interfaces;
+using NotZune.Application.Models;
 
 namespace NotZune.UI.ViewModels;
 
@@ -43,6 +45,8 @@ public class SettingsViewModel : ViewModelBase
     private readonly IMediaLibraryService? _libraryService;
     private readonly IPlayerCoordinator? _playerCoordinator;
     private readonly IDeviceSyncService? _deviceSyncService;
+    private readonly ISettingsStore? _settingsStore;
+    private bool _isRestoringSettings = true;
 
     public event EventHandler<string?>? BackgroundArtChanged;
 
@@ -149,6 +153,7 @@ public class SettingsViewModel : ViewModelBase
             if (SetProperty(ref _selectedAccent, value))
             {
                 ApplyAccent(value);
+                SaveCurrentSettings();
             }
         }
     }
@@ -162,6 +167,7 @@ public class SettingsViewModel : ViewModelBase
             if (SetProperty(ref _selectedBackground, value))
             {
                 BackgroundArtChanged?.Invoke(this, value.AssetUri);
+                SaveCurrentSettings();
             }
         }
     }
@@ -181,6 +187,8 @@ public class SettingsViewModel : ViewModelBase
                 {
                     _playerCoordinator.CrossfadeDurationSeconds = value ? _crossfadeDurationSeconds : 0.0;
                 }
+
+                SaveCurrentSettings();
             }
         }
     }
@@ -199,6 +207,7 @@ public class SettingsViewModel : ViewModelBase
                     _playerCoordinator.CrossfadeDurationSeconds = clamped;
                 }
                 OnPropertyChanged(nameof(CrossfadeDurationText));
+                SaveCurrentSettings();
             }
         }
     }
@@ -217,6 +226,8 @@ public class SettingsViewModel : ViewModelBase
                 {
                     _playerCoordinator.GaplessEnabled = value;
                 }
+
+                SaveCurrentSettings();
             }
         }
     }
@@ -230,6 +241,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _soundService.SoundEffectsEnabled = value;
                 OnPropertyChanged();
+                SaveCurrentSettings();
             }
         }
     }
@@ -238,14 +250,26 @@ public class SettingsViewModel : ViewModelBase
     public bool VolumeLevelingEnabled
     {
         get => _volumeLevelingEnabled;
-        set => SetProperty(ref _volumeLevelingEnabled, value);
+        set
+        {
+            if (SetProperty(ref _volumeLevelingEnabled, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _compactModeAlwaysOnTop = true;
     public bool CompactModeAlwaysOnTop
     {
         get => _compactModeAlwaysOnTop;
-        set => SetProperty(ref _compactModeAlwaysOnTop, value);
+        set
+        {
+            if (SetProperty(ref _compactModeAlwaysOnTop, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     // ==========================================
@@ -263,7 +287,13 @@ public class SettingsViewModel : ViewModelBase
     public string SelectedRipFormat
     {
         get => _selectedRipFormat;
-        set => SetProperty(ref _selectedRipFormat, value);
+        set
+        {
+            if (SetProperty(ref _selectedRipFormat, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     public ObservableCollection<string> RipBitrates { get; } = new()
@@ -279,28 +309,52 @@ public class SettingsViewModel : ViewModelBase
     public string SelectedRipBitrate
     {
         get => _selectedRipBitrate;
-        set => SetProperty(ref _selectedRipBitrate, value);
+        set
+        {
+            if (SetProperty(ref _selectedRipBitrate, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private string _ripDestinationFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), "NotZune Rips");
     public string RipDestinationFolder
     {
         get => _ripDestinationFolder;
-        set => SetProperty(ref _ripDestinationFolder, value);
+        set
+        {
+            if (SetProperty(ref _ripDestinationFolder, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _autoRipCdOnInsert = false;
     public bool AutoRipCdOnInsert
     {
         get => _autoRipCdOnInsert;
-        set => SetProperty(ref _autoRipCdOnInsert, value);
+        set
+        {
+            if (SetProperty(ref _autoRipCdOnInsert, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _ejectCdAfterRip = true;
     public bool EjectCdAfterRip
     {
         get => _ejectCdAfterRip;
-        set => SetProperty(ref _ejectCdAfterRip, value);
+        set
+        {
+            if (SetProperty(ref _ejectCdAfterRip, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     // ==========================================
@@ -316,7 +370,13 @@ public class SettingsViewModel : ViewModelBase
     public string SelectedDiscType
     {
         get => _selectedDiscType;
-        set => SetProperty(ref _selectedDiscType, value);
+        set
+        {
+            if (SetProperty(ref _selectedDiscType, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     public ObservableCollection<string> BurnSpeeds { get; } = new()
@@ -332,14 +392,26 @@ public class SettingsViewModel : ViewModelBase
     public string SelectedBurnSpeed
     {
         get => _selectedBurnSpeed;
-        set => SetProperty(ref _selectedBurnSpeed, value);
+        set
+        {
+            if (SetProperty(ref _selectedBurnSpeed, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _applyVolumeLevelingToBurn = true;
     public bool ApplyVolumeLevelingToBurn
     {
         get => _applyVolumeLevelingToBurn;
-        set => SetProperty(ref _applyVolumeLevelingToBurn, value);
+        set
+        {
+            if (SetProperty(ref _applyVolumeLevelingToBurn, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     // ==========================================
@@ -349,35 +421,91 @@ public class SettingsViewModel : ViewModelBase
     public bool AutoFetchMetadata
     {
         get => _autoFetchMetadata;
-        set => SetProperty(ref _autoFetchMetadata, value);
+        set
+        {
+            if (SetProperty(ref _autoFetchMetadata, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _autoDownloadArtistArt = true;
     public bool AutoDownloadArtistArt
     {
         get => _autoDownloadArtistArt;
-        set => SetProperty(ref _autoDownloadArtistArt, value);
+        set
+        {
+            if (SetProperty(ref _autoDownloadArtistArt, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _writeTagsToFile = true;
     public bool WriteTagsToFile
     {
         get => _writeTagsToFile;
-        set => SetProperty(ref _writeTagsToFile, value);
+        set
+        {
+            if (SetProperty(ref _writeTagsToFile, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _musicBrainzEnabled = true;
     public bool MusicBrainzEnabled
     {
         get => _musicBrainzEnabled;
-        set => SetProperty(ref _musicBrainzEnabled, value);
+        set
+        {
+            if (SetProperty(ref _musicBrainzEnabled, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _lastFmEnabled = true;
     public bool LastFmEnabled
     {
         get => _lastFmEnabled;
-        set => SetProperty(ref _lastFmEnabled, value);
+        set
+        {
+            if (SetProperty(ref _lastFmEnabled, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private bool _lrcLibEnabled = true;
+    public bool LrcLibEnabled
+    {
+        get => _lrcLibEnabled;
+        set
+        {
+            if (SetProperty(ref _lrcLibEnabled, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private string _fanartTvApiKey = string.Empty;
+    public string FanartTvApiKey
+    {
+        get => _fanartTvApiKey;
+        set
+        {
+            if (SetProperty(ref _fanartTvApiKey, value?.Trim() ?? string.Empty))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     // ==========================================
@@ -399,6 +527,8 @@ public class SettingsViewModel : ViewModelBase
                 {
                     _libraryService?.StopDirectoryWatcher();
                 }
+
+                SaveCurrentSettings();
             }
         }
     }
@@ -407,7 +537,13 @@ public class SettingsViewModel : ViewModelBase
     public string StartupView
     {
         get => _startupView;
-        set => SetProperty(ref _startupView, value);
+        set
+        {
+            if (SetProperty(ref _startupView, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private string _musicFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic) is { Length: > 0 } myMusic
@@ -416,7 +552,13 @@ public class SettingsViewModel : ViewModelBase
     public string MusicFolderPath
     {
         get => _musicFolderPath;
-        set => SetProperty(ref _musicFolderPath, value);
+        set
+        {
+            if (SetProperty(ref _musicFolderPath, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _isScanning;
@@ -475,6 +617,7 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(ReservedGbText));
                 OnPropertyChanged(nameof(SyncSpaceGbText));
                 OnPropertyChanged(nameof(SpaceReservationSummaryText));
+                SaveCurrentSettings();
             }
         }
     }
@@ -494,7 +637,13 @@ public class SettingsViewModel : ViewModelBase
     public string MusicSyncRule
     {
         get => _musicSyncRule;
-        set => SetProperty(ref _musicSyncRule, value);
+        set
+        {
+            if (SetProperty(ref _musicSyncRule, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     public ObservableCollection<string> PodcastSyncRules { get; } = new()
@@ -509,21 +658,39 @@ public class SettingsViewModel : ViewModelBase
     public string PodcastSyncRule
     {
         get => _podcastSyncRule;
-        set => SetProperty(ref _podcastSyncRule, value);
+        set
+        {
+            if (SetProperty(ref _podcastSyncRule, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private bool _wirelessSyncEnabled = true;
     public bool WirelessSyncEnabled
     {
         get => _wirelessSyncEnabled;
-        set => SetProperty(ref _wirelessSyncEnabled, value);
+        set
+        {
+            if (SetProperty(ref _wirelessSyncEnabled, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     private string _networkName = "Home-WiFi (WPA2)";
     public string NetworkName
     {
         get => _networkName;
-        set => SetProperty(ref _networkName, value);
+        set
+        {
+            if (SetProperty(ref _networkName, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
     }
 
     public string PlatformInfo => $"{System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture})";
@@ -547,13 +714,15 @@ public class SettingsViewModel : ViewModelBase
         IFolderPickerService? folderPicker = null,
         IMediaLibraryService? libraryService = null,
         IPlayerCoordinator? playerCoordinator = null,
-        IDeviceSyncService? deviceSyncService = null)
+        IDeviceSyncService? deviceSyncService = null,
+        ISettingsStore? settingsStore = null)
     {
         _soundService = soundService;
         _folderPicker = folderPicker;
         _libraryService = libraryService;
         _playerCoordinator = playerCoordinator;
         _deviceSyncService = deviceSyncService;
+        _settingsStore = settingsStore;
 
         _selectedAccent = AccentColors[0];
         _selectedBackground = BackgroundThemes[1]; // Default to authentic Zune Vector Ribbon
@@ -601,6 +770,165 @@ public class SettingsViewModel : ViewModelBase
             }
         });
         TestSoundCommand = new RelayCommand(() => _soundService?.PlaySyncComplete());
+
+        LoadPersistedSettings();
+        _isRestoringSettings = false;
+    }
+
+    // ==========================================
+    // SETTINGS PERSISTENCE
+    // ==========================================
+    private void LoadPersistedSettings()
+    {
+        if (_settingsStore == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var settings = _settingsStore.Load();
+
+            if (!string.IsNullOrWhiteSpace(settings.MusicFolderPath))
+            {
+                _musicFolderPath = settings.MusicFolderPath;
+                OnPropertyChanged(nameof(MusicFolderPath));
+            }
+
+            CrossfadeEnabled = settings.CrossfadeEnabled;
+            _crossfadeDurationSeconds = Math.Clamp(settings.CrossfadeDurationSeconds, 0.0, 10.0);
+            OnPropertyChanged(nameof(CrossfadeDurationSeconds));
+            OnPropertyChanged(nameof(CrossfadeDurationText));
+            if (_playerCoordinator != null)
+            {
+                _playerCoordinator.CrossfadeDurationSeconds = CrossfadeEnabled ? _crossfadeDurationSeconds : 0.0;
+                _playerCoordinator.GaplessEnabled = settings.GaplessPlaybackEnabled;
+            }
+
+            if (_soundService != null)
+            {
+                _soundService.SoundEffectsEnabled = settings.SoundEffectsEnabled;
+            }
+            OnPropertyChanged(nameof(SoundEffectsEnabled));
+
+            VolumeLevelingEnabled = settings.VolumeLevelingEnabled;
+            CompactModeAlwaysOnTop = settings.CompactModeAlwaysOnTop;
+
+            _selectedRipFormat = settings.SelectedRipFormat;
+            OnPropertyChanged(nameof(SelectedRipFormat));
+            _selectedRipBitrate = settings.SelectedRipBitrate;
+            OnPropertyChanged(nameof(SelectedRipBitrate));
+            _ripDestinationFolder = settings.RipDestinationFolder;
+            OnPropertyChanged(nameof(RipDestinationFolder));
+            AutoRipCdOnInsert = settings.AutoRipCdOnInsert;
+            EjectCdAfterRip = settings.EjectCdAfterRip;
+
+            _selectedDiscType = settings.SelectedDiscType;
+            OnPropertyChanged(nameof(SelectedDiscType));
+            _selectedBurnSpeed = settings.SelectedBurnSpeed;
+            OnPropertyChanged(nameof(SelectedBurnSpeed));
+            _applyVolumeLevelingToBurn = settings.ApplyVolumeLevelingToBurn;
+            OnPropertyChanged(nameof(ApplyVolumeLevelingToBurn));
+
+            AutoFetchMetadata = settings.AutoFetchMetadata;
+            AutoDownloadArtistArt = settings.AutoDownloadArtistArt;
+            WriteTagsToFile = settings.WriteTagsToFile;
+            _musicBrainzEnabled = settings.MusicBrainzEnabled;
+            OnPropertyChanged(nameof(MusicBrainzEnabled));
+            _lastFmEnabled = settings.LastFmEnabled;
+            OnPropertyChanged(nameof(LastFmEnabled));
+            _lrcLibEnabled = settings.LrcLibEnabled;
+            OnPropertyChanged(nameof(LrcLibEnabled));
+            _fanartTvApiKey = settings.FanartTvApiKey;
+            OnPropertyChanged(nameof(FanartTvApiKey));
+
+            _startupView = settings.StartupView;
+            OnPropertyChanged(nameof(StartupView));
+
+            _spaceReservationPercent = Math.Clamp(settings.SpaceReservationPercent, 0, 50);
+            OnPropertyChanged(nameof(SpaceReservationPercent));
+            OnPropertyChanged(nameof(ReservedGbText));
+            OnPropertyChanged(nameof(SyncSpaceGbText));
+            OnPropertyChanged(nameof(SpaceReservationSummaryText));
+
+            _musicSyncRule = settings.MusicSyncRule;
+            OnPropertyChanged(nameof(MusicSyncRule));
+            _podcastSyncRule = settings.PodcastSyncRule;
+            OnPropertyChanged(nameof(PodcastSyncRule));
+            _wirelessSyncEnabled = settings.WirelessSyncEnabled;
+            OnPropertyChanged(nameof(WirelessSyncEnabled));
+            _networkName = settings.NetworkName;
+            OnPropertyChanged(nameof(NetworkName));
+
+            if (!string.IsNullOrWhiteSpace(settings.SelectedAccentName))
+            {
+                var accent = AccentColors.FirstOrDefault(a => a.Name == settings.SelectedAccentName);
+                if (accent != null)
+                {
+                    _selectedAccent = accent;
+                    ApplyAccent(accent);
+                    OnPropertyChanged(nameof(SelectedAccent));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(settings.SelectedBackgroundName))
+            {
+                var theme = BackgroundThemes.FirstOrDefault(t => t.Name == settings.SelectedBackgroundName);
+                if (theme != null)
+                {
+                    _selectedBackground = theme;
+                    BackgroundArtChanged?.Invoke(this, theme.AssetUri);
+                    OnPropertyChanged(nameof(SelectedBackground));
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Corrupt settings should never break startup; defaults apply.
+        }
+    }
+
+    private void SaveCurrentSettings()
+    {
+        if (_settingsStore == null || _isRestoringSettings)
+        {
+            return;
+        }
+
+        _settingsStore.Save(new AppSettings
+        {
+            MusicFolderPath = MusicFolderPath,
+            AutoWatchFolder = AutoWatchFolder,
+            StartupView = StartupView,
+            CrossfadeEnabled = CrossfadeEnabled,
+            CrossfadeDurationSeconds = CrossfadeDurationSeconds,
+            GaplessPlaybackEnabled = GaplessPlaybackEnabled,
+            SoundEffectsEnabled = SoundEffectsEnabled,
+            VolumeLevelingEnabled = VolumeLevelingEnabled,
+            CompactModeAlwaysOnTop = CompactModeAlwaysOnTop,
+            SelectedRipFormat = SelectedRipFormat,
+            SelectedRipBitrate = SelectedRipBitrate,
+            RipDestinationFolder = RipDestinationFolder,
+            AutoRipCdOnInsert = AutoRipCdOnInsert,
+            EjectCdAfterRip = EjectCdAfterRip,
+            SelectedDiscType = SelectedDiscType,
+            SelectedBurnSpeed = SelectedBurnSpeed,
+            ApplyVolumeLevelingToBurn = ApplyVolumeLevelingToBurn,
+            AutoFetchMetadata = AutoFetchMetadata,
+            AutoDownloadArtistArt = AutoDownloadArtistArt,
+            WriteTagsToFile = WriteTagsToFile,
+            MusicBrainzEnabled = MusicBrainzEnabled,
+            LastFmEnabled = LastFmEnabled,
+            LrcLibEnabled = LrcLibEnabled,
+            FanartTvApiKey = FanartTvApiKey,
+            SpaceReservationPercent = SpaceReservationPercent,
+            MusicSyncRule = MusicSyncRule,
+            PodcastSyncRule = PodcastSyncRule,
+            WirelessSyncEnabled = WirelessSyncEnabled,
+            NetworkName = NetworkName,
+            SelectedAccentName = SelectedAccent.Name,
+            SelectedBackgroundName = SelectedBackground.Name
+        });
     }
 
     private async Task OnSelectFolderAsync()

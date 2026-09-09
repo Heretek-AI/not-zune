@@ -53,6 +53,8 @@ public interface IMediaLibraryService
     Task<IReadOnlyList<Track>> GetPlaylistTracksAsync(Guid playlistId);
     Task ExportPlaylistToZplAsync(Guid playlistId, string targetFilePath);
     Task UpdateTrackMetadataAsync(Guid trackId, string title, string artistName, string albumTitle, int? year, string genre, int trackNumber, int discNumber);
+    Task SetAlbumArtworkAsync(Guid albumId, string? artworkUri);
+    Task SetArtistMetadataAsync(string artistName, string? biography, string? thumbnailUri, string? backgroundImageUri, string? musicBrainzId);
     Task<IReadOnlyList<Album>> GetPinnedAlbumsAsync();
     Task PinAlbumAsync(Guid albumId);
     Task UnpinAlbumAsync(Guid albumId);

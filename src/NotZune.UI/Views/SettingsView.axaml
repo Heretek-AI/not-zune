@@ -311,14 +311,27 @@
 
           <StackPanel Spacing="10">
             <TextBlock Text="DATA PROVIDERS" Classes="section-header" />
-            <CheckBox IsChecked="{Binding MusicBrainzEnabled}" 
-                      Content="MusicBrainz / Cover Art Archive (Track and Album Metadata)" 
-                      CornerRadius="0" 
+            <CheckBox IsChecked="{Binding MusicBrainzEnabled}"
+                      Content="MusicBrainz / Cover Art Archive (Track and Album Metadata)"
+                      CornerRadius="0"
                       Foreground="{DynamicResource ZuneTextActiveBrush}" />
-            <CheckBox IsChecked="{Binding LastFmEnabled}" 
-                      Content="Last.fm / Fanart.tv (Artist Relations, Mixview Constellation &amp; Photography)" 
-                      CornerRadius="0" 
+            <CheckBox IsChecked="{Binding LastFmEnabled}"
+                      Content="Last.fm / Fanart.tv (Artist Relations, Mixview Constellation &amp; Photography)"
+                      CornerRadius="0"
                       Foreground="{DynamicResource ZuneTextActiveBrush}" />
+            <CheckBox IsChecked="{Binding LrcLibEnabled}"
+                      Content="LRCLIB (synced and plain lyrics for Now Playing)"
+                      CornerRadius="0"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="FANART.TV API KEY" Classes="section-header" />
+            <TextBlock Text="Register a free personal key at fanart.tv to stream real artist backdrops into the Ken-Burns slideshow. MusicBrainz, Cover Art Archive, Wikipedia, and LRCLIB lookups stay key-free." Classes="caption" TextWrapping="Wrap" />
+            <TextBox Text="{Binding FanartTvApiKey}"
+                     Watermark="Paste your personal Fanart.tv API key here"
+                     CornerRadius="0"
+                     FontSize="12" />
           </StackPanel>
         </StackPanel>
 

@@ -55,6 +55,8 @@ public class ZuneFeatureGapTests
             LastUpdatedMetadata = (trackId, title, artistName, albumTitle, year, genre, trackNumber, discNumber);
             return Task.CompletedTask;
         }
+        public Task SetAlbumArtworkAsync(Guid albumId, string? artworkUri) => Task.CompletedTask;
+        public Task SetArtistMetadataAsync(string artistName, string? biography, string? thumbnailUri, string? backgroundImageUri, string? musicBrainzId) => Task.CompletedTask;
         public List<Album> PinnedAlbums { get; set; } = new();
         public Task<IReadOnlyList<Album>> GetPinnedAlbumsAsync() => Task.FromResult<IReadOnlyList<Album>>(PinnedAlbums);
         public Task PinAlbumAsync(Guid albumId)

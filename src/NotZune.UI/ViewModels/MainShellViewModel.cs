@@ -256,7 +256,11 @@ public class MainShellViewModel : ViewModelBase
         ISoundEffectService? soundEffectService = null,
         IUserStatsService? userStatsService = null,
         IPodcastService? podcastService = null,
-        IFolderPickerService? folderPickerService = null)
+        IFolderPickerService? folderPickerService = null,
+        ISettingsStore? settingsStore = null,
+        IArtistEnrichmentService? enrichmentService = null,
+        IArtworkCacheService? artworkCacheService = null,
+        IExternalMetadataService? metadataService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -267,10 +271,10 @@ public class MainShellViewModel : ViewModelBase
 
         // Child ViewModels
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
-        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService);
-        NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService);
+        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService);
+        NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService);
         DeviceVM = new DeviceViewModel(deviceSyncService);
-        SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService);
+        SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService, settingsStore);
         ZuneCardVM = new ZuneCardViewModel(_userStatsService);
 
         var mixService = new MixviewCoordinator(libraryService);

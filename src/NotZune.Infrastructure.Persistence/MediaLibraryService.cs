@@ -95,6 +95,47 @@ public class MediaLibraryService : IMediaLibraryService
         }
     }
 
+    public async Task SetAlbumArtworkAsync(Guid albumId, string? artworkUri)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var album = await ctx.Albums.FindAsync(albumId);
+        if (album != null)
+        {
+            album.ArtworkUri = artworkUri;
+            await ctx.SaveChangesAsync();
+        }
+    }
+
+    public async Task SetArtistMetadataAsync(string artistName, string? biography, string? thumbnailUri, string? backgroundImageUri, string? musicBrainzId)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync();
+        var artist = await ctx.Artists.FirstOrDefaultAsync(a => a.Name == artistName);
+        if (artist != null)
+        {
+            if (!string.IsNullOrWhiteSpace(biography))
+            {
+                artist.Biography = biography;
+            }
+
+            if (!string.IsNullOrWhiteSpace(thumbnailUri))
+            {
+                artist.ThumbnailUri = thumbnailUri;
+            }
+
+            if (!string.IsNullOrWhiteSpace(backgroundImageUri))
+            {
+                artist.BackgroundImageUri = backgroundImageUri;
+            }
+
+            if (!string.IsNullOrWhiteSpace(musicBrainzId))
+            {
+                artist.MusicBrainzId = musicBrainzId;
+            }
+
+            await ctx.SaveChangesAsync();
+        }
+    }
+
     public async Task ClearDemoDataAsync()
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync();
