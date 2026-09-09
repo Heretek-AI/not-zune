@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using NotZune.Application.Interfaces;
 using NotZune.Application.Services;
@@ -38,9 +39,19 @@ public class VideoPhotoParityTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
+        // Windows keeps pooled SQLite connections open, which would lock test.db.
+        SqliteConnection.ClearAllPools();
+
+        try
         {
-            Directory.Delete(_tempDir, recursive: true);
+            if (Directory.Exists(_tempDir))
+            {
+                Directory.Delete(_tempDir, recursive: true);
+            }
+        }
+        catch (IOException)
+        {
+            // Best-effort cleanup; a lingering temp dir must not fail the test run.
         }
     }
 

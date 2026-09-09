@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using NotZune.Application.Interfaces;
 using NotZune.Application.Models;
@@ -307,6 +308,9 @@ public class SyncGroupPersistenceTests : IDisposable
 
     public void Dispose()
     {
+        // Windows keeps pooled SQLite connections open, which would lock test.db.
+        SqliteConnection.ClearAllPools();
+
         try
         {
             if (Directory.Exists(_tempDir))
@@ -314,8 +318,9 @@ public class SyncGroupPersistenceTests : IDisposable
                 Directory.Delete(_tempDir, recursive: true);
             }
         }
-        catch
+        catch (IOException)
         {
+            // Best-effort cleanup; a lingering temp dir must not fail the test run.
         }
     }
 

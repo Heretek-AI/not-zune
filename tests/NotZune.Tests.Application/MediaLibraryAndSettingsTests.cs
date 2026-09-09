@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using NotZune.Application.Interfaces;
 using NotZune.Domain.Enums;
@@ -32,6 +33,9 @@ public class MediaLibraryAndSettingsTests : IDisposable
 
     public void Dispose()
     {
+        // Windows keeps pooled SQLite connections open, which would lock test.db.
+        SqliteConnection.ClearAllPools();
+
         if (File.Exists(_dbPath))
         {
             try { File.Delete(_dbPath); } catch { }
