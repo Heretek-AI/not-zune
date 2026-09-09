@@ -32,4 +32,13 @@ bld/
 notzune.db
 
 # Disassembly temporary downloads and unpack caches
-tools/
+tools/*
+!tools/disassembly
+tools/disassembly/*
+!tools/disassembly/zuneshell
+!tools/disassembly/zunedbapi
+!tools/disassembly/zuneshell_resources
+!tools/disassembly/uix
+
+# Local Zune installer packages (kept out of VCS; decompiled trees above are tracked)
+review/
