@@ -33,6 +33,7 @@ public class SoundEffectService : ISoundEffectService
     public void PlaySyncComplete() => PlaySound("COMPLETEDSYNCBURNCD.WAV");
     public void PlayDownloadComplete() => PlaySound("DOWNLOAD.WAV");
     public void PlayRipComplete() => PlaySound("COMPLETEDRIPREVERSESYNC.WAV");
+    public void PlayBurnComplete() => PlaySound("COMPLETEDSYNCBURNCD.WAV");
     public void PlayNotification() => PlaySound("INBOX.WAV");
 
     private void PlaySound(string filename)

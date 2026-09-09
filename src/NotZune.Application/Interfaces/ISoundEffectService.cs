@@ -6,5 +6,6 @@ public interface ISoundEffectService
     void PlaySyncComplete();
     void PlayDownloadComplete();
     void PlayRipComplete();
+    void PlayBurnComplete();
     void PlayNotification();
 }

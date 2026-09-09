@@ -74,6 +74,28 @@
             <TextBlock Text="{Binding FreeText}" Classes="caption" FontSize="10" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
           </StackPanel>
         </WrapPanel>
+
+        <!-- Space Reservation Control -->
+        <StackPanel Spacing="6" Margin="0,8,0,0">
+          <TextBlock Text="SPACE RESERVATION" Classes="section-header" FontSize="11" />
+          <TextBlock Text="{Binding SpaceReservationSummaryText}" Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}" />
+          <Grid ColumnDefinitions="*,Auto" MaxWidth="500" HorizontalAlignment="Left" Margin="0,4,0,0">
+            <Slider Grid.Column="0" 
+                    Value="{Binding SpaceReservationPercent}" 
+                    Minimum="0" 
+                    Maximum="50" 
+                    SmallChange="5" 
+                    LargeChange="10" 
+                    Width="320" 
+                    HorizontalAlignment="Left" />
+            <TextBlock Grid.Column="1" 
+                       Text="{Binding SpaceReservationPercent, StringFormat={}{0}%}" 
+                       Classes="body" 
+                       FontWeight="Bold" 
+                       VerticalAlignment="Center" 
+                       Margin="12,0,0,0" />
+          </Grid>
+        </StackPanel>
       </StackPanel>
 
       <!-- Sync Button & Progress -->

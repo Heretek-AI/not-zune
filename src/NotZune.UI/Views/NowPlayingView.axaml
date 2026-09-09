@@ -14,16 +14,30 @@
     <!-- MODE 1: DYNAMIC ARTIST CANVAS                  -->
     <!-- ============================================== -->
     <Grid IsVisible="{Binding IsArtistCanvasMode}">
-      <!-- Ambient Gradient Vignette -->
-      <Border CornerRadius="0">
-        <Border.Background>
-          <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-            <GradientStop Offset="0.0" Color="#181818" />
-            <GradientStop Offset="0.4" Color="#101010" />
-            <GradientStop Offset="1.0" Color="#070707" />
-          </LinearGradientBrush>
-        </Border.Background>
-      </Border>
+      <!-- Ken-Burns Pan/Zoom Animated Backdrop Photo -->
+      <Grid ClipToBounds="True">
+        <Image Source="{Binding CurrentBackdropImage}" 
+               Stretch="UniformToFill" 
+               Opacity="0.25">
+          <Image.RenderTransform>
+            <TransformGroup>
+              <ScaleTransform ScaleX="{Binding KenBurnsScale}" ScaleY="{Binding KenBurnsScale}" />
+              <TranslateTransform X="{Binding KenBurnsTranslateX}" Y="{Binding KenBurnsTranslateY}" />
+            </TransformGroup>
+          </Image.RenderTransform>
+        </Image>
+
+        <!-- Dark Matte Gradient Overlay -->
+        <Border CornerRadius="0">
+          <Border.Background>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+              <GradientStop Offset="0.0" Color="#E6141414" />
+              <GradientStop Offset="0.5" Color="#F20D0D0D" />
+              <GradientStop Offset="1.0" Color="#FA070707" />
+            </LinearGradientBrush>
+          </Border.Background>
+        </Border>
+      </Grid>
 
       <!-- Giant Ambient Typographic Watermark -->
       <TextBlock Text="{Binding ArtistName}" 
@@ -55,6 +69,29 @@
           <TextBlock Text="{Binding Genre}" Classes="body" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
         </StackPanel>
       </StackPanel>
+
+      <!-- Ambient Audio Spectrum Equalizer (Reactive Bars) -->
+      <ItemsControl ItemsSource="{Binding VisualizerBars}" 
+                    HorizontalAlignment="Right" 
+                    VerticalAlignment="Bottom" 
+                    Margin="0,0,48,32" 
+                    Opacity="0.75"
+                    IsHitTestVisible="False">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Bottom" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Width="3" 
+                    Height="{Binding}" 
+                    Background="{DynamicResource ZuneAccentBrush}" 
+                    CornerRadius="0" 
+                    VerticalAlignment="Bottom" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
 
       <!-- Slide-out Drawer: Lyrics & Artist Biography -->
       <Border HorizontalAlignment="Right" 
@@ -240,6 +277,14 @@
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Top" 
                 Margin="0,20,40,0">
+      <!-- Mixview Constellation Discovery -->
+      <Button Command="{Binding LaunchMixviewCommand}" Classes="zune-action">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Image Source="avares://NotZune.UI/Assets/Zune/Mixview/MIX.MIX.DEFAULT.PNG" Width="13" Height="13" VerticalAlignment="Center" />
+          <TextBlock Text="MIXVIEW" Classes="caption" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+
       <!-- Showlist Queue Toggle -->
       <Button Command="{Binding ToggleShowlistCommand}" Classes="zune-action">
         <StackPanel Orientation="Horizontal" Spacing="6">

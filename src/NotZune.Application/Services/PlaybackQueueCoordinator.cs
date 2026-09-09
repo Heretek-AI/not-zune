@@ -47,6 +47,27 @@ public class PlaybackQueueCoordinator : IPlayerCoordinator
         set => _repeat = value;
     }
 
+    private double _crossfadeDurationSeconds = 2.0;
+    public double CrossfadeDurationSeconds
+    {
+        get => _crossfadeDurationSeconds;
+        set => _crossfadeDurationSeconds = Math.Clamp(value, 0.0, 10.0);
+    }
+
+    private bool _isCrossfading;
+    public bool IsCrossfading
+    {
+        get => _isCrossfading;
+        private set => _isCrossfading = value;
+    }
+
+    private bool _gaplessEnabled = true;
+    public bool GaplessEnabled
+    {
+        get => _gaplessEnabled;
+        set => _gaplessEnabled = value;
+    }
+
     public IReadOnlyList<Track> Queue
     {
         get
@@ -88,6 +109,7 @@ public class PlaybackQueueCoordinator : IPlayerCoordinator
             }
 
             _currentPosition = TimeSpan.Zero;
+            _isCrossfading = false;
             _state = PlaybackState.Playing;
         }
 
@@ -123,6 +145,7 @@ public class PlaybackQueueCoordinator : IPlayerCoordinator
     {
         _state = PlaybackState.Stopped;
         _currentPosition = TimeSpan.Zero;
+        _isCrossfading = false;
         StateChanged?.Invoke(this, new PlaybackStateChangedEventArgs(_state, _currentPosition));
         return Task.CompletedTask;
     }
@@ -149,11 +172,13 @@ public class PlaybackQueueCoordinator : IPlayerCoordinator
             {
                 _state = PlaybackState.Stopped;
                 _currentPosition = TimeSpan.Zero;
+                _isCrossfading = false;
                 StateChanged?.Invoke(this, new PlaybackStateChangedEventArgs(_state, _currentPosition));
                 return Task.CompletedTask;
             }
 
             _currentPosition = TimeSpan.Zero;
+            _isCrossfading = false;
             _state = PlaybackState.Playing;
         }
 
@@ -196,6 +221,15 @@ public class PlaybackQueueCoordinator : IPlayerCoordinator
 
         _currentPosition = position < TimeSpan.Zero ? TimeSpan.Zero : 
                            position > Duration ? Duration : position;
+
+        if (Duration > TimeSpan.Zero && _crossfadeDurationSeconds > 0)
+        {
+            IsCrossfading = (Duration - _currentPosition) <= TimeSpan.FromSeconds(_crossfadeDurationSeconds);
+        }
+        else
+        {
+            IsCrossfading = false;
+        }
 
         StateChanged?.Invoke(this, new PlaybackStateChangedEventArgs(_state, _currentPosition));
         return Task.CompletedTask;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Timers;
 using System.Windows.Input;
@@ -20,6 +21,11 @@ public class NowPlayingViewModel : ViewModelBase
     private readonly IPlayerCoordinator _playerCoordinator;
     private readonly IMediaLibraryService _libraryService;
     private readonly System.Timers.Timer _hudIdleTimer;
+    private readonly System.Timers.Timer _slideshowTimer;
+    private readonly System.Timers.Timer _visualizerTimer;
+    private readonly Random _random = new();
+
+    public event EventHandler<string>? LaunchMixviewRequested;
 
     private NowPlayingMode _mode = NowPlayingMode.ArtistCanvas;
     private bool _isHudVisible = true;
@@ -28,6 +34,49 @@ public class NowPlayingViewModel : ViewModelBase
 
     public ObservableCollection<Album> MosaicWallAlbums { get; } = new();
     public ObservableCollection<Track> UpcomingQueue { get; } = new();
+    public ObservableCollection<double> VisualizerBars { get; } = new();
+
+    private readonly string[] _backdrops = new[]
+    {
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-10.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-15.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-20.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-25.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-30.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-35.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-40.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-45.JPG",
+        "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-47.JPG"
+    };
+
+    private int _backdropIndex = 0;
+    private string _currentBackdropImage;
+    public string CurrentBackdropImage
+    {
+        get => _currentBackdropImage;
+        set => SetProperty(ref _currentBackdropImage, value);
+    }
+
+    private double _kenBurnsScale = 1.05;
+    public double KenBurnsScale
+    {
+        get => _kenBurnsScale;
+        set => SetProperty(ref _kenBurnsScale, value);
+    }
+
+    private double _kenBurnsTranslateX = 0;
+    public double KenBurnsTranslateX
+    {
+        get => _kenBurnsTranslateX;
+        set => SetProperty(ref _kenBurnsTranslateX, value);
+    }
+
+    private double _kenBurnsTranslateY = 0;
+    public double KenBurnsTranslateY
+    {
+        get => _kenBurnsTranslateY;
+        set => SetProperty(ref _kenBurnsTranslateY, value);
+    }
 
     public NowPlayingMode Mode
     {
@@ -104,6 +153,7 @@ public class NowPlayingViewModel : ViewModelBase
     public ICommand PreviousCommand { get; }
     public ICommand ToggleFavoriteCommand { get; }
     public ICommand ToggleDislikeCommand { get; }
+    public ICommand LaunchMixviewCommand { get; }
 
     public NowPlayingViewModel(
         IPlayerCoordinator playerCoordinator,
@@ -111,6 +161,14 @@ public class NowPlayingViewModel : ViewModelBase
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
+
+        _currentBackdropImage = _backdrops[0];
+
+        // Initialize 24 ambient visualizer bars
+        for (int i = 0; i < 24; i++)
+        {
+            VisualizerBars.Add(4.0);
+        }
 
         // Auto-hiding HUD timer (fades out after 3.5 seconds of idle)
         _hudIdleTimer = new System.Timers.Timer(3500) { AutoReset = false };
@@ -121,6 +179,45 @@ public class NowPlayingViewModel : ViewModelBase
                 IsHudVisible = false;
             }
         };
+
+        // Ken-Burns slideshow timer (cycles backdrop photo and motion every 8 seconds)
+        _slideshowTimer = new System.Timers.Timer(8000) { AutoReset = true };
+        _slideshowTimer.Elapsed += (s, e) =>
+        {
+            _backdropIndex = (_backdropIndex + 1) % _backdrops.Length;
+            CurrentBackdropImage = _backdrops[_backdropIndex];
+            KenBurnsScale = 1.05 + (_random.NextDouble() * 0.12);
+            KenBurnsTranslateX = (_random.NextDouble() * 40) - 20;
+            KenBurnsTranslateY = (_random.NextDouble() * 30) - 15;
+        };
+        _slideshowTimer.Start();
+
+        // Ambient visualizer update loop (every 75ms)
+        _visualizerTimer = new System.Timers.Timer(75) { AutoReset = true };
+        _visualizerTimer.Elapsed += (s, e) =>
+        {
+            if (IsPlaying)
+            {
+                for (int i = 0; i < VisualizerBars.Count; i++)
+                {
+                    // Simulated natural spectrum distribution (higher energy in bass, taper in highs)
+                    double factor = 1.0 - (i * 0.03);
+                    double height = 4.0 + (_random.NextDouble() * 45.0 * factor);
+                    VisualizerBars[i] = height;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < VisualizerBars.Count; i++)
+                {
+                    if (VisualizerBars[i] > 4.0)
+                    {
+                        VisualizerBars[i] = Math.Max(4.0, VisualizerBars[i] * 0.7);
+                    }
+                }
+            }
+        };
+        _visualizerTimer.Start();
 
         ToggleModeCommand = new RelayCommand(() =>
         {
@@ -194,6 +291,11 @@ public class NowPlayingViewModel : ViewModelBase
                 await _playerCoordinator.NextAsync();
             }
             TriggerHudActivity();
+        });
+
+        LaunchMixviewCommand = new RelayCommand(() =>
+        {
+            LaunchMixviewRequested?.Invoke(this, ArtistName);
         });
 
         _playerCoordinator.TrackChanged += OnTrackChanged;

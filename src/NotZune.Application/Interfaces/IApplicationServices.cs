@@ -14,6 +14,9 @@ public interface IPlayerCoordinator
     bool IsMuted { get; set; }
     bool Shuffle { get; set; }
     bool Repeat { get; set; }
+    double CrossfadeDurationSeconds { get; set; }
+    bool IsCrossfading { get; }
+    bool GaplessEnabled { get; set; }
     IReadOnlyList<Track> Queue { get; }
 
     Task PlayTrackAsync(Track track, IEnumerable<Track>? contextQueue = null);

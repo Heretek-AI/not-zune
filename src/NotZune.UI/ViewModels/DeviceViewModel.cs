@@ -79,6 +79,26 @@ public class DeviceViewModel : ViewModelBase
         }
     }
 
+    private int _spaceReservationPercent = 10;
+    public int SpaceReservationPercent
+    {
+        get => _spaceReservationPercent;
+        set
+        {
+            var clamped = Math.Clamp(value, 0, 50);
+            if (SetProperty(ref _spaceReservationPercent, clamped))
+            {
+                OnPropertyChanged(nameof(ReservedGbText));
+                OnPropertyChanged(nameof(SyncSpaceGbText));
+                OnPropertyChanged(nameof(SpaceReservationSummaryText));
+            }
+        }
+    }
+
+    public string ReservedGbText => $"{(TotalGb * (_spaceReservationPercent / 100.0)):F1} GB";
+    public string SyncSpaceGbText => $"{(TotalGb * (1.0 - (_spaceReservationPercent / 100.0))):F1} GB";
+    public string SpaceReservationSummaryText => $"{SpaceReservationPercent}% ({ReservedGbText}) reserved for device buffer";
+
     public string StorageText
     {
         get

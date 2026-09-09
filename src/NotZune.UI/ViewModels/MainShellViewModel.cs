@@ -19,7 +19,9 @@ public enum NavigationPivot
     NowPlaying,
     Device,
     Settings,
-    Social
+    Social,
+    Disc,
+    Mixview
 }
 
 public class MainShellViewModel : ViewModelBase
@@ -46,6 +48,8 @@ public class MainShellViewModel : ViewModelBase
     public DeviceViewModel DeviceVM { get; }
     public SettingsViewModel SettingsVM { get; }
     public ZuneCardViewModel ZuneCardVM { get; }
+    public MixviewViewModel MixviewVM { get; }
+    public CDViewModel CDVM { get; }
 
     public event EventHandler<bool>? CompactModeChanged;
 
@@ -123,6 +127,8 @@ public class MainShellViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsDeviceActive));
                 OnPropertyChanged(nameof(IsSettingsActive));
                 OnPropertyChanged(nameof(IsSocialActive));
+                OnPropertyChanged(nameof(IsDiscActive));
+                OnPropertyChanged(nameof(IsMixviewActive));
                 OnPropertyChanged(nameof(IsQuickDockVisible));
 
                 CurrentView = _activePivot switch
@@ -133,6 +139,8 @@ public class MainShellViewModel : ViewModelBase
                     NavigationPivot.Device => DeviceVM,
                     NavigationPivot.Settings => SettingsVM,
                     NavigationPivot.Social => ZuneCardVM,
+                    NavigationPivot.Disc => CDVM,
+                    NavigationPivot.Mixview => MixviewVM,
                     _ => QuickplayVM
                 };
 
@@ -158,6 +166,8 @@ public class MainShellViewModel : ViewModelBase
     public bool IsDeviceActive => _activePivot == NavigationPivot.Device;
     public bool IsSettingsActive => _activePivot == NavigationPivot.Settings;
     public bool IsSocialActive => _activePivot == NavigationPivot.Social;
+    public bool IsDiscActive => _activePivot == NavigationPivot.Disc;
+    public bool IsMixviewActive => _activePivot == NavigationPivot.Mixview;
 
     public ViewModelBase CurrentView
     {
@@ -235,6 +245,8 @@ public class MainShellViewModel : ViewModelBase
     public ICommand ClearSearchCommand { get; }
     public ICommand OpenDeviceCommand { get; }
     public ICommand OpenPlaylistsCommand { get; }
+    public ICommand NavigateToMixviewCommand { get; }
+    public ICommand OpenCDCommand { get; }
 
     public MainShellViewModel(
         IPlayerCoordinator playerCoordinator,
@@ -258,8 +270,30 @@ public class MainShellViewModel : ViewModelBase
         CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService);
         DeviceVM = new DeviceViewModel(deviceSyncService);
-        SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService);
+        SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService);
         ZuneCardVM = new ZuneCardViewModel(_userStatsService);
+
+        var mixService = new MixviewCoordinator(libraryService);
+        MixviewVM = new MixviewViewModel(mixService, playerCoordinator, smartDJService, libraryService);
+
+        NowPlayingVM.LaunchMixviewRequested += async (_, artist) =>
+        {
+            await MixviewVM.InitializeSeedAsync(artist, MixNodeType.Artist);
+            ActivePivot = NavigationPivot.Mixview;
+        };
+
+        NavigateToMixviewCommand = new AsyncRelayCommand<string>(async artistName =>
+        {
+            var seed = string.IsNullOrWhiteSpace(artistName) ? (CurrentTrack?.ArtistName ?? "Zune") : artistName;
+            await MixviewVM.InitializeSeedAsync(seed, MixNodeType.Artist);
+            ActivePivot = NavigationPivot.Mixview;
+        });
+
+        CDVM = new CDViewModel(libraryService, playerCoordinator, _soundEffectService);
+        OpenCDCommand = new RelayCommand(() =>
+        {
+            ActivePivot = NavigationPivot.Disc;
+        });
 
         _currentView = QuickplayVM;
 

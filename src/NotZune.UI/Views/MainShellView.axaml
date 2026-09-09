@@ -31,6 +31,12 @@
     <DataTemplate DataType="vm:PodcastsViewModel">
       <views:PodcastsView />
     </DataTemplate>
+    <DataTemplate DataType="vm:MixviewViewModel">
+      <views:MixviewView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:CDViewModel">
+      <views:CDView />
+    </DataTemplate>
   </UserControl.DataTemplates>
 
   <Panel>
@@ -122,6 +128,9 @@
             </Button>
             <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Device}">
               <TextBlock Text="DEVICE" Classes="pivot-header" Classes.active="{Binding IsDeviceActive}" />
+            </Button>
+            <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Disc}">
+              <TextBlock Text="DISC" Classes="pivot-header" Classes.active="{Binding IsDiscActive}" />
             </Button>
             <Button Command="{Binding SelectPivotCommand}" CommandParameter="{x:Static vm:NavigationPivot.Social}">
               <TextBlock Text="SOCIAL" Classes="pivot-header" Classes.active="{Binding IsSocialActive}" />

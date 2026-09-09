@@ -3,162 +3,560 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
              x:Class="NotZune.UI.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-  <ScrollViewer Margin="40,20,40,20">
-    <StackPanel Spacing="32" MaxWidth="700" HorizontalAlignment="Left">
-      <TextBlock Text="settings" Classes="hero" />
+  <Grid RowDefinitions="Auto,Auto,*" Margin="40,24,40,24">
 
-      <!-- Section: Accent Color -->
-      <StackPanel Spacing="16">
-        <TextBlock Text="SIGNATURE ACCENT COLOR" Classes="section-header" />
-        <TextBlock Text="Choose an authentic Zune palette accent." Classes="caption" />
-
-        <ItemsControl ItemsSource="{Binding AccentColors}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal" Spacing="16" />
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Button Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SelectAccentCommand}"
-                      CommandParameter="{Binding}"
-                      Padding="0">
-                <StackPanel Spacing="8">
-                  <Border Background="{Binding HexCode}" Width="48" Height="48" CornerRadius="0" />
-                  <TextBlock Text="{Binding Name}" Classes="caption" HorizontalAlignment="Center" />
-                </StackPanel>
-              </Button>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-
-      <!-- Section: Background Themes Gallery -->
-      <StackPanel Spacing="16">
-        <TextBlock Text="BACKGROUND ART THEME" Classes="section-header" />
-        <TextBlock Text="Select an authentic Zune 4.8 vector illustration backdrop." Classes="caption" />
-
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-          <ItemsControl ItemsSource="{Binding BackgroundThemes}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal" Spacing="12" />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Button Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SelectBackgroundCommand}"
-                        CommandParameter="{Binding}"
-                        Padding="0">
-                  <Border Width="160" Height="80" 
-                          Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
-                          BorderBrush="{DynamicResource ZuneBorderBrush}" 
-                          BorderThickness="1" 
-                          CornerRadius="0">
-                    <Grid>
-                      <Image Source="{Binding AssetUri}" Stretch="UniformToFill" Opacity="0.5" />
-                      <Border Background="#99111111" VerticalAlignment="Bottom" Padding="6,4">
-                        <TextBlock Text="{Binding Name}" Classes="caption" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                      </Border>
-                    </Grid>
-                  </Border>
-                </Button>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
-      </StackPanel>
-
-      <!-- Section: Authentic Zune Sound Effects -->
-      <StackPanel Spacing="12">
-        <TextBlock Text="AUDIO SOUND EFFECTS" Classes="section-header" />
-        <TextBlock Text="Tactile audio feedback for device sync, ripping, and notifications." Classes="caption" />
-        
-        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,4,0,0">
-          <CheckBox IsChecked="{Binding SoundEffectsEnabled}" 
-                    Content="Enable Classic Zune Sound Effects" 
-                    CornerRadius="0"
-                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
-          <Button Classes="zune-action" Command="{Binding TestSoundCommand}">
-            <TextBlock Text="TEST SYNC SOUND" Classes="caption" FontWeight="SemiBold" />
-          </Button>
-        </StackPanel>
-      </StackPanel>
-
-      <!-- Section: Playback & Mini-Player Preferences -->
-      <StackPanel Spacing="12">
-        <TextBlock Text="PLAYBACK &amp; MINI-PLAYER" Classes="section-header" />
-        <TextBlock Text="Audio playback leveling and compact player behavior." Classes="caption" />
-        
-        <StackPanel Spacing="10" Margin="0,4,0,0">
-          <CheckBox IsChecked="{Binding VolumeLevelingEnabled}" 
-                    Content="Volume Leveling (ReplayGain normalization across tracks)" 
-                    CornerRadius="0"
-                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
-          <CheckBox IsChecked="{Binding AutoWatchFolder}" 
-                    Content="Background Library Watcher (Auto-detect newly added music files)" 
-                    CornerRadius="0"
-                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
-          <CheckBox IsChecked="{Binding CompactModeAlwaysOnTop}" 
-                    Content="Always Keep Compact Mini-Player on Top" 
-                    CornerRadius="0"
-                    Foreground="{DynamicResource ZuneTextActiveBrush}" />
-        </StackPanel>
-      </StackPanel>
-
-      <!-- Section: Library Folders -->
-      <StackPanel Spacing="12">
-        <TextBlock Text="MUSIC COLLECTION FOLDER" Classes="section-header" />
-        <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
-          <TextBox Grid.Column="0" 
-                   Text="{Binding MusicFolderPath}" 
-                   CornerRadius="0"
-                   Background="{DynamicResource ZuneSurfaceElevatedBrush}"
-                   Foreground="{DynamicResource ZuneTextActiveBrush}"
-                   BorderThickness="0"
-                   Padding="10,8" />
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="12,0,0,0">
-            <Button Classes="zune-action" 
-                    Command="{Binding SelectFolderCommand}">
-              <TextBlock Text="BROWSE" Classes="caption" FontWeight="SemiBold" />
-            </Button>
-            <Button Classes="zune-action" 
-                    Command="{Binding RescanCommand}">
-              <TextBlock Text="RESCAN" Classes="caption" FontWeight="SemiBold" />
-            </Button>
-            <Button Classes="zune-action" 
-                    Command="{Binding ClearDemoLibraryCommand}">
-              <TextBlock Text="CLEAR DEMO DATA" Classes="caption" FontWeight="SemiBold" />
-            </Button>
-          </StackPanel>
-        </Grid>
-
-        <!-- Scanning progress & status indicator -->
-        <ProgressBar Height="4" 
-                     Value="{Binding ScanProgress}" 
-                     Minimum="0.0" 
-                     Maximum="1.0" 
-                     IsVisible="{Binding IsScanning}" 
-                     CornerRadius="0" 
-                     Foreground="{DynamicResource ZuneAccentBrush}" 
-                     Background="{DynamicResource ZuneSurfaceBrush}" />
-
-        <TextBlock Text="{Binding ScanStatusText}" 
-                   Classes="caption" 
-                   Foreground="{DynamicResource ZuneAccentBrush}" 
-                   IsVisible="{Binding HasScanStatus}" />
-      </StackPanel>
-
-      <!-- Section: Platform & Diagnostics -->
-      <StackPanel Spacing="8">
-        <TextBlock Text="SYSTEM &amp; PLATFORM" Classes="section-header" />
-        <TextBlock Text="{Binding PlatformInfo}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
-        <TextBlock Text="{Binding VersionInfo}" Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}" />
-      </StackPanel>
+    <!-- ======================================================== -->
+    <!-- PRIMARY PIVOT: SOFTWARE | DEVICE                         -->
+    <!-- ======================================================== -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="28" Margin="0,0,0,12">
+      <Button Classes="pivot" 
+              Command="{Binding SelectTopLevelPivotCommand}" 
+              CommandParameter="Software"
+              Opacity="{Binding IsSoftwarePivotActive, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+        <TextBlock Text="SOFTWARE" 
+                   Classes="pivot" 
+                   Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                   Opacity="{Binding IsSoftwarePivotActive, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=True}" />
+      </Button>
+      <Button Classes="pivot" 
+              Command="{Binding SelectTopLevelPivotCommand}" 
+              CommandParameter="Device">
+        <TextBlock Text="DEVICE" 
+                   Classes="pivot" 
+                   Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
     </StackPanel>
-  </ScrollViewer>
+
+    <!-- ======================================================== -->
+    <!-- SECONDARY SUB-PIVOT STRIP                                -->
+    <!-- ======================================================== -->
+    <!-- Software Sub-Pivots -->
+    <StackPanel Grid.Row="1" 
+                Orientation="Horizontal" 
+                Spacing="20" 
+                Margin="0,0,0,24"
+                IsVisible="{Binding IsSoftwarePivotActive}">
+      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Collection">
+        <TextBlock Text="collection" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Playback">
+        <TextBlock Text="playback" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Rip">
+        <TextBlock Text="rip" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Burn">
+        <TextBlock Text="burn" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Metadata">
+        <TextBlock Text="metadata" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Display">
+        <TextBlock Text="display" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="About">
+        <TextBlock Text="about" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+    </StackPanel>
+
+    <!-- Device Sub-Pivots -->
+    <StackPanel Grid.Row="1" 
+                Orientation="Horizontal" 
+                Spacing="20" 
+                Margin="0,0,0,24"
+                IsVisible="{Binding IsDevicePivotActive}">
+      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="SyncOptions">
+        <TextBlock Text="sync options" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="SpaceReservation">
+        <TextBlock Text="space reservation" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="WirelessSync">
+        <TextBlock Text="wireless sync" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="DeviceInfo">
+        <TextBlock Text="device info" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      </Button>
+    </StackPanel>
+
+    <!-- ======================================================== -->
+    <!-- CONTENT BODY                                             -->
+    <!-- ======================================================== -->
+    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <Panel MaxWidth="800" HorizontalAlignment="Left">
+
+        <!-- SUB-PANEL: COLLECTION -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsCollectionSubPivotActive}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="MONITORED MUSIC FOLDERS" Classes="section-header" />
+            <TextBlock Text="Not-Zune scans these folders for media files and keeps your library synchronized." Classes="caption" />
+            
+            <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+              <TextBox Grid.Column="0" 
+                       Text="{Binding MusicFolderPath}" 
+                       CornerRadius="0"
+                       Background="{DynamicResource ZuneSurfaceElevatedBrush}"
+                       Foreground="{DynamicResource ZuneTextActiveBrush}"
+                       BorderThickness="0"
+                       Padding="10,8" />
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="12,0,0,0">
+                <Button Classes="zune-action" Command="{Binding SelectFolderCommand}">
+                  <TextBlock Text="BROWSE" Classes="caption" FontWeight="SemiBold" />
+                </Button>
+                <Button Classes="zune-action" Command="{Binding RescanCommand}">
+                  <TextBlock Text="RESCAN" Classes="caption" FontWeight="SemiBold" />
+                </Button>
+                <Button Classes="zune-action" Command="{Binding ClearDemoLibraryCommand}">
+                  <TextBlock Text="CLEAR DEMO DATA" Classes="caption" FontWeight="SemiBold" />
+                </Button>
+              </StackPanel>
+            </Grid>
+
+            <!-- Scanning Progress -->
+            <ProgressBar Height="4" 
+                         Value="{Binding ScanProgress}" 
+                         Minimum="0.0" 
+                         Maximum="1.0" 
+                         IsVisible="{Binding IsScanning}" 
+                         CornerRadius="0" 
+                         Foreground="{DynamicResource ZuneAccentBrush}" 
+                         Background="{DynamicResource ZuneSurfaceBrush}" 
+                         Margin="0,8,0,0" />
+
+            <TextBlock Text="{Binding ScanStatusText}" 
+                       Classes="caption" 
+                       Foreground="{DynamicResource ZuneAccentBrush}" 
+                       IsVisible="{Binding HasScanStatus}" 
+                       Margin="0,4,0,0" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="LIBRARY WATCHER" Classes="section-header" />
+            <CheckBox IsChecked="{Binding AutoWatchFolder}" 
+                      Content="Automatically watch folder for new songs and albums" 
+                      CornerRadius="0"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: PLAYBACK & AUDIO -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsPlaybackSubPivotActive}">
+          <!-- Crossfade Duration Slider -->
+          <StackPanel Spacing="10">
+            <TextBlock Text="CROSSFADE PLAYBACK" Classes="section-header" />
+            <TextBlock Text="Fade out the current song while fading in the next song for continuous audio transition." Classes="caption" />
+            
+            <CheckBox IsChecked="{Binding CrossfadeEnabled}" 
+                      Content="Enable Track Crossfading" 
+                      CornerRadius="0"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                      Margin="0,4,0,0" />
+
+            <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0" MaxWidth="500">
+              <Slider Grid.Column="0" 
+                      Value="{Binding CrossfadeDurationSeconds}" 
+                      Minimum="0.5" 
+                      Maximum="10.0" 
+                      SmallChange="0.5" 
+                      LargeChange="1.0" 
+                      IsEnabled="{Binding CrossfadeEnabled}" />
+              <TextBlock Grid.Column="1" 
+                         Text="{Binding CrossfadeDurationText}" 
+                         Classes="body" 
+                         FontWeight="SemiBold" 
+                         Foreground="{DynamicResource ZuneAccentBrush}" 
+                         VerticalAlignment="Center" 
+                         Margin="16,0,0,0" />
+            </Grid>
+          </StackPanel>
+
+          <!-- Gapless Playback -->
+          <StackPanel Spacing="10">
+            <TextBlock Text="GAPLESS TRANSITIONS" Classes="section-header" />
+            <TextBlock Text="Eliminate silence between tracks for seamless live recordings and concept albums." Classes="caption" />
+            <CheckBox IsChecked="{Binding GaplessPlaybackEnabled}" 
+                      Content="Enable Gapless Album Transitions" 
+                      CornerRadius="0"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+
+          <!-- Volume Leveling -->
+          <StackPanel Spacing="10">
+            <TextBlock Text="VOLUME LEVELING" Classes="section-header" />
+            <TextBlock Text="Automatically balances perceived volume across songs of varying loudness (ReplayGain)." Classes="caption" />
+            <CheckBox IsChecked="{Binding VolumeLevelingEnabled}" 
+                      Content="Apply Volume Leveling to all playback" 
+                      CornerRadius="0"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+
+          <!-- Sound Effects -->
+          <StackPanel Spacing="10">
+            <TextBlock Text="AUTHENTIC SOUND EFFECTS" Classes="section-header" />
+            <TextBlock Text="Tactile audio feedback for device sync, ripping, and notification alerts." Classes="caption" />
+            <StackPanel Orientation="Horizontal" Spacing="16">
+              <CheckBox IsChecked="{Binding SoundEffectsEnabled}" 
+                        Content="Enable Classic Zune Sound Effects" 
+                        CornerRadius="0"
+                        Foreground="{DynamicResource ZuneTextActiveBrush}" />
+              <Button Classes="zune-action" Command="{Binding TestSoundCommand}">
+                <TextBlock Text="TEST SYNC SOUND" Classes="caption" FontWeight="SemiBold" />
+              </Button>
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: RIP -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsRipSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="AUDIO CD RIPPING FORMAT" Classes="section-header" />
+            <TextBlock Text="Choose encoding format and quality when ripping physical audio discs." Classes="caption" />
+            
+            <ComboBox ItemsSource="{Binding RipAudioFormats}" 
+                      SelectedItem="{Binding SelectedRipFormat}" 
+                      CornerRadius="0" 
+                      Width="340" 
+                      HorizontalAlignment="Left" 
+                      Margin="0,6,0,0" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="AUDIO BITRATE &amp; FIDELITY" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding RipBitrates}" 
+                      SelectedItem="{Binding SelectedRipBitrate}" 
+                      CornerRadius="0" 
+                      Width="340" 
+                      HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="DESTINATION DIRECTORY" Classes="section-header" />
+            <TextBox Text="{Binding RipDestinationFolder}" 
+                     CornerRadius="0" 
+                     Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+                     Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                     BorderThickness="0" 
+                     Padding="10,8" 
+                     MaxWidth="500" 
+                     HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Spacing="8">
+            <CheckBox IsChecked="{Binding AutoRipCdOnInsert}" 
+                      Content="Rip CD automatically when inserted into drive" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+            <CheckBox IsChecked="{Binding EjectCdAfterRip}" 
+                      Content="Eject disc when ripping finishes" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: BURN -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsBurnSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="DISC FORMAT" Classes="section-header" />
+            <TextBlock Text="Select whether to create standard audio CDs playable anywhere or high-capacity data archives." Classes="caption" />
+            
+            <ComboBox ItemsSource="{Binding DiscTypes}" 
+                      SelectedItem="{Binding SelectedDiscType}" 
+                      CornerRadius="0" 
+                      Width="450" 
+                      HorizontalAlignment="Left" 
+                      Margin="0,6,0,0" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="BURN SPEED" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding BurnSpeeds}" 
+                      SelectedItem="{Binding SelectedBurnSpeed}" 
+                      CornerRadius="0" 
+                      Width="340" 
+                      HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <CheckBox IsChecked="{Binding ApplyVolumeLevelingToBurn}" 
+                      Content="Level volume across all burned tracks for balanced listening" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: METADATA -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsMetadataSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="ONLINE METADATA SERVICES" Classes="section-header" />
+            <TextBlock Text="Automatically identify tracks, fetch hi-res album art, and query artist biographies." Classes="caption" />
+            
+            <CheckBox IsChecked="{Binding AutoFetchMetadata}" 
+                      Content="Automatically query online databases for track and album metadata" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                      Margin="0,4,0,0" />
+            <CheckBox IsChecked="{Binding AutoDownloadArtistArt}" 
+                      Content="Download high-resolution artist backdrops for Now Playing Ken-Burns slideshow" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+            <CheckBox IsChecked="{Binding WriteTagsToFile}" 
+                      Content="Write updated tags directly to ID3/FLAC file metadata" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="DATA PROVIDERS" Classes="section-header" />
+            <CheckBox IsChecked="{Binding MusicBrainzEnabled}" 
+                      Content="MusicBrainz / Cover Art Archive (Track and Album Metadata)" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+            <CheckBox IsChecked="{Binding LastFmEnabled}" 
+                      Content="Last.fm / Fanart.tv (Artist Relations, Mixview Constellation &amp; Photography)" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: DISPLAY -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsDisplaySubPivotActive}">
+          <!-- Accent Colors -->
+          <StackPanel Spacing="12">
+            <TextBlock Text="SIGNATURE ACCENT COLOR" Classes="section-header" />
+            <TextBlock Text="Choose an authentic Zune palette accent." Classes="caption" />
+
+            <ItemsControl ItemsSource="{Binding AccentColors}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="16" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SelectAccentCommand}"
+                          CommandParameter="{Binding}"
+                          Padding="0">
+                    <StackPanel Spacing="8">
+                      <Border Background="{Binding HexCode}" Width="48" Height="48" CornerRadius="0" />
+                      <TextBlock Text="{Binding Name}" Classes="caption" HorizontalAlignment="Center" />
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <!-- Background Themes -->
+          <StackPanel Spacing="12">
+            <TextBlock Text="BACKGROUND ART THEME" Classes="section-header" />
+            <TextBlock Text="Select an authentic Zune 4.8 vector illustration backdrop." Classes="caption" />
+
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+              <ItemsControl ItemsSource="{Binding BackgroundThemes}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="12" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SelectBackgroundCommand}"
+                            CommandParameter="{Binding}"
+                            Padding="0">
+                      <Border Width="160" Height="80" 
+                              Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+                              BorderBrush="{DynamicResource ZuneBorderBrush}" 
+                              BorderThickness="1" 
+                              CornerRadius="0">
+                        <Grid>
+                          <Image Source="{Binding AssetUri}" Stretch="UniformToFill" Opacity="0.5" />
+                          <Border Background="#99111111" VerticalAlignment="Bottom" Padding="6,4">
+                            <TextBlock Text="{Binding Name}" Classes="caption" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                          </Border>
+                        </Grid>
+                      </Border>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </StackPanel>
+
+          <!-- Window Behavior -->
+          <StackPanel Spacing="10">
+            <TextBlock Text="WINDOW &amp; MINI-PLAYER BEHAVIOR" Classes="section-header" />
+            <CheckBox IsChecked="{Binding CompactModeAlwaysOnTop}" 
+                      Content="Always Keep Compact Mini-Player on Top of other windows" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: ABOUT -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsAboutSubPivotActive}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{Binding VersionInfo}" Classes="hero" />
+            <TextBlock Text="The Modern Spiritual Successor to Microsoft Zune Desktop" Classes="section-header" Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="{Binding PlatformInfo}" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          </StackPanel>
+
+          <Border Background="{DynamicResource ZuneSurfaceBrush}" 
+                  BorderBrush="{DynamicResource ZuneBorderBrush}" 
+                  BorderThickness="1" 
+                  CornerRadius="0" 
+                  Padding="20" 
+                  MaxWidth="650">
+            <StackPanel Spacing="12">
+              <TextBlock Text="DESIGN INVARIANTS &amp; PRINCIPLES" Classes="section-header" />
+              <TextBlock Text="• Strict Metro / Iris Design Language: Zero Corner Radius on all controls and surfaces." Classes="body" />
+              <TextBlock Text="• Content Before Chrome: Eliminating unnecessary borders, bevels, and artificial depth." Classes="body" />
+              <TextBlock Text="• Typography as Art: Segoe UI, Selawik, and clear hierarchical scale establishing visual rhythm." Classes="body" />
+              <TextBlock Text="• Physical Hardware Sync: Native USB MTP/MTPZ protocol and reverse HTTP proxy for Zune 30, 80, 120, and HD devices." Classes="body" />
+              <TextBlock Text="• Open Architecture: Clean Architecture with decoupled domain, application, audio, and UI tiers." Classes="body" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ======================================================== -->
+        <!-- DEVICE SUB-PANELS                                        -->
+        <!-- ======================================================== -->
+        <!-- SUB-PANEL: DEVICE SYNC OPTIONS -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsSyncOptionsSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="MUSIC SYNCHRONIZATION RULE" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding SyncRules}" 
+                      SelectedItem="{Binding MusicSyncRule}" 
+                      CornerRadius="0" 
+                      Width="380" 
+                      HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="PODCAST SYNCHRONIZATION RULE" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding PodcastSyncRules}" 
+                      SelectedItem="{Binding PodcastSyncRule}" 
+                      CornerRadius="0" 
+                      Width="380" 
+                      HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="GUEST &amp; REVERSE SYNC" Classes="section-header" />
+            <CheckBox IsChecked="True" 
+                      Content="Allow reverse sync from device to PC for podcasts and unencrypted media" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: DEVICE SPACE RESERVATION -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsSpaceReservationSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="DEVICE SPACE RESERVATION" Classes="section-header" />
+            <TextBlock Text="Reserve free space on your Zune so the device is never completely filled by media sync." Classes="caption" />
+            
+            <TextBlock Text="{Binding SpaceReservationSummaryText}" 
+                       Classes="body" 
+                       FontWeight="SemiBold" 
+                       Foreground="{DynamicResource ZuneAccentBrush}" 
+                       Margin="0,8,0,0" />
+
+            <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0" MaxWidth="500">
+              <Slider Grid.Column="0" 
+                      Value="{Binding SpaceReservationPercent}" 
+                      Minimum="0" 
+                      Maximum="50" 
+                      SmallChange="5" 
+                      LargeChange="10" />
+              <TextBlock Grid.Column="1" 
+                         Text="{Binding SpaceReservationPercent, StringFormat={}{0}%}" 
+                         Classes="body" 
+                         FontWeight="Bold" 
+                         VerticalAlignment="Center" 
+                         Margin="16,0,0,0" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" MaxWidth="500" Margin="0,16,0,0">
+              <Border Grid.Column="0" Background="{DynamicResource ZuneSurfaceBrush}" Padding="16" Margin="0,0,8,0" CornerRadius="0">
+                <StackPanel Spacing="4">
+                  <TextBlock Text="SYNC CAPACITY" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                  <TextBlock Text="{Binding SyncSpaceGbText}" Classes="hero" FontSize="28" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Background="{DynamicResource ZuneSurfaceBrush}" Padding="16" Margin="8,0,0,0" CornerRadius="0">
+                <StackPanel Spacing="4">
+                  <TextBlock Text="RESERVED BUFFER" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+                  <TextBlock Text="{Binding ReservedGbText}" Classes="hero" FontSize="28" Foreground="{DynamicResource ZuneAccentBrush}" />
+                </StackPanel>
+              </Border>
+            </Grid>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: WIRELESS SYNC -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsWirelessSyncSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="WIRELESS DEVICE SYNCHRONIZATION" Classes="section-header" />
+            <TextBlock Text="Synchronize your Zune over home Wi-Fi whenever the device is plugged in and charging." Classes="caption" />
+            
+            <CheckBox IsChecked="{Binding WirelessSyncEnabled}" 
+                      Content="Enable Wireless Sync over Local Network" 
+                      CornerRadius="0" 
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                      Margin="0,4,0,0" />
+
+            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto" MaxWidth="500" Margin="0,12,0,0">
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="Network Name:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,4" />
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NetworkName}" Classes="body" FontWeight="SemiBold" Margin="0,4" />
+
+              <TextBlock Grid.Row="1" Grid.Column="0" Text="Pairing Protocol:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,4" />
+              <TextBlock Grid.Row="1" Grid.Column="1" Text="SSDP / PTP-IP Wireless Listener" Classes="body" Margin="0,4" />
+
+              <TextBlock Grid.Row="2" Grid.Column="0" Text="Sync Status:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,4" />
+              <TextBlock Grid.Row="2" Grid.Column="1" Text="Listening on port 10102" Classes="body" Foreground="{DynamicResource ZuneAccentBrush}" Margin="0,4" />
+            </Grid>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: DEVICE INFO -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsDeviceInfoSubPivotActive}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{Binding DeviceModelName}" Classes="hero" />
+            <TextBlock Text="Hardware Connected via USB / MTPZ" Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}" />
+          </StackPanel>
+
+          <Border Background="{DynamicResource ZuneSurfaceBrush}" 
+                  BorderBrush="{DynamicResource ZuneBorderBrush}" 
+                  BorderThickness="1" 
+                  CornerRadius="0" 
+                  Padding="20" 
+                  MaxWidth="550">
+            <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="Device Model:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,6" />
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DeviceModelName}" Classes="body" FontWeight="SemiBold" Margin="0,6" />
+
+              <TextBlock Grid.Row="1" Grid.Column="0" Text="Serial Number:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,6" />
+              <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DeviceSerialNumber}" Classes="body" Margin="0,6" />
+
+              <TextBlock Grid.Row="2" Grid.Column="0" Text="Firmware Version:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,6" />
+              <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FirmwareVersion}" Classes="body" Margin="0,6" />
+
+              <TextBlock Grid.Row="3" Grid.Column="0" Text="Battery:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,6" />
+              <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DeviceBatteryText}" Classes="body" Foreground="{DynamicResource ZuneAccentBrush}" Margin="0,6" />
+
+              <TextBlock Grid.Row="4" Grid.Column="0" Text="Total Capacity:" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" Margin="0,6" />
+              <TextBlock Grid.Row="4" Grid.Column="1" Text="32.0 GB Flash Memory" Classes="body" Margin="0,6" />
+            </Grid>
+          </Border>
+        </StackPanel>
+
+      </Panel>
+    </ScrollViewer>
+
+  </Grid>
 </UserControl>
