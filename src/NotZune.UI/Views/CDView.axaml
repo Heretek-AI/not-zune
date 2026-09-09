@@ -12,11 +12,11 @@
 
     <!-- Primary Header & Mode Switch -->
     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="24" Margin="0,0,0,16">
-      <Button Classes="pivot" Command="{Binding SwitchModeCommand}" CommandParameter="Rip">
-        <TextBlock Text="RIP CD" Classes="pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SwitchModeCommand}" CommandParameter="Rip">
+        <TextBlock Text="RIP CD" Classes="subpivot" Classes.active="{Binding IsRipMode}" />
       </Button>
-      <Button Classes="pivot" Command="{Binding SwitchModeCommand}" CommandParameter="Burn">
-        <TextBlock Text="BURN DISC" Classes="pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SwitchModeCommand}" CommandParameter="Burn">
+        <TextBlock Text="BURN DISC" Classes="subpivot" Classes.active="{Binding IsBurnMode}" />
       </Button>
     </StackPanel>
 

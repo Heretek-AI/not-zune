@@ -15,6 +15,33 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    private void OnResizeZonePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control zone || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
+
+        if (!CanResize || WindowState != WindowState.Normal)
+            return;
+
+        WindowEdge? edge = zone.Name switch
+        {
+            "ResizeNorthWest" => WindowEdge.NorthWest,
+            "ResizeNorth" => WindowEdge.North,
+            "ResizeNorthEast" => WindowEdge.NorthEast,
+            "ResizeWest" => WindowEdge.West,
+            "ResizeEast" => WindowEdge.East,
+            "ResizeSouthWest" => WindowEdge.SouthWest,
+            "ResizeSouth" => WindowEdge.South,
+            "ResizeSouthEast" => WindowEdge.SouthEast,
+            _ => null
+        };
+
+        if (edge is { } resolved)
+        {
+            BeginResizeDrag(resolved, e);
+        }
+    }
+
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
@@ -135,10 +162,10 @@ public partial class MainWindow : Window
         }
         else
         {
-            MinWidth = 734;
-            MinHeight = 500;
-            Width = _preCompactWidth >= 734 ? _preCompactWidth : 1240;
-            Height = _preCompactHeight >= 500 ? _preCompactHeight : 780;
+            MinWidth = 1100;
+            MinHeight = 560;
+            Width = _preCompactWidth >= 1100 ? _preCompactWidth : 1360;
+            Height = _preCompactHeight >= 560 ? _preCompactHeight : 780;
             Topmost = false;
             CanResize = true;
         }

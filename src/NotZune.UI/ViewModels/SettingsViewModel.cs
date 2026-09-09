@@ -91,6 +91,18 @@ public class SettingsViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(IsSoftwarePivotActive));
                 OnPropertyChanged(nameof(IsDevicePivotActive));
+                // Content panels compose top-level + sub-pivot state.
+                OnPropertyChanged(nameof(IsCollectionSubPivotActive));
+                OnPropertyChanged(nameof(IsPlaybackSubPivotActive));
+                OnPropertyChanged(nameof(IsRipSubPivotActive));
+                OnPropertyChanged(nameof(IsBurnSubPivotActive));
+                OnPropertyChanged(nameof(IsMetadataSubPivotActive));
+                OnPropertyChanged(nameof(IsDisplaySubPivotActive));
+                OnPropertyChanged(nameof(IsAboutSubPivotActive));
+                OnPropertyChanged(nameof(IsSyncOptionsSubPivotActive));
+                OnPropertyChanged(nameof(IsSpaceReservationSubPivotActive));
+                OnPropertyChanged(nameof(IsWirelessSyncSubPivotActive));
+                OnPropertyChanged(nameof(IsDeviceInfoSubPivotActive));
             }
         }
     }
@@ -117,13 +129,15 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
-    public bool IsCollectionSubPivotActive => SoftwarePivot == SoftwareSubPivot.Collection;
-    public bool IsPlaybackSubPivotActive => SoftwarePivot == SoftwareSubPivot.Playback;
-    public bool IsRipSubPivotActive => SoftwarePivot == SoftwareSubPivot.Rip;
-    public bool IsBurnSubPivotActive => SoftwarePivot == SoftwareSubPivot.Burn;
-    public bool IsMetadataSubPivotActive => SoftwarePivot == SoftwareSubPivot.Metadata;
-    public bool IsDisplaySubPivotActive => SoftwarePivot == SoftwareSubPivot.Display;
-    public bool IsAboutSubPivotActive => SoftwarePivot == SoftwareSubPivot.About;
+    // Sub-pivot flags are composed with the top-level pivot: each pivot remembers its
+    // last sub-pivot, so without the gate two content panels would render at once.
+    public bool IsCollectionSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Collection;
+    public bool IsPlaybackSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Playback;
+    public bool IsRipSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Rip;
+    public bool IsBurnSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Burn;
+    public bool IsMetadataSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Metadata;
+    public bool IsDisplaySubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Display;
+    public bool IsAboutSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.About;
 
     private DeviceSubPivot _devicePivot = DeviceSubPivot.SyncOptions;
     public DeviceSubPivot DevicePivot
@@ -141,10 +155,10 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
-    public bool IsSyncOptionsSubPivotActive => DevicePivot == DeviceSubPivot.SyncOptions;
-    public bool IsSpaceReservationSubPivotActive => DevicePivot == DeviceSubPivot.SpaceReservation;
-    public bool IsWirelessSyncSubPivotActive => DevicePivot == DeviceSubPivot.WirelessSync;
-    public bool IsDeviceInfoSubPivotActive => DevicePivot == DeviceSubPivot.DeviceInfo;
+    public bool IsSyncOptionsSubPivotActive => IsDevicePivotActive && DevicePivot == DeviceSubPivot.SyncOptions;
+    public bool IsSpaceReservationSubPivotActive => IsDevicePivotActive && DevicePivot == DeviceSubPivot.SpaceReservation;
+    public bool IsWirelessSyncSubPivotActive => IsDevicePivotActive && DevicePivot == DeviceSubPivot.WirelessSync;
+    public bool IsDeviceInfoSubPivotActive => IsDevicePivotActive && DevicePivot == DeviceSubPivot.DeviceInfo;
 
     // ==========================================
     // THEMES & ACCENTS

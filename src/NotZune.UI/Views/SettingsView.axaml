@@ -13,21 +13,11 @@
     <!-- PRIMARY PIVOT: SOFTWARE | DEVICE                         -->
     <!-- ======================================================== -->
     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="28" Margin="0,0,0,12">
-      <Button Classes="pivot" 
-              Command="{Binding SelectTopLevelPivotCommand}" 
-              CommandParameter="Software"
-              Opacity="{Binding IsSoftwarePivotActive, Converter={x:Static StringConverters.IsNullOrEmpty}}">
-        <TextBlock Text="SOFTWARE" 
-                   Classes="pivot" 
-                   Foreground="{DynamicResource ZuneTextActiveBrush}" 
-                   Opacity="{Binding IsSoftwarePivotActive, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=True}" />
+      <Button Command="{Binding SelectTopLevelPivotCommand}" CommandParameter="Software">
+        <TextBlock Text="SOFTWARE" Classes="subpivot" Classes.active="{Binding IsSoftwarePivotActive}" />
       </Button>
-      <Button Classes="pivot" 
-              Command="{Binding SelectTopLevelPivotCommand}" 
-              CommandParameter="Device">
-        <TextBlock Text="DEVICE" 
-                   Classes="pivot" 
-                   Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectTopLevelPivotCommand}" CommandParameter="Device">
+        <TextBlock Text="DEVICE" Classes="subpivot" Classes.active="{Binding IsDevicePivotActive}" />
       </Button>
     </StackPanel>
 
@@ -40,26 +30,26 @@
                 Spacing="20" 
                 Margin="0,0,0,24"
                 IsVisible="{Binding IsSoftwarePivotActive}">
-      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Collection">
-        <TextBlock Text="collection" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Collection">
+        <TextBlock Text="collection" Classes="subpivot" Classes.active="{Binding IsCollectionSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Playback">
-        <TextBlock Text="playback" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Playback">
+        <TextBlock Text="playback" Classes="subpivot" Classes.active="{Binding IsPlaybackSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Rip">
-        <TextBlock Text="rip" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Rip">
+        <TextBlock Text="rip" Classes="subpivot" Classes.active="{Binding IsRipSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Burn">
-        <TextBlock Text="burn" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Burn">
+        <TextBlock Text="burn" Classes="subpivot" Classes.active="{Binding IsBurnSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Metadata">
-        <TextBlock Text="metadata" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Metadata">
+        <TextBlock Text="metadata" Classes="subpivot" Classes.active="{Binding IsMetadataSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Display">
-        <TextBlock Text="display" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Display">
+        <TextBlock Text="display" Classes="subpivot" Classes.active="{Binding IsDisplaySubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="About">
-        <TextBlock Text="about" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="About">
+        <TextBlock Text="about" Classes="subpivot" Classes.active="{Binding IsAboutSubPivotActive}" />
       </Button>
     </StackPanel>
 
@@ -69,17 +59,17 @@
                 Spacing="20" 
                 Margin="0,0,0,24"
                 IsVisible="{Binding IsDevicePivotActive}">
-      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="SyncOptions">
-        <TextBlock Text="sync options" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectDevicePivotCommand}" CommandParameter="SyncOptions">
+        <TextBlock Text="sync options" Classes="subpivot" Classes.active="{Binding IsSyncOptionsSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="SpaceReservation">
-        <TextBlock Text="space reservation" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectDevicePivotCommand}" CommandParameter="SpaceReservation">
+        <TextBlock Text="space reservation" Classes="subpivot" Classes.active="{Binding IsSpaceReservationSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="WirelessSync">
-        <TextBlock Text="wireless sync" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectDevicePivotCommand}" CommandParameter="WirelessSync">
+        <TextBlock Text="wireless sync" Classes="subpivot" Classes.active="{Binding IsWirelessSyncSubPivotActive}" />
       </Button>
-      <Button Classes="sub-pivot" Command="{Binding SelectDevicePivotCommand}" CommandParameter="DeviceInfo">
-        <TextBlock Text="device info" Classes="sub-pivot" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+      <Button Command="{Binding SelectDevicePivotCommand}" CommandParameter="DeviceInfo">
+        <TextBlock Text="device info" Classes="subpivot" Classes.active="{Binding IsDeviceInfoSubPivotActive}" />
       </Button>
     </StackPanel>
 

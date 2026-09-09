@@ -152,6 +152,14 @@ public class MainShellViewModel : ViewModelBase
     }
 
     public bool IsQuickDockVisible => !IsNowPlayingActive && !IsCompactMode;
+
+    /// <summary>
+    /// Official chrome parity (ShowSearch per page): Quickplay, Playback (Now Playing)
+    /// and the settings frame hide the header search box; collection-like lands show it.
+    /// </summary>
+    public bool IsHeaderSearchVisible
+        => !IsQuickplayActive && !IsNowPlayingActive && !IsSettingsActive && !IsCompactMode;
+
     public string QuickDockDeviceName => DeviceVM.HasDevice ? DeviceVM.DeviceName.ToUpperInvariant() : "NO DEVICE";
     public string QuickDockDeviceStatus => DeviceVM.HasDevice ? (DeviceVM.IsSyncing ? "SYNCING..." : "CONNECTED") : "CONNECT USB";
     public double QuickDockDeviceOpacity => DeviceVM.HasDevice ? 1.0 : 0.45;
@@ -182,6 +190,7 @@ public class MainShellViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsDiscActive));
                 OnPropertyChanged(nameof(IsMixviewActive));
                 OnPropertyChanged(nameof(IsQuickDockVisible));
+                OnPropertyChanged(nameof(IsHeaderSearchVisible));
 
                 CurrentView = _activePivot switch
                 {

@@ -13,10 +13,22 @@ public partial class MainShellView : UserControl
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        var window = TopLevel.GetTopLevel(this) as Window;
+        if (window == null)
+            return;
+
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
-            var window = TopLevel.GetTopLevel(this) as Window;
-            window?.BeginMoveDrag(e);
+            if (e.ClickCount == 2 && window.CanResize)
+            {
+                window.WindowState = window.WindowState == WindowState.Maximized
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
+            }
+            else
+            {
+                window.BeginMoveDrag(e);
+            }
         }
     }
 
