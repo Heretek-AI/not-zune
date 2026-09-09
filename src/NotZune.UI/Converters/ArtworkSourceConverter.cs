@@ -16,6 +16,9 @@ public class ArtworkSourceConverter : IValueConverter
 {
     public static readonly ArtworkSourceConverter Instance = new();
 
+    /// <summary>High-resolution variant for photo zoom/slideshow surfaces.</summary>
+    public static readonly ArtworkSourceConverter Large = new() { DecodeWidth = 1600 };
+
     public int DecodeWidth { get; set; } = 300;
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

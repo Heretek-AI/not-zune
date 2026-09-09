@@ -347,7 +347,10 @@ public class MainShellViewModel : ViewModelBase
         IArtworkCacheService? artworkCacheService = null,
         IExternalMetadataService? metadataService = null,
         IAudioOutputEngine? audioEngine = null,
-        ISmartPlaylistService? smartPlaylistService = null)
+        ISmartPlaylistService? smartPlaylistService = null,
+        IVideoLibraryService? videoLibraryService = null,
+        IVideoPlaybackEngine? videoEngine = null,
+        IPhotoLibraryService? photoLibraryService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -358,8 +361,8 @@ public class MainShellViewModel : ViewModelBase
 
         // Child ViewModels
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
-        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService, smartPlaylistService);
-        NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService, audioEngine);
+        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService, smartPlaylistService, videoLibraryService, videoEngine, photoLibraryService);
+        NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService, audioEngine, videoLibraryService, videoEngine);
         DeviceVM = new DeviceViewModel(deviceSyncService, libraryService);
         SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService, settingsStore);
 

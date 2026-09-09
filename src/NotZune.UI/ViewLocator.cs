@@ -23,6 +23,9 @@ public class ViewLocator : IDataTemplate
             MainShellViewModel => new MainShellView(),
             ZuneCardViewModel => new ZuneCardView(),
             PodcastsViewModel => new PodcastsView(),
+            PlaylistsViewModel => new PlaylistsView(),
+            VideoLibraryViewModel => new VideoLibraryView(),
+            PhotoLibraryViewModel => new PhotoLibraryView(),
             CDViewModel => new CDView(),
             _ => FindViewByConvention(data)
         };

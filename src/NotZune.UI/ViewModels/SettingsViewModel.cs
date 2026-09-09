@@ -700,6 +700,39 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public ObservableCollection<string> MediaSyncRules { get; } = new()
+    {
+        "All Videos & Pictures",
+        "Newest 25 Items",
+        "Nothing (Manual Drag and Drop)"
+    };
+
+    private string _videoSyncRule = "All Videos & Pictures";
+    public string VideoSyncRule
+    {
+        get => _videoSyncRule;
+        set
+        {
+            if (SetProperty(ref _videoSyncRule, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private string _picturesSyncRule = "Newest 25 Items";
+    public string PicturesSyncRule
+    {
+        get => _picturesSyncRule;
+        set
+        {
+            if (SetProperty(ref _picturesSyncRule, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
     private bool _wirelessSyncEnabled = true;
     public bool WirelessSyncEnabled
     {
@@ -889,6 +922,10 @@ public class SettingsViewModel : ViewModelBase
             OnPropertyChanged(nameof(MusicSyncRule));
             _podcastSyncRule = settings.PodcastSyncRule;
             OnPropertyChanged(nameof(PodcastSyncRule));
+            _videoSyncRule = settings.VideoSyncRule;
+            OnPropertyChanged(nameof(VideoSyncRule));
+            _picturesSyncRule = settings.PicturesSyncRule;
+            OnPropertyChanged(nameof(PicturesSyncRule));
             _wirelessSyncEnabled = settings.WirelessSyncEnabled;
             OnPropertyChanged(nameof(WirelessSyncEnabled));
             _networkName = settings.NetworkName;
@@ -963,6 +1000,8 @@ public class SettingsViewModel : ViewModelBase
             SpaceReservationPercent = SpaceReservationPercent,
             MusicSyncRule = MusicSyncRule,
             PodcastSyncRule = PodcastSyncRule,
+            VideoSyncRule = VideoSyncRule,
+            PicturesSyncRule = PicturesSyncRule,
             WirelessSyncEnabled = WirelessSyncEnabled,
             NetworkName = NetworkName,
             SelectedAccentName = SelectedAccent.Name,

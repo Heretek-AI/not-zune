@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NotZune.UI\NotZune.UI.csproj" />
+    <ProjectReference Include="..\NotZune.Infrastructure.Video\NotZune.Infrastructure.Video.csproj" />
   </ItemGroup>
 
   <ItemGroup>

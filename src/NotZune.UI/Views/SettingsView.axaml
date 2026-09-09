@@ -458,6 +458,24 @@
           </StackPanel>
 
           <StackPanel Spacing="10">
+            <TextBlock Text="VIDEO SYNCHRONIZATION RULE" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding MediaSyncRules}" 
+                      SelectedItem="{Binding VideoSyncRule}" 
+                      CornerRadius="0" 
+                      Width="380" 
+                      HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="PICTURES SYNCHRONIZATION RULE" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding MediaSyncRules}" 
+                      SelectedItem="{Binding PicturesSyncRule}" 
+                      CornerRadius="0" 
+                      Width="380" 
+                      HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
             <TextBlock Text="GUEST &amp; REVERSE SYNC" Classes="section-header" />
             <CheckBox IsChecked="True" 
                       Content="Allow reverse sync from device to PC for podcasts and unencrypted media" 

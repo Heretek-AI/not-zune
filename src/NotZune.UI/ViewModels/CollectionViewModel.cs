@@ -14,7 +14,9 @@ public enum CollectionSubPivot
     Songs,
     Genres,
     Podcasts,
-    Playlists
+    Playlists,
+    Videos,
+    Pictures
 }
 
 public class CollectionViewModel : ViewModelBase
@@ -48,6 +50,8 @@ public class CollectionViewModel : ViewModelBase
 
     public PodcastsViewModel PodcastsVM { get; }
     public PlaylistsViewModel PlaylistsVM { get; }
+    public VideoLibraryViewModel VideoVM { get; }
+    public PhotoLibraryViewModel PhotoVM { get; }
 
     public ObservableCollection<Artist> Artists { get; } = new();
     public ObservableCollection<Album> Albums { get; } = new();
@@ -69,6 +73,8 @@ public class CollectionViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsGenresActive));
                 OnPropertyChanged(nameof(IsPodcastsActive));
                 OnPropertyChanged(nameof(IsPlaylistsActive));
+                OnPropertyChanged(nameof(IsVideosActive));
+                OnPropertyChanged(nameof(IsPicturesActive));
             }
         }
     }
@@ -79,6 +85,8 @@ public class CollectionViewModel : ViewModelBase
     public bool IsGenresActive => _activeSubPivot == CollectionSubPivot.Genres;
     public bool IsPodcastsActive => _activeSubPivot == CollectionSubPivot.Podcasts;
     public bool IsPlaylistsActive => _activeSubPivot == CollectionSubPivot.Playlists;
+    public bool IsVideosActive => _activeSubPivot == CollectionSubPivot.Videos;
+    public bool IsPicturesActive => _activeSubPivot == CollectionSubPivot.Pictures;
 
     public Artist? SelectedArtist
     {
@@ -138,6 +146,21 @@ public class CollectionViewModel : ViewModelBase
 
     public bool IsEditMetadataOpen => ActiveEditMetadataVM != null;
 
+    private PhotoSlideshowViewModel? _activeSlideshowVM;
+    public PhotoSlideshowViewModel? ActiveSlideshowVM
+    {
+        get => _activeSlideshowVM;
+        set
+        {
+            if (SetProperty(ref _activeSlideshowVM, value))
+            {
+                OnPropertyChanged(nameof(IsSlideshowOpen));
+            }
+        }
+    }
+
+    public bool IsSlideshowOpen => ActiveSlideshowVM != null;
+
     private string? _findAlbumInfoStatusText;
     public string? FindAlbumInfoStatusText
     {
@@ -162,7 +185,10 @@ public class CollectionViewModel : ViewModelBase
         ISmartDJService? smartDJService = null,
         IArtworkCacheService? artworkCache = null,
         IExternalMetadataService? metadataService = null,
-        ISmartPlaylistService? smartPlaylistService = null)
+        ISmartPlaylistService? smartPlaylistService = null,
+        IVideoLibraryService? videoLibraryService = null,
+        IVideoPlaybackEngine? videoEngine = null,
+        IPhotoLibraryService? photoLibraryService = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
@@ -171,6 +197,18 @@ public class CollectionViewModel : ViewModelBase
         _metadataService = metadataService;
         var podService = podcastService ?? new NotZune.Application.Services.PodcastService(playerCoordinator);
         PodcastsVM = new PodcastsViewModel(podService);
+        VideoVM = new VideoLibraryViewModel(
+            videoLibraryService ?? new NotZune.Application.Services.EmptyVideoLibraryService(),
+            videoEngine ?? new NotZune.Application.Services.UnavailableVideoPlaybackEngine());
+        PhotoVM = new PhotoLibraryViewModel(
+            photoLibraryService ?? new NotZune.Application.Services.EmptyPhotoLibraryService());
+        PhotoVM.SlideshowRequested += (_, photo) =>
+        {
+            var startIndex = photo != null ? PhotoVM.GalleryPhotos.IndexOf(photo) : 0;
+            var slideshow = new PhotoSlideshowViewModel(PhotoVM.GalleryPhotos, Math.Max(0, startIndex));
+            slideshow.RequestClose += (_, _) => ActiveSlideshowVM = null;
+            ActiveSlideshowVM = slideshow;
+        };
         PlaylistsVM = new PlaylistsViewModel(libraryService, playerCoordinator, smartPlaylistService);
 
         OpenEditMetadataCommand = new RelayCommand<Track>(track =>

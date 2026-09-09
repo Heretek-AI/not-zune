@@ -33,6 +33,12 @@
         <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Playlists}">
           <TextBlock Text="playlists" Classes="subpivot" Classes.active="{Binding IsPlaylistsActive}" />
         </Button>
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Videos}">
+          <TextBlock Text="videos" Classes="subpivot" Classes.active="{Binding IsVideosActive}" />
+        </Button>
+        <Button Command="{Binding SelectSubPivotCommand}" CommandParameter="{x:Static vm:CollectionSubPivot.Pictures}">
+          <TextBlock Text="pictures" Classes="subpivot" Classes.active="{Binding IsPicturesActive}" />
+        </Button>
       </StackPanel>
 
       <!-- Minimal Search Box -->
@@ -394,6 +400,8 @@
 
       <!-- 6. PLAYLISTS SUB-PIVOT -->
       <ContentControl IsVisible="{Binding IsPlaylistsActive}" Content="{Binding PlaylistsVM}" />
+      <ContentControl IsVisible="{Binding IsVideosActive}" Content="{Binding VideoVM}" />
+      <ContentControl IsVisible="{Binding IsPicturesActive}" Content="{Binding PhotoVM}" />
 
     </Grid>
   </Grid>
@@ -412,5 +420,10 @@
   <Grid IsVisible="{Binding IsTrackMatchReviewOpen}" Background="#D9000000">
     <views:TrackMatchReviewView DataContext="{Binding ActiveTrackMatchReviewVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
   </Grid>
+
+  <!-- 10. PHOTO SLIDESHOW OVERLAY (SLIDESHOWLAND parity) -->
+  <Panel IsVisible="{Binding IsSlideshowOpen}" Background="Black" ZIndex="120">
+    <views:PhotoSlideshowView DataContext="{Binding ActiveSlideshowVM}" />
+  </Panel>
 </Panel>
 </UserControl>

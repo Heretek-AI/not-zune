@@ -42,6 +42,8 @@ public class AppSettings
     public int SpaceReservationPercent { get; set; } = 10;
     public string MusicSyncRule { get; set; } = "All Music (Automatic Sync)";
     public string PodcastSyncRule { get; set; } = "3 Newest Episodes";
+    public string VideoSyncRule { get; set; } = "All Videos & Pictures";
+    public string PicturesSyncRule { get; set; } = "Newest 25 Items";
     public bool WirelessSyncEnabled { get; set; } = true;
     public string NetworkName { get; set; } = "Home-WiFi (WPA2)";
 

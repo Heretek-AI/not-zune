@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<Playlist> Playlists => Set<Playlist>();
     public DbSet<PlayHistoryEntry> PlayHistory => Set<PlayHistoryEntry>();
     public DbSet<SmartPlaylist> SmartPlaylists => Set<SmartPlaylist>();
+    public DbSet<Video> Videos => Set<Video>();
+    public DbSet<Photo> Photos => Set<Photo>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -71,6 +73,20 @@ public class AppDbContext : DbContext
                 .HasConversion(
                     v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
                     v => System.Text.Json.JsonSerializer.Deserialize<List<SmartPlaylistRule>>(string.IsNullOrEmpty(v) ? "[]" : v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<SmartPlaylistRule>());
+        });
+
+        modelBuilder.Entity<Video>(entity =>
+        {
+            entity.HasKey(v => v.Id);
+            entity.HasIndex(v => v.Title);
+            entity.HasIndex(v => v.FilePath);
+        });
+
+        modelBuilder.Entity<Photo>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.HasIndex(p => p.FilePath);
+            entity.HasIndex(p => p.FolderPath);
         });
     }
 }

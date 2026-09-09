@@ -10,7 +10,8 @@ using NotZune.Domain.Models;
 using NotZune.Infrastructure.Audio;
 using NotZune.Infrastructure.Devices;
 using NotZune.Infrastructure.External;
-using NotZune.Infrastructure.Persistence;using NotZune.UI.Services;
+using NotZune.Infrastructure.Persistence;
+using NotZune.Infrastructure.Video;using NotZune.UI.Services;
 using NotZune.UI.ViewModels;
 
 namespace NotZune.Desktop;
@@ -77,6 +78,9 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IExternalMetadataService, ExternalMetadataService>();
         services.AddSingleton<IArtistEnrichmentService, ArtistEnrichmentCoordinator>();
         services.AddSingleton<ISmartPlaylistService, SmartPlaylistService>();
+        services.AddSingleton<IVideoLibraryService, VideoLibraryService>();
+        services.AddSingleton<IPhotoLibraryService, PhotoLibraryService>();
+        services.AddSingleton<IVideoPlaybackEngine, VideoPlaybackEngine>();
 
         // 3. Audio & Hardware Subsystems
         services.AddSingleton<AudioEngine>();
@@ -107,6 +111,28 @@ public partial class App : Avalonia.Application
                 Rules TEXT NOT NULL,
                 CreatedAtUtc TEXT NOT NULL,
                 UpdatedAtUtc TEXT NOT NULL)");
+
+            ctx.Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS Videos (
+                Id TEXT NOT NULL PRIMARY KEY,
+                Title TEXT NOT NULL,
+                FilePath TEXT NOT NULL,
+                Duration TEXT NOT NULL,
+                Year INTEGER,
+                Genre TEXT NOT NULL,
+                ArtworkUri TEXT,
+                PlayCount INTEGER NOT NULL,
+                LastPlayedAtUtc TEXT,
+                SizeBytes INTEGER NOT NULL,
+                AddedAtUtc TEXT NOT NULL)");
+
+            ctx.Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS Photos (
+                Id TEXT NOT NULL PRIMARY KEY,
+                Title TEXT NOT NULL,
+                FilePath TEXT NOT NULL,
+                FolderPath TEXT NOT NULL,
+                TakenDate TEXT,
+                SizeBytes INTEGER NOT NULL,
+                AddedAtUtc TEXT NOT NULL)");
 
             if (!ctx.Tracks.Any())
             {

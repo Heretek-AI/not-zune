@@ -17,7 +17,8 @@ namespace NotZune.UI.ViewModels;
 public enum NowPlayingMode
 {
     ArtistCanvas,
-    MosaicWall
+    MosaicWall,
+    Video
 }
 
 public class NowPlayingViewModel : ViewModelBase
@@ -99,12 +100,92 @@ public class NowPlayingViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(IsArtistCanvasMode));
                 OnPropertyChanged(nameof(IsMosaicWallMode));
+                OnPropertyChanged(nameof(IsVideoMode));
+
+                if (value == NowPlayingMode.Video)
+                {
+                    _ = LoadLibraryVideosAsync();
+                }
             }
         }
     }
 
     public bool IsArtistCanvasMode => _mode == NowPlayingMode.ArtistCanvas;
     public bool IsMosaicWallMode => _mode == NowPlayingMode.MosaicWall;
+    public bool IsVideoMode => _mode == NowPlayingMode.Video;
+
+    private readonly IVideoLibraryService? _videoLibraryService;
+    private readonly IVideoPlaybackEngine? _videoEngine;
+
+    public ObservableCollection<Video> LibraryVideos { get; } = new();
+
+    private Video? _selectedVideo;
+    public Video? SelectedVideo
+    {
+        get => _selectedVideo;
+        set
+        {
+            if (SetProperty(ref _selectedVideo, value))
+            {
+                OpenVideoPlayback();
+            }
+        }
+    }
+
+    private VideoPlaybackViewModel? _videoPlaybackVM;
+    public VideoPlaybackViewModel? VideoPlaybackVM
+    {
+        get => _videoPlaybackVM;
+        private set
+        {
+            if (SetProperty(ref _videoPlaybackVM, value))
+            {
+                OnPropertyChanged(nameof(HasVideoPlayback));
+            }
+        }
+    }
+
+    public bool HasVideoPlayback => VideoPlaybackVM != null;
+
+    private async System.Threading.Tasks.Task LoadLibraryVideosAsync()
+    {
+        if (_videoLibraryService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var videos = await _videoLibraryService.GetAllVideosAsync();
+            LibraryVideos.Clear();
+            foreach (var v in videos)
+            {
+                LibraryVideos.Add(v);
+            }
+
+            if (_selectedVideo == null && LibraryVideos.Count > 0)
+            {
+                SelectedVideo = LibraryVideos[0];
+            }
+        }
+        catch (Exception)
+        {
+            // Video library is best-effort inside Now Playing.
+        }
+    }
+
+    private void OpenVideoPlayback()
+    {
+        if (_videoEngine == null || _selectedVideo == null)
+        {
+            VideoPlaybackVM = null;
+            return;
+        }
+
+        var playback = new VideoPlaybackViewModel(_videoEngine, _selectedVideo);
+        playback.Start();
+        VideoPlaybackVM = playback;
+    }
 
     public bool IsHudVisible
     {
@@ -176,12 +257,16 @@ public class NowPlayingViewModel : ViewModelBase
         IPlayerCoordinator playerCoordinator,
         IMediaLibraryService libraryService,
         IArtistEnrichmentService? enrichmentService = null,
-        IAudioOutputEngine? audioEngine = null)
+        IAudioOutputEngine? audioEngine = null,
+        IVideoLibraryService? videoLibraryService = null,
+        IVideoPlaybackEngine? videoEngine = null)
     {
         _playerCoordinator = playerCoordinator;
         _libraryService = libraryService;
         _enrichmentService = enrichmentService;
         _audioEngine = audioEngine;
+        _videoLibraryService = videoLibraryService;
+        _videoEngine = videoEngine;
 
         _activeBackdrops = new List<string>(_themeBackdrops);
         _currentBackdropImage = _activeBackdrops[0];
@@ -266,7 +351,12 @@ public class NowPlayingViewModel : ViewModelBase
 
         ToggleModeCommand = new RelayCommand(() =>
         {
-            Mode = Mode == NowPlayingMode.ArtistCanvas ? NowPlayingMode.MosaicWall : NowPlayingMode.ArtistCanvas;
+            Mode = Mode switch
+            {
+                NowPlayingMode.ArtistCanvas => NowPlayingMode.MosaicWall,
+                NowPlayingMode.MosaicWall => NowPlayingMode.Video,
+                _ => NowPlayingMode.ArtistCanvas
+            };
         });
 
         ToggleBioDrawerCommand = new RelayCommand(() =>
