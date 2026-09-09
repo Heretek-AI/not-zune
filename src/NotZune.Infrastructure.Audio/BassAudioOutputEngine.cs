@@ -79,7 +79,7 @@ public sealed class BassAudioOutputEngine : IAudioOutputEngine
             _isCrossfading = false;
             _fadeStopwatch.Reset();
 
-            BassMix.MixerAddChannel(_mixer, source, BassFlags.MixerNoRampin);
+            BassMix.MixerAddChannel(_mixer, source, BassFlags.MixerChanNoRampin);
             ApplySourceVolume(_currentSource, _currentBaseVolume, _isMuted);
             Bass.ChannelPlay(_mixer, Restart: true);
             ScheduleEndSync();
@@ -325,7 +325,7 @@ public sealed class BassAudioOutputEngine : IAudioOutputEngine
 
         _preparedSource = prepared;
         _preparedSourceSeconds = Bass.ChannelBytes2Seconds(prepared, Bass.ChannelGetLength(prepared));
-        BassMix.MixerAddChannel(_mixer, prepared, BassFlags.MixerNoRampin);
+        BassMix.MixerAddChannel(_mixer, prepared, BassFlags.MixerChanNoRampin);
         ApplySourceVolume(prepared, 0.0001, _isMuted);
 
         _isCrossfading = true;
@@ -446,7 +446,7 @@ public sealed class BassAudioOutputEngine : IAudioOutputEngine
 
             _preparedSource = prepared;
             _preparedSourceSeconds = Bass.ChannelBytes2Seconds(prepared, Bass.ChannelGetLength(prepared));
-            BassMix.MixerAddChannel(_mixer, prepared, BassFlags.MixerNoRampin);
+            BassMix.MixerAddChannel(_mixer, prepared, BassFlags.MixerChanNoRampin);
             ApplySourceVolume(prepared, _currentBaseVolume, _isMuted);
 
             FireTransitioned();
