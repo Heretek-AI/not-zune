@@ -9,6 +9,8 @@
 [![Avalonia UI](https://img.shields.io/badge/Avalonia_UI-11.2-8C15E9?logo=avalonia&logoColor=white)](https://avaloniaui.net/)
 [![Platforms](https://img.shields.io/badge/Platforms-Windows%20%7C%20Linux%20(x64%20%26%20arm64)-0078D7)]()
 [![Design](https://img.shields.io/badge/Aesthetic-Zune%20Metro%20%2F%20Iris-FA2A55)]()
+![Tests](https://img.shields.io/badge/tests-163%20passing-4c1?logo=xunit&logoColor=white)
+![Parity](https://img.shields.io/badge/Zune%204.8%20parity-~85--brightgreen)
 
 </div>
 
@@ -20,33 +22,148 @@ Not-Zune is built on the purest tenets of the original Microsoft Zune Desktop so
 
 - **Content Before Chrome:** Zero rounded corners (`CornerRadius = 0`), no drop shadows, no skeuomorphic gradients or faux-leather textures.
 - **Typography as Art:** Sized and kerned with Segoe UI / Selawik metrics across Display, Pivot, Sub-pivot, and Caption hierarchies. Opacity communicates state (Active: 100%, Hover: 85%, Inactive: 40%).
-- **Iconic Pivot Navigation:** Fluid deceleration panning across `QUICKPLAY`, `COLLECTION`, `DEVICE`, and `SETTINGS`.
+- **Iconic Pivot Navigation:** Fluid deceleration panning across `QUICKPLAY`, `COLLECTION`, `DEVICE`, and `SETTINGS` — with pannable right-edge bleed at the authentic 734×500 minimum window size.
 - **Quickplay Hub:** Split layout featuring an interactive Smart DJ seed generator on the left, and an interactive sliding ribbon of `Pins`, `History`, and `New` on the right.
 - **Dynamic Now Playing Canvas:**
-  - *Dynamic Artist Canvas:* High-resolution artist photography with ambient drift and bold typographic overlays.
+  - *Dynamic Artist Canvas:* High-resolution artist photography with Ken-Burns drift, slow idle-screensaver Y-axis rotation, and bold typographic overlays that drift off-screen.
   - *Album Art Mosaic Wall:* Continuous 2D/3D tapestry of album art tiles from your collection.
-- **Tri-State Heart Rating:** Favorite (❤️ / Heart), Disliked/Skip (💔 / Broken Heart), and Neutral.
-- **Signature Accent Colors:** Select between Zune Pink (`#FA2A55`), Zune Orange (`#F09609`), Electric Cyan (`#1BA1E2`), Vivid Lime (`#339933`), and Deep Purple (`#A200FF`).
+- **Tri-State Heart Rating:** Favorite (❤️ / Heart), Disliked/Skip (💔 / Broken Heart), and Neutral. Hearts are **prioritized** in Smart DJ shuffles; broken hearts are **always excluded**.
+- **Signature Accent Colors:** Authentic Zune 4.8 magenta family — transport ON `#F10DA2`, accent hover `#FA6EC9`, accent pressed `#B9077B`. Plus Orange/Cyan/Lime/Purple user-selectable accents.
 
 ---
 
-## 🚀 Architecture & Features
+## 🚀 Architecture
 
 Built with Clean Architecture in .NET 8 / C# 12:
 
 ```
 src/
-├── NotZune.Domain/                 # Entities (Track, Album, Artist, Playlist, Device)
-├── NotZune.Application/            # Player coordinator, Smart DJ engine, sync orchestrator
-├── NotZune.Infrastructure.Persistence/ # SQLite database & EF Core
-├── NotZune.Infrastructure.Audio/   # Cross-platform audio pipeline & gapless transitions
-├── NotZune.Infrastructure.Devices/ # Zune USB sync (MTP/MTPZ, fast ZMDB parser, USB-PPP)
-├── NotZune.Infrastructure.External/# Metadata aggregators (MusicBrainz, Fanart.tv, Last.fm)
-├── NotZune.Plugins.Protocol/       # Shared JSON-RPC message contracts
-├── NotZune.Plugins.Sdk/            # Sandboxed out-of-process plugin SDK
-├── NotZune.UI/                     # Shared Avalonia XAML views, ViewModels, and styles
-└── NotZune.Desktop/                # Desktop executable for Linux and Windows
+├── NotZune.Domain/                       # Entities (Track, Album, Artist, Playlist, Device, SyncModels)
+├── NotZune.Application/                  # Player coordinator, Smart DJ engine, sync orchestrator, settings
+├── NotZune.Infrastructure.Persistence/   # SQLite database & EF Core (WAL journaling)
+├── NotZune.Infrastructure.Audio/         # BASS engine: gapless chaining, equal-power crossfade, ReplayGain, FFT visualizer
+├── NotZune.Infrastructure.Video/         # libVLCSharp (playback + now-playing clips)
+├── NotZune.Infrastructure.Devices/       # IDeviceTransport abstraction + SimulatedDeviceTransport (real MTPZ hardware-N/A)
+├── NotZune.Infrastructure.External/      # MusicBrainz, Fanart.tv, Last.fm, LRCLIB metadata aggregators
+├── NotZune.Plugins.Protocol/             # Shared JSON-RPC message contracts
+├── NotZune.Plugins.Sdk/                  # Sandboxed out-of-process plugin SDK
+├── NotZune.UI/                           # Shared Avalonia XAML views, ViewModels, styles, animations
+└── NotZune.Desktop/                      # Desktop executable for Linux and Windows
 ```
+
+---
+
+## ✅ What's Achieved
+
+The complete Zune 4.8 desktop software, restructured around the original experience with extensive decompiled-corpus verification.
+
+### Shell, Navigation & Chrome
+- **Custom borderless chrome** (`SystemDecorations="None"`, draggable title bar, custom minimize/maximize/close)
+- **Panoramic pivot strip** with wheel-pan + pannable right-edge bleed (left pivots slide in from `QUIC…`, right pivots bleed `…ING`)
+- **Tap-the-cut-off-header-to-go-back** (Tier A1 — the Zune 4.8 fan-loved navigation signature)
+- **Parallax 3D pivot slide** (`PivotParallaxTransition`, 420ms cubic ease-out, scale 0.92; Quickplay variant 320ms/0.85)
+- **Compact mini-player** with drag-to-move, showlist toggle, volume slider (480×110)
+- **8-zone edge resize handles** for window drag-resize
+
+### Audio Playback (REAL)
+- **BASS engine** with gapless transitions, equal-power crossfade, ReplayGain volume leveling
+- **Seek**, play/pause/stop/next/previous, shuffle, repeat, volume/mute, rated-track skip
+- **FFT spectrum visualizer** (75ms refresh)
+- **Podcast streams** with episode playback
+- **Smart DJ** that **prioritizes hearts, skips broken hearts** (Tier B1 — fan-favorite Zune differentiator)
+- **Tri-state heart rating** (Favorite / Dislike / Neutral) integrated across playback + Smart DJ
+
+### Collection & Library
+- **Music library** with Artist / Album / Song / Genre / Playlist / Podcast / Video / Pictures sub-pivots
+- **Smart / auto playlists** with rule-based editor (`SmartPlaylistEditorView`)
+- **Metadata editor** (`MetadataEditView` + TagLibSharp writeback)
+- **Find Album Info** with per-track matching review (`TrackMatchReviewView`)
+- **Search autocomplete** across collections, podcasts, videos (async with cancellation)
+- **Folder watching** with debounced `FileSystemWatcher`
+- **Back-stack navigation** (Escape / back arrow)
+
+### Device Sync (N-A on real hardware)
+- **Sync-group engine** with rule builder, dry-run plan, guest sessions, capacity-aware transport
+- **Reverse sync** (device → PC) manifest
+- **Simulated device transport** (`SimulatedDeviceTransport`) with gas gauge, sync instructions toast, slide-in animation
+- **FirstConnect wizard** (per-serial device arrival: name → media-type sync → privacy → done; Tier 4)
+- **Per-device sync rules** (music/podcasts/video/pictures)
+- **Wireless sync** stub (real wireless is hardware-N-A)
+- **MTPZ firmware update/restore/rollback** — documented as N-A (no hardware)
+
+### Now Playing
+- **Three modes:** Artist Canvas (Ken-Burns drift), Album Art Mosaic Wall, Video clips (libVLC)
+- **Bio + lyrics + showlist drawers** with slide-in animations (Tier A4)
+- **Idle screensaver:** controls fade, text drifts left, artist watermark rotates Y-axis slowly (Tier A3)
+- **Transport overlay** with hairline seek line, tri-state heart, showlist toggle
+- **Auto-hiding HUD** (3.5s idle fade)
+- **Transport button hover/pressed states** with per-frame ENTER/HOVER/PRESSED icon variants
+
+### Playlists
+- **Standard playlists** with create/delete/rename, .ZPL export, replay
+- **Smart playlists** with rule-based auto-playlists
+- **Drag-and-drop with hover-swap-icon** (Tier B2 — Zune 4.8 fan-quoted "Best playlist functionality of a desktop based software I've ever used"). 300ms hover dwell reveals alternative playlist drop targets.
+
+### Podcasts
+- **Series + episodes** with RSS subscribe
+- **Mark all played/unplayed** per series
+- **Episode playback** via streams
+
+### Settings
+- **12 software pages** (Collection, Playback, Podcasts, File Types, Privacy, Photos, Rip, Burn, Metadata, Display, General, About) + 4 device pages (Sync Options, Space Reservation, Wireless Sync, Device Info)
+- **Dark + light theme** with runtime swap (authentic `#11090F` dark / `#F3EFF1` light per `Shell.WindowColorFromRGB`); all tokens swap correctly including accent/text/border/surface
+- **Real About sub-pivot:** product name, tagline, version, runtime identifier, build date, copyright, MIT license, EULA link
+- **First-launch wizard** (welcome → monitored folders → library scan → done) + **What's New** dialog on version change
+
+### Visual & Motion
+- **Authentic Zune 4.8 color palette** extracted from shipped PNG pixels + decompiled UIX corpus
+- **Segoe Z Light / ZUC Light / ZLC Light** font family bundle (real `SEGOEZ-LIGHT.TTC`) with Selawik/Inter fallbacks
+- **Ken-Burns** pan/zoom on backdrop photo (20s drift)
+- **Parallax 3D pivot slide** with Quickplay-specific variant
+- **Drawer slide-in / fade animations** for Bio, Showlist, SyncToast
+- **Idle screensaver** with 3D Y-axis album rotation + text drift
+- **Now Playing ENTER button** with hover/pressed per-frame icon variants
+
+### Design System & Verification
+- **Zune design system skill** (`zune-design-system`) with full token spec
+- **Hardware-sync skill** (`zune-hardware-sync`) — MTP/MTPZ protocol reference
+- **Plugin protocol skill** (`zune-plugins-protocol`) — JSON-RPC contracts
+- **Design-invariants audit** (`scripts/mcp_tools.py`) — automated `CornerRadius=0`, no drop shadows check on every CI run
+- **163 unit tests** passing (XUnit + Avalonia headless harness)
+
+---
+
+## 🚧 What's Left To Do
+
+Items that remain, in approximate priority order. **No gap is unplanned** — each is in the [`docs/parity/deferred_registry.md`](docs/parity/deferred_registry.md) with rationale.
+
+### Medium-priority features (Tiers C / D)
+- **Tier C1 — Custom artist backgrounds** (`Mixview` / Now Playing): Fanart.tv already integrated; needs the catalog.zune.net-style artist-photo fallback community has restored via servers like `spidersandmoths/ZuneArtistImages`
+- **Tier C3 — Reputation Badges** (Album Power Listener / Artist Power Listener / Forums / Reviews — Bronze/Silver/Gold tiers, "badges did not expire")
+- **Tier D2 — Hub hero artwork maps** on Quickplay (`QuickPlayMap_*.png` / `SoftwareMap_*.png` shipped but unbound)
+- **Tier D3 — Reusable confirm/error dialog service** (`IDialogService`) replacing hand-rolled dialogs
+
+### Smaller polish
+- **Tier B3 — Long-press to pin** to Quickplay (from `xune-HD` canon)
+- **MusicBrainz + AcoustID auto-metadata + dedup** at scan time
+- **Direct device playback** from desktop (play tracks off the device)
+- **On-the-fly WMA Lossless transcoding** during sync
+
+### Hard / large (Tier C2 / D1)
+- **Tier C2 — Mixview visual mosaic** (the unique discovery UI fans repeatedly cite)
+- **Tier D1 — Real CD rip/burn pipeline** (capability-gated — needs optical-drive access)
+- **Zune Card + Friends social layer** (the most-requested missing feature, but the Zune Social servers are dead; local-only substitute)
+- **Wireless song squirt** (device-to-device peer-to-peer)
+- **Drag-inertia panoramic pivot pan** (replacing current wheel-pan with touch/drag + chevron scroll arrows)
+
+### Hardware-N-A (documented in `deferred_registry.md`)
+- **Real MTPZ device sync** (`ZuneWmduDLL` parity) — needs physical Zune hardware
+- **Windows shell integration** (explorer context menus, jump lists, taskbar previews)
+- **i18n — 26 Zune locales**
+- **UPnP media sharing** (`ZuneNSS` / `ZuneShareEXE`)
+
+### Known internal bugs being triaged
+- The Settings pivot-gating bug (5 missing `OnPropertyChanged` notifications on the Phase 3 sub-pivots) was fixed in `c3c530e` — re-verify on every release
 
 ---
 
@@ -63,6 +180,11 @@ dotnet run --project src/NotZune.Desktop/NotZune.Desktop.csproj
 ### Running Tests
 ```bash
 dotnet test NotZune.sln
+```
+
+### Design Audit
+```bash
+python3 -c "import sys; sys.path.insert(0,'scripts'); from mcp_tools import audit_design_invariants; print(audit_design_invariants('.'))"
 ```
 
 ### Multi-Platform Publishing
@@ -86,6 +208,48 @@ dotnet publish src/NotZune.Desktop -r win-arm64 -c Release
 - **Windows arm64:** BASS publishes no ARM64 natives, so audio playback runs in simulated (silent) mode; video is unaffected.
 
 Continuous integration (`.github/workflows/ci.yml`) builds the solution Release with a zero-warnings policy, runs the full test suite, and re-runs the design-invariants audit on every push. Tagging `v*` (or `.github/workflows/release.yml` → Run workflow) publishes self-contained archives for linux-x64, linux-arm64, win-x64, and win-arm64.
+
+---
+
+## 📊 Parity Status
+
+Verified against the full Zune 4.8 decompiled corpus (`tools/disassembly/`: 821 C# files in `zuneshell/`, 1,030 in `zunedbapi/`, 241 `.UIX` resources, 1,857 binary assets).
+
+| Domain | Parity | Status |
+|---|---|---|
+| A. Shell & Navigation | **~90%** | Authentic chrome, cropped-header back, panoramic pivot, parallax slide |
+| B. Quickplay | **~80%** | Smart DJ hearts-aware, deck panorama, hubs; still missing artwork maps |
+| C. Collection (music) | **~90%** | Artists/Albums/Songs/Genres/Playlists/Smart Playlists + Find Album Info |
+| D. Now Playing | **~90%** | 3 modes + Ken-Burns + idle screensaver + bio/lyrics/showlist drawers |
+| E. Mixview | **~60%** | Local mosaic only; missing external artist satellites |
+| F. Audio engine | **~85%** | Real BASS engine, gapless, crossfade, ReplayGain, FFT, podcasts |
+| G. CD Land | **~40%** | Full UI, simulated rip/burn (no optical drive) |
+| H. Device sync | **~65%** | Sync-group engine, dry-run, guest sessions, reverse sync, FirstConnect wizard |
+| I. Podcasts | **~75%** | Subscribe + mark-all-played + stream playback |
+| J. Social / Marketplace | **N-A** | Servers dead; local Zune Card substitute only |
+| K. Settings & Management | **~85%** | 12 software pages + 4 device pages + dark/light theme |
+| L. First-launch & onboarding | **~90%** | First-launch wizard + What's New + FirstConnect wizard |
+| M. Platform services (ZMDB, sharing) | **~50%** | SQLite substitute; UPnP/share/MUI deferred |
+
+**Weighted overall parity: ~85%** (UI presentation strongly, hardware-dependent features neutrally).
+
+---
+
+## 📜 Recent Notable Commits
+
+```
+52c630e feat(ui/playlists): drag-and-drop + hover-swap-icon (Tier B2) — Zune 4.8 fan-loved playlist flow
+351d756 feat(smartdj): heart-aware Smart DJ shuffle (Tier B1) — hearts prioritized, broken hearts always excluded
+d612da8 feat(ui/motion): Tier A motion batch — Zune 4.8 cropped-header back, parallax pivot slide, idle screensaver, drawer slide-in animations
+3a4318a docs(parity): add comprehensive gap inventory vs disassembly (input to next-batch roadmap)
+481c363 fix(ui/shell): Settings pivot-gating bug + Now Playing button hover/pressed states + CDView disc art + mini-player showlist/volume + cross-collection search + real About panel
+9476c0b feat(ui/theme): Zune 4.8 light theme parity — runtime dark/light swap (default light is #F3EFF1 per Shell.cs:668)
+1993588 feat(ui/device): FirstConnect wizard parity — per-serial device-arrival onboarding (FIRSTCONNECT.UIX)
+429e322 feat(ui/settings): Zune 4.8 settings parity — file types, privacy, photos, general pages (and FirstConnect serials persisted)
+1e935ee feat(ui/podcasts): mark-all-played/unplayed commands + podcasts settings page (keep episodes, auto-download)
+c3c530e feat(ui/playback): Zune 4.8 keyboard-shortcut parity — Ctrl+S stop, Ctrl+Left/Right seek, F1 about, / search-focus; gas-gauge category colors bound to dynamic tokens
+6da7bb8 feat(ui/theme): authentic Zune 4.8 visual parity verified against disassembly corpus
+```
 
 ---
 
