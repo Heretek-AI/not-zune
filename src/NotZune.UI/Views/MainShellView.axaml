@@ -460,6 +460,11 @@
       <Grid Grid.Row="0" Grid.RowSpan="3" IsVisible="{Binding IsWhatsNewOpen}" Background="#D9000000" ZIndex="105">
         <views:WhatsNewView DataContext="{Binding WhatsNewVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Grid>
+
+      <!-- FirstConnect Wizard Overlay (FIRSTCONNECT parity) — per-device-arrival -->
+      <Grid Grid.Row="0" Grid.RowSpan="3" IsVisible="{Binding IsFirstConnectWizardOpen}" Background="#D9000000" ZIndex="108">
+        <views:FirstConnectWizardView DataContext="{Binding FirstConnectWizardVM}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Grid>
     </Grid>
   </Panel>
 </UserControl>

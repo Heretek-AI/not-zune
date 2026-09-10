@@ -508,6 +508,13 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    private string _firstConnectDeviceName = string.Empty;
+    public string FirstConnectDeviceName
+    {
+        get => _firstConnectDeviceName;
+        set => SetProperty(ref _firstConnectDeviceName, value);
+    }
+
     // ==========================================
     // RIP SETTINGS
     // ==========================================
@@ -1142,6 +1149,8 @@ public class SettingsViewModel : ViewModelBase
 
             _showRatings = settings.ShowRatings;
             OnPropertyChanged(nameof(ShowRatings));
+            _firstConnectDeviceName = settings.FirstConnectDeviceName;
+            OnPropertyChanged(nameof(FirstConnectDeviceName));
 
             _spaceReservationPercent = Math.Clamp(settings.SpaceReservationPercent, 0, 50);
             OnPropertyChanged(nameof(SpaceReservationPercent));
@@ -1201,6 +1210,9 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Explicit save (used by external callers, e.g. MainShell's FirstConnect wizard).</summary>
+    public void Persist() => SaveCurrentSettings();
+
     private void SaveCurrentSettings()
     {
         if (_settingsStore == null || _isRestoringSettings)
@@ -1256,6 +1268,7 @@ public class SettingsViewModel : ViewModelBase
             DeletePhotosAfterReverseSync = DeletePhotosAfterReverseSync,
             ShowRatings = ShowRatings,
             FirstConnectCompletedSerials = FirstConnectCompletedSerials,
+            FirstConnectDeviceName = FirstConnectDeviceName,
         });
     }
 

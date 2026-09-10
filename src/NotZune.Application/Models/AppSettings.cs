@@ -66,6 +66,7 @@ public class AppSettings
     // General
     public bool ShowRatings { get; set; } = true;
     public List<string> FirstConnectCompletedSerials { get; set; } = new();
+    public string FirstConnectDeviceName { get; set; } = string.Empty;
 
     // Display
     public string SelectedAccentName { get; set; } = string.Empty;

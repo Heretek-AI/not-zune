@@ -38,7 +38,7 @@ public class MainShellViewModel : ViewModelBase
     private NavigationPivot _activePivot = NavigationPivot.Quickplay;
     private readonly Stack<NavigationPivot> _navigationHistory = new();
     private bool _isNavigatingBack;
-    private ViewModelBase _currentView;
+    private ViewModelBase _currentView = null!;
 
     private bool _isCompactMode;
     private string? _selectedBackgroundArt = "avares://NotZune.UI/Assets/Zune/Backgrounds/USERBACKGROUND-ART-536X196-10.JPG";
@@ -53,8 +53,8 @@ public class MainShellViewModel : ViewModelBase
     public DeviceViewModel DeviceVM { get; }
     public SettingsViewModel SettingsVM { get; }
     public ZuneCardViewModel ZuneCardVM { get; }
-    public MixviewViewModel MixviewVM { get; }
-    public CDViewModel CDVM { get; }
+    public MixviewViewModel MixviewVM { get; } = null!;
+    public CDViewModel CDVM { get; } = null!;
 
     public event EventHandler<bool>? CompactModeChanged;
 
@@ -291,28 +291,28 @@ public class MainShellViewModel : ViewModelBase
     }
 
     // Commands
-    public ICommand SelectPivotCommand { get; }
-    public ICommand PlayPauseCommand { get; }
-    public ICommand NextCommand { get; }
-    public ICommand PreviousCommand { get; }
-    public ICommand ToggleFavoriteCommand { get; }
-    public ICommand ToggleDislikeCommand { get; }
-    public ICommand ToggleNowPlayingCommand { get; }
-    public ICommand ToggleShuffleCommand { get; }
-    public ICommand ToggleRepeatCommand { get; }
-    public ICommand SeekCommand { get; }
-    public ICommand StopCommand { get; }
-    public ICommand RewindCommand { get; }
-    public ICommand FastForwardCommand { get; }
-    public ICommand ToggleCompactModeCommand { get; }
-    public ICommand ToggleZuneCardCommand { get; }
-    public ICommand ClearSearchCommand { get; }
-    public ICommand OpenDeviceCommand { get; }
-    public ICommand OpenPlaylistsCommand { get; }
-    public ICommand NavigateToMixviewCommand { get; }
-    public ICommand OpenCDCommand { get; }
-    public ICommand AcceptSuggestionCommand { get; }
-    public ICommand GoBackCommand { get; }
+    public ICommand SelectPivotCommand { get; } = null!;
+    public ICommand PlayPauseCommand { get; } = null!;
+    public ICommand NextCommand { get; } = null!;
+    public ICommand PreviousCommand { get; } = null!;
+    public ICommand ToggleFavoriteCommand { get; } = null!;
+    public ICommand ToggleDislikeCommand { get; } = null!;
+    public ICommand ToggleNowPlayingCommand { get; } = null!;
+    public ICommand ToggleShuffleCommand { get; } = null!;
+    public ICommand ToggleRepeatCommand { get; } = null!;
+    public ICommand SeekCommand { get; } = null!;
+    public ICommand StopCommand { get; } = null!;
+    public ICommand RewindCommand { get; } = null!;
+    public ICommand FastForwardCommand { get; } = null!;
+    public ICommand ToggleCompactModeCommand { get; } = null!;
+    public ICommand ToggleZuneCardCommand { get; } = null!;
+    public ICommand ClearSearchCommand { get; } = null!;
+    public ICommand OpenDeviceCommand { get; } = null!;
+    public ICommand OpenPlaylistsCommand { get; } = null!;
+    public ICommand NavigateToMixviewCommand { get; } = null!;
+    public ICommand OpenCDCommand { get; } = null!;
+    public ICommand AcceptSuggestionCommand { get; } = null!;
+    public ICommand GoBackCommand { get; } = null!;
     public bool CanGoBack => _navigationHistory.Count > 0;
 
     private FirstLaunchWizardViewModel? _firstLaunchWizardVM;
@@ -329,6 +329,21 @@ public class MainShellViewModel : ViewModelBase
     }
 
     public bool IsFirstLaunchWizardOpen => FirstLaunchWizardVM != null;
+
+    private FirstConnectWizardViewModel? _firstConnectWizardVM;
+    public FirstConnectWizardViewModel? FirstConnectWizardVM
+    {
+        get => _firstConnectWizardVM;
+        set
+        {
+            if (SetProperty(ref _firstConnectWizardVM, value))
+            {
+                OnPropertyChanged(nameof(IsFirstConnectWizardOpen));
+            }
+        }
+    }
+
+    public bool IsFirstConnectWizardOpen => FirstConnectWizardVM != null;
 
     private WhatsNewViewModel? _whatsNewVM;
     public WhatsNewViewModel? WhatsNewVM
@@ -445,10 +460,18 @@ public class MainShellViewModel : ViewModelBase
         _playerCoordinator.RatingChanged += OnPlayerRatingChanged;
 
         // Wire device sync events
-        _deviceSyncService.DeviceConnected += (_, _) =>
+        _deviceSyncService.DeviceConnected += (_, dev) =>
         {
             _soundEffectService?.PlayNotification();
             NotifyQuickDockChanged();
+
+            // Zune FIRSTCONNECT parity: run the device-arrival wizard once per physical serial.
+            if (dev != null
+                && !string.IsNullOrWhiteSpace(dev.SerialNumber)
+                && !SettingsVM.FirstConnectCompletedSerials.Contains(dev.SerialNumber))
+            {
+                BeginFirstConnect(dev);
+            }
         };
         _deviceSyncService.DeviceDisconnected += (_, _) => NotifyQuickDockChanged();
         DeviceVM.PropertyChanged += (_, _) => NotifyQuickDockChanged();
@@ -533,11 +556,62 @@ public class MainShellViewModel : ViewModelBase
                 _equalizerFrame = (_equalizerFrame % 10) + 1;
                 NowPlayingIconSource = $"avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.FRAME{_equalizerFrame:D2}.PNG";
             };
+            BeginFirstConnectOnAlreadyConnected();
         }
         catch
         {
             // Fallback for headless test environments where Dispatcher is unavailable
         }
+    }
+
+    private void BeginFirstConnectOnAlreadyConnected()
+    {
+        if (SettingsVM == null || _deviceSyncService == null)
+        {
+            return;
+        }
+
+        foreach (var device in _deviceSyncService.ConnectedDevices)
+        {
+            if (device != null
+                && !string.IsNullOrWhiteSpace(device.SerialNumber)
+                && !SettingsVM.FirstConnectCompletedSerials.Contains(device.SerialNumber))
+            {
+                BeginFirstConnect(device);
+                return;
+            }
+        }
+    }
+
+    private void BeginFirstConnect(NotZune.Domain.Models.ZuneDevice device)
+    {
+        if (SettingsVM == null || FirstConnectWizardVM != null)
+        {
+            return;
+        }
+
+        var vm = new FirstConnectWizardViewModel(device);
+        vm.RequestClose += (_, result) =>
+        {
+            FirstConnectWizardVM = null;
+
+            if (result != null && result.Device != null && !string.IsNullOrWhiteSpace(result.Device.SerialNumber))
+            {
+                if (!SettingsVM.FirstConnectCompletedSerials.Contains(result.Device.SerialNumber))
+                {
+                    SettingsVM.FirstConnectCompletedSerials.Add(result.Device.SerialNumber);
+                }
+
+                if (result.SyncMusic) SettingsVM.MusicSyncRule = "All Music (Automatic Sync)";
+                if (result.SyncVideos) SettingsVM.VideoSyncRule = "All Videos & Pictures";
+                if (result.SyncPhotos) SettingsVM.PicturesSyncRule = "Newest 25 Items";
+                if (result.SyncPodcasts) SettingsVM.PodcastSyncRule = "3 Newest Episodes";
+
+                SettingsVM.FirstConnectDeviceName = result.DeviceName;
+                SettingsVM.Persist();
+            }
+        };
+        FirstConnectWizardVM = vm;
     }
 
     /// <summary>
