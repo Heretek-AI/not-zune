@@ -628,20 +628,58 @@
 
         <!-- SUB-PANEL: ABOUT -->
         <StackPanel Spacing="24" IsVisible="{Binding IsAboutSubPivotActive}">
-          <StackPanel Spacing="8">
-            <TextBlock Text="{Binding VersionInfo}" Classes="hero" />
-            <TextBlock Text="The Modern Spiritual Successor to Microsoft Zune Desktop" Classes="section-header" Foreground="{DynamicResource ZuneAccentBrush}" />
-            <TextBlock Text="{Binding PlatformInfo}" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          <StackPanel Orientation="Horizontal" Spacing="20">
+            <!-- Authentic Zune brand mark -->
+            <Image Source="avares://NotZune.UI/Assets/Zune/Branding/ZUNECOLORLOGO.PNG"
+                   Width="80" Height="80"
+                   VerticalAlignment="Top" />
+
+            <StackPanel Spacing="6" VerticalAlignment="Center">
+              <TextBlock Text="{Binding ProductName}" Classes="hero" FontSize="48" />
+              <TextBlock Text="{Binding ProductTagline}" Classes="section-header" Foreground="{DynamicResource ZuneAccentBrush}" LetterSpacing="1" />
+              <TextBlock Text="{Binding VersionInfo}" Classes="body" Foreground="{DynamicResource ZuneTextActiveBrush}" />
+              <TextBlock Text="{Binding ProductBuildId}" Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+            </StackPanel>
           </StackPanel>
 
-          <Border Background="{DynamicResource ZuneSurfaceBrush}" 
-                  BorderBrush="{DynamicResource ZuneBorderBrush}" 
-                  BorderThickness="1" 
-                  CornerRadius="0" 
-                  Padding="20" 
-                  MaxWidth="650">
+          <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}"
+                  BorderBrush="{DynamicResource ZuneBorderBrush}"
+                  BorderThickness="1"
+                  CornerRadius="0"
+                  Padding="20"
+                  MaxWidth="700">
+            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="VERSION" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProductVersion}" Classes="body" Margin="0,0,0,6" />
+
+              <TextBlock Grid.Row="1" Grid.Column="0" Text="RUNTIME" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ProductRuntime}" Classes="body" Margin="0,0,0,6" />
+
+              <TextBlock Grid.Row="2" Grid.Column="0" Text="PLATFORM" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PlatformInfo}" Classes="body" Margin="0,0,0,6" />
+
+              <TextBlock Grid.Row="3" Grid.Column="0" Text="BUILD" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ProductBuildId}" Classes="body" Margin="0,0,0,6" />
+
+              <TextBlock Grid.Row="4" Grid.Column="0" Text="COPYRIGHT" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ProductCopyright}" Classes="body" Margin="0,0,0,6" />
+
+              <TextBlock Grid.Row="5" Grid.Column="0" Text="LICENSE" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <TextBlock Grid.Row="5" Grid.Column="1" Text="MIT License" Classes="body" Margin="0,0,0,6" />
+
+              <TextBlock Grid.Row="6" Grid.Column="0" Text="EULA &amp; SOURCE" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneTextSecondaryBrush}" />
+              <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding ProductEulaLink}" Classes="caption" Foreground="{DynamicResource ZuneAccentBrush}" TextDecorations="Underline" />
+            </Grid>
+          </Border>
+
+          <Border Background="{DynamicResource ZuneSurfaceElevatedBrush}"
+                  BorderBrush="{DynamicResource ZuneBorderBrush}"
+                  BorderThickness="1"
+                  CornerRadius="0"
+                  Padding="20"
+                  MaxWidth="700">
             <StackPanel Spacing="12">
-              <TextBlock Text="DESIGN INVARIANTS &amp; PRINCIPLES" Classes="section-header" />
+              <TextBlock Text="DESIGN INVARIANTS &amp; PRINCIPLES" Classes="section-header" Foreground="{DynamicResource ZuneAccentBrush}" />
               <TextBlock Text="• Strict Metro / Iris Design Language: Zero Corner Radius on all controls and surfaces." Classes="body" />
               <TextBlock Text="• Content Before Chrome: Eliminating unnecessary borders, bevels, and artificial depth." Classes="body" />
               <TextBlock Text="• Typography as Art: Segoe UI, Selawik, and clear hierarchical scale establishing visual rhythm." Classes="body" />

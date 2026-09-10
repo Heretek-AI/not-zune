@@ -219,19 +219,22 @@
             </Panel>
 
             <!-- Animated Now Playing Dancing Equalizer Button -->
-            <Button Command="{Binding ToggleNowPlayingCommand}" VerticalAlignment="Center">
-              <Border BorderBrush="{DynamicResource ZuneAccentBrush}" 
-                      BorderThickness="1" 
-                      Padding="12,4" 
-                      Background="{DynamicResource ZuneCardBrush}" 
+            <Button Command="{Binding ToggleNowPlayingCommand}" VerticalAlignment="Center"
+                    PointerEntered="OnNowPlayingButtonPointerEntered"
+                    PointerExited="OnNowPlayingButtonPointerExited"
+                    PointerPressed="OnNowPlayingButtonPointerPressed">
+              <Border BorderBrush="{DynamicResource ZuneAccentBrush}"
+                      BorderThickness="1"
+                      Padding="12,4"
+                      Background="{DynamicResource ZuneCardBrush}"
                       CornerRadius="0">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <Image Source="{Binding NowPlayingIconSource}" Width="18" Height="17" VerticalAlignment="Center" />
-                  <TextBlock Text="NOW PLAYING" 
-                             Classes="caption" 
-                             FontWeight="SemiBold" 
+                  <TextBlock Text="NOW PLAYING"
+                             Classes="caption"
+                             FontWeight="SemiBold"
                              LetterSpacing="1"
-                             Foreground="{DynamicResource ZuneTextActiveBrush}" 
+                             Foreground="{DynamicResource ZuneTextActiveBrush}"
                              VerticalAlignment="Center" />
                 </StackPanel>
               </Border>

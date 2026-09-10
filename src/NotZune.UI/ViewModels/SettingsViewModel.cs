@@ -138,10 +138,15 @@ public class SettingsViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(IsCollectionSubPivotActive));
                 OnPropertyChanged(nameof(IsPlaybackSubPivotActive));
+                OnPropertyChanged(nameof(IsPodcastsSubPivotActive));
+                OnPropertyChanged(nameof(IsFileTypesSubPivotActive));
+                OnPropertyChanged(nameof(IsPrivacySubPivotActive));
+                OnPropertyChanged(nameof(IsPhotosSubPivotActive));
                 OnPropertyChanged(nameof(IsRipSubPivotActive));
                 OnPropertyChanged(nameof(IsBurnSubPivotActive));
                 OnPropertyChanged(nameof(IsMetadataSubPivotActive));
                 OnPropertyChanged(nameof(IsDisplaySubPivotActive));
+                OnPropertyChanged(nameof(IsGeneralSubPivotActive));
                 OnPropertyChanged(nameof(IsAboutSubPivotActive));
             }
         }
@@ -994,6 +999,15 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public string ProductName => NotZune.Application.AppInfo.ProductName;
+    public string ProductTagline => NotZune.Application.AppInfo.Tagline;
+    public string ProductCopyright => NotZune.Application.AppInfo.CopyrightLine;
+    public string ProductEulaLink => NotZune.Application.AppInfo.EulaLink;
+    public string ProductVersion => NotZune.Application.AppInfo.Version;
+    public string ProductRuntime => string.IsNullOrWhiteSpace(NotZune.Application.AppInfo.RuntimeIdentifier)
+        ? PlatformInfo
+        : NotZune.Application.AppInfo.RuntimeIdentifier;
+    public string ProductBuildId => NotZune.Application.AppInfo.BuildIdentifier;
     public string PlatformInfo => $"{System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture})";
     public string VersionInfo => NotZune.Application.AppInfo.VersionDisplay;
 

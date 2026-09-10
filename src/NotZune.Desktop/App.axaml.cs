@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NotZune.Application;
 using NotZune.Application.Interfaces;
 using NotZune.Application.Services;
 using NotZune.Domain.Enums;
@@ -33,6 +34,13 @@ public partial class App : Avalonia.Application
 
         // Seed initial rich demo data
         SeedDemoData(_serviceProvider);
+
+        // Populate AppInfo for the About page: runtime + commit identifier.
+        AppInfo.RuntimeIdentifier =
+            $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription} on " +
+            $"{System.Runtime.InteropServices.RuntimeInformation.OSDescription}";
+        AppInfo.BuildIdentifier =
+            $"Built on {DateTime.UtcNow:yyyy-MM-dd HH:mm 'UTC'}";
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

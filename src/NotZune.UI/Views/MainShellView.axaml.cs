@@ -76,4 +76,29 @@ public partial class MainShellView : UserControl
         var window = TopLevel.GetTopLevel(this) as Window;
         window?.Close();
     }
+
+    private void OnNowPlayingButtonPointerEntered(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (DataContext is ViewModels.MainShellViewModel vm)
+        {
+            vm.NotifyNowPlayingButtonHover(true);
+        }
+    }
+
+    private void OnNowPlayingButtonPointerExited(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (DataContext is ViewModels.MainShellViewModel vm)
+        {
+            vm.NotifyNowPlayingButtonHover(false);
+            vm.NotifyNowPlayingButtonPressed(false);
+        }
+    }
+
+    private void OnNowPlayingButtonPointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        if (DataContext is ViewModels.MainShellViewModel vm)
+        {
+            vm.NotifyNowPlayingButtonPressed(true);
+        }
+    }
 }

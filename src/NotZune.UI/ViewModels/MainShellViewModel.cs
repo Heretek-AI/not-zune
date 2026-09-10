@@ -34,6 +34,8 @@ public class MainShellViewModel : ViewModelBase
     private readonly IDeviceSyncService _deviceSyncService;
     private readonly ISoundEffectService? _soundEffectService;
     private readonly IUserStatsService? _userStatsService;
+    private readonly IPodcastService? _podcastService;
+    private readonly IVideoLibraryService? _videoLibraryService;
 
     private NavigationPivot _activePivot = NavigationPivot.Quickplay;
     private readonly Stack<NavigationPivot> _navigationHistory = new();
@@ -45,6 +47,9 @@ public class MainShellViewModel : ViewModelBase
 
     private int _equalizerFrame = 1;
     private readonly DispatcherTimer? _equalizerTimer;
+    private bool _isNowPlayingButtonHovered;
+    private bool _isNowPlayingButtonPressed;
+    private bool _isNowPlayingPlaying;
     private string _nowPlayingIconSource = "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.PNG";
 
     public QuickplayViewModel QuickplayVM { get; }
@@ -91,6 +96,53 @@ public class MainShellViewModel : ViewModelBase
         private set => SetProperty(ref _nowPlayingIconSource, value);
     }
 
+    /// <summary>Code-behind hook: pointer entered the Now Playing button.</summary>
+    public void NotifyNowPlayingButtonHover(bool isHovering) => SetNowPlayingHoverState(isHovering);
+
+    /// <summary>Code-behind hook: pointer pressed/released the Now Playing button.</summary>
+    public void NotifyNowPlayingButtonPressed(bool isPressed) => SetNowPlayingPressedState(isPressed);
+
+    private void SetNowPlayingHoverState(bool isHovering)
+    {
+        if (_isNowPlayingButtonHovered == isHovering) return;
+        _isNowPlayingButtonHovered = isHovering;
+        RefreshNowPlayingIcon();
+    }
+
+    private void SetNowPlayingPressedState(bool isPressed)
+    {
+        if (_isNowPlayingButtonPressed == isPressed) return;
+        _isNowPlayingButtonPressed = isPressed;
+        RefreshNowPlayingIcon();
+    }
+
+    /// <summary>Compute the right Now Playing icon asset for the current (hover/pressed/playing/frame) state.</summary>
+    private void RefreshNowPlayingIcon()
+    {
+        string? variant = _isNowPlayingButtonPressed ? "PRESSED"
+                       : _isNowPlayingButtonHovered ? "HOVER"
+                       : null;
+
+        if (!_isNowPlayingPlaying)
+        {
+            NowPlayingIconSource = variant switch
+            {
+                "PRESSED" => "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.PRESSED.PNG",
+                "HOVER"   => "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.HOVER.PNG",
+                _         => "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.PNG",
+            };
+            return;
+        }
+
+        // Playing: cycle through 10 frames, with the hover/pressed variant.
+        NowPlayingIconSource = variant switch
+        {
+            "PRESSED" => $"avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.PRESSED.FRAME{_equalizerFrame:D2}.PNG",
+            "HOVER"   => $"avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.HOVER.FRAME{_equalizerFrame:D2}.PNG",
+            _         => $"avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.FRAME{_equalizerFrame:D2}.PNG",
+        };
+    }
+
     private string _headerSearchQuery = string.Empty;
     public string HeaderSearchQuery
     {
@@ -116,6 +168,8 @@ public class MainShellViewModel : ViewModelBase
 
     public bool HasSearchSuggestions => SearchSuggestions.Count > 0 && !string.IsNullOrWhiteSpace(HeaderSearchQuery);
 
+    private CancellationTokenSource? _searchCts;
+
     private void UpdateSearchSuggestions(string query)
     {
         SearchSuggestions.Clear();
@@ -130,22 +184,85 @@ public class MainShellViewModel : ViewModelBase
 
         suggestions.AddRange(CollectionVM.Artists
             .Where(a => a.Name.ToLowerInvariant().Contains(lower))
-            .Take(3)
+            .Take(2)
             .Select(a => a.Name));
 
         suggestions.AddRange(CollectionVM.Albums
             .Where(a => a.Title.ToLowerInvariant().Contains(lower))
-            .Take(3)
+            .Take(2)
             .Select(a => a.Title));
 
         suggestions.AddRange(CollectionVM.Songs
             .Where(s => s.Title.ToLowerInvariant().Contains(lower))
-            .Take(3)
+            .Take(2)
             .Select(s => s.Title));
 
-        foreach (var suggestion in suggestions.Distinct().Take(8))
+        foreach (var suggestion in suggestions.Distinct().Take(6))
         {
             SearchSuggestions.Add(suggestion);
+        }
+
+        // Async podcast + video matches (debounced via cancellation token)
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        _ = SearchExtendedAsync(query, _searchCts.Token);
+
+        OnPropertyChanged(nameof(HasSearchSuggestions));
+    }
+
+    private async Task SearchExtendedAsync(string query, CancellationToken ct)
+    {
+        var lower = query.Trim().ToLowerInvariant();
+        var added = new List<string>();
+
+        if (_podcastService != null)
+        {
+            try
+            {
+                var podcasts = await _podcastService.GetAllPodcastsAsync();
+                foreach (var series in podcasts)
+                {
+                    if (ct.IsCancellationRequested) return;
+                    if (series.Title?.ToLowerInvariant().Contains(lower) == true)
+                    {
+                        added.Add(series.Title);
+                    }
+                }
+            }
+            catch
+            {
+                // Search is best-effort; ignore service failures
+            }
+        }
+
+        if (_videoLibraryService != null)
+        {
+            try
+            {
+                var videos = await _videoLibraryService.GetAllVideosAsync();
+                foreach (var video in videos)
+                {
+                    if (ct.IsCancellationRequested) return;
+                    if (video.Title?.ToLowerInvariant().Contains(lower) == true)
+                    {
+                        added.Add(video.Title);
+                    }
+                }
+            }
+            catch
+            {
+                // best-effort
+            }
+        }
+
+        if (ct.IsCancellationRequested || added.Count == 0) return;
+
+        // Append the additional matches (deduped) without evicting the synchronous ones.
+        var existing = new HashSet<string>(SearchSuggestions, StringComparer.OrdinalIgnoreCase);
+        foreach (var s in added.Where(s => !existing.Contains(s)).Take(4))
+        {
+            SearchSuggestions.Add(s);
+            if (SearchSuggestions.Count >= 10) break;
         }
 
         OnPropertyChanged(nameof(HasSearchSuggestions));
@@ -386,13 +503,14 @@ public class MainShellViewModel : ViewModelBase
         _deviceSyncService = deviceSyncService;
         _soundEffectService = soundEffectService ?? new SoundEffectService();
         _userStatsService = userStatsService ?? new UserStatsService(libraryService);
-        var podService = podcastService ?? new PodcastService(playerCoordinator);
+        _podcastService = podcastService ?? new PodcastService(playerCoordinator);
+        _videoLibraryService = videoLibraryService;
 
         // Child ViewModels
         QuickplayVM = new QuickplayViewModel(playerCoordinator, libraryService, smartDJService);
-        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, podService, smartDJService, artworkCacheService, metadataService, smartPlaylistService, videoLibraryService, videoEngine, photoLibraryService);
+        CollectionVM = new CollectionViewModel(playerCoordinator, libraryService, _podcastService, smartDJService, artworkCacheService, metadataService, smartPlaylistService, videoLibraryService, videoEngine, photoLibraryService);
         NowPlayingVM = new NowPlayingViewModel(playerCoordinator, libraryService, enrichmentService, audioEngine, videoLibraryService, videoEngine);
-        DeviceVM = new DeviceViewModel(deviceSyncService, libraryService, syncEngine, settingsStore, videoLibraryService, photoLibraryService, podService, _soundEffectService, syncGroupService);
+        DeviceVM = new DeviceViewModel(deviceSyncService, libraryService, syncEngine, settingsStore, videoLibraryService, photoLibraryService, _podcastService, _soundEffectService, syncGroupService);
         SettingsVM = new SettingsViewModel(_soundEffectService, folderPickerService, _libraryService, playerCoordinator, deviceSyncService, settingsStore);
 
         // Onboarding (FIRSTLAUNCH + WHATSNEW parity): wizard on first run, What's New on version change.
@@ -554,7 +672,7 @@ public class MainShellViewModel : ViewModelBase
             _equalizerTimer.Tick += (s, e) =>
             {
                 _equalizerFrame = (_equalizerFrame % 10) + 1;
-                NowPlayingIconSource = $"avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.FRAME{_equalizerFrame:D2}.PNG";
+                RefreshNowPlayingIcon();
             };
             BeginFirstConnectOnAlreadyConnected();
         }
@@ -712,12 +830,14 @@ public class MainShellViewModel : ViewModelBase
 
         if (IsPlaying)
         {
+            _isNowPlayingPlaying = true;
             _equalizerTimer?.Start();
         }
         else
         {
+            _isNowPlayingPlaying = false;
             _equalizerTimer?.Stop();
-            NowPlayingIconSource = "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.PNG";
+            RefreshNowPlayingIcon();
         }
     }
 
