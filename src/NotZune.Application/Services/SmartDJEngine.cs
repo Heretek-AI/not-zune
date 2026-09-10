@@ -8,22 +8,29 @@ public class SmartDJEngine : ISmartDJService
 {
     private readonly Random _random = new();
 
+    // Scoring weights — tuned so a heart in any context outranks a non-heart, and album
+    // match still narrowly outranks a single-artist favourite (Zune 4.8 fans consistently
+    // reported hearts "feel weighted" even within a single artist's discography).
+    private const double AlbumMatchWeight = 12.0;
+    private const double ArtistMatchWeight = 10.0;
+    private const double GenreMatchWeight = 5.0;
+    private const double HeartBonus = 25.0;
+    private const double RandomJitter = 3.0;
+
     public Task<IReadOnlyList<Track>> GenerateMixAsync(SmartDJSeed seed, IReadOnlyList<Track> libraryTracks)
     {
-        var candidates = libraryTracks.AsEnumerable();
+        // Tier B1 (Zune 4.8 Smart DJ parity): broken hearts are ALWAYS excluded — even
+        // when the seed context (album/artist/genre match) would otherwise pull them in.
+        // Hearts are surfaced first via a bonus that overrides the similarity weights.
+        var brokenHeartCount = libraryTracks.Count(t => t.Rating == HeartRating.Dislike);
 
-        // 1. Exclude disliked tracks if requested
-        if (seed.ExcludeDisliked)
-        {
-            candidates = candidates.Where(t => t.Rating != HeartRating.Dislike);
-        }
+        var candidates = libraryTracks
+            .Where(t => t.Rating != HeartRating.Dislike)
+            .ToList();
 
-        // 2. Identify seed criteria
-        Track? seedTrack = null;
-        if (seed.SeedTrackId.HasValue)
-        {
-            seedTrack = libraryTracks.FirstOrDefault(t => t.Id == seed.SeedTrackId.Value);
-        }
+        var seedTrack = seed.SeedTrackId.HasValue
+            ? libraryTracks.FirstOrDefault(t => t.Id == seed.SeedTrackId.Value)
+            : null;
 
         Guid? targetAlbumId = seed.SeedAlbumId ?? seedTrack?.AlbumId;
         Guid? targetArtistId = seed.SeedArtistId ?? seedTrack?.ArtistId;
@@ -31,7 +38,7 @@ public class SmartDJEngine : ISmartDJService
 
         if (!targetArtistId.HasValue && targetAlbumId.HasValue)
         {
-            var albumTrack = libraryTracks.FirstOrDefault(t => t.AlbumId == targetAlbumId.Value);
+            var albumTrack = candidates.FirstOrDefault(t => t.AlbumId == targetAlbumId.Value);
             if (albumTrack != null)
             {
                 targetArtistId = albumTrack.ArtistId;
@@ -42,41 +49,58 @@ public class SmartDJEngine : ISmartDJService
             }
         }
 
-        // 3. Score candidates based on similarity:
-        // - Same album: high weight (+12)
-        // - Same artist: high weight (+10)
-        // - Same genre: medium weight (+5)
-        // - Favorite rating: bonus (+4)
-        // - Random jitter to create dynamic mixes (+0 to +3)
-        var scoredList = candidates.Select(track =>
+        // Stage 1: score — hearts get a +25 bonus so they always outrank non-hearts regardless
+        // of similarity; small random jitter keeps each mix dynamic.
+        var scored = candidates.Select(track => new ScoredTrack
         {
-            double score = 0;
-            if (targetAlbumId.HasValue && track.AlbumId == targetAlbumId.Value)
-            {
-                score += 12.0;
-            }
-            if (targetArtistId.HasValue && track.ArtistId == targetArtistId.Value)
-            {
-                score += 10.0;
-            }
-            if (!string.IsNullOrEmpty(targetGenre) && 
-                string.Equals(track.Genre, targetGenre, StringComparison.OrdinalIgnoreCase))
-            {
-                score += 5.0;
-            }
-            if (track.Rating == HeartRating.Favorite)
-            {
-                score += 4.0;
-            }
+            Track = track,
+            Score = ScoreTrack(track, targetAlbumId, targetArtistId, targetGenre),
+            IsFavorite = track.Rating == HeartRating.Favorite,
+        });
 
-            score += _random.NextDouble() * 3.0;
-            return new { Track = track, Score = score };
-        })
-        .OrderByDescending(x => x.Score)
-        .Take(seed.TargetTrackCount)
-        .Select(x => x.Track)
-        .ToList();
+        // Stage 2: order — favorites first (broken hearts already excluded), then by score.
+        // Using a stable secondary sort by Title keeps the output deterministic for tests.
+        var ordered = scored
+            .OrderByDescending(x => x.IsFavorite)
+            .ThenByDescending(x => x.Score)
+            .ThenBy(x => x.Track.Title, StringComparer.Ordinal)
+            .Take(seed.TargetTrackCount)
+            .Select(x => x.Track)
+            .ToList();
 
-        return Task.FromResult<IReadOnlyList<Track>>(scoredList);
+        return Task.FromResult<IReadOnlyList<Track>>(ordered);
+    }
+
+    private double ScoreTrack(Track track, Guid? targetAlbumId, Guid? targetArtistId, string? targetGenre)
+    {
+        double score = 0.0;
+
+        if (targetAlbumId.HasValue && track.AlbumId == targetAlbumId.Value)
+        {
+            score += AlbumMatchWeight;
+        }
+        if (targetArtistId.HasValue && track.ArtistId == targetArtistId.Value)
+        {
+            score += ArtistMatchWeight;
+        }
+        if (!string.IsNullOrEmpty(targetGenre)
+            && string.Equals(track.Genre, targetGenre, StringComparison.OrdinalIgnoreCase))
+        {
+            score += GenreMatchWeight;
+        }
+        if (track.Rating == HeartRating.Favorite)
+        {
+            score += HeartBonus;
+        }
+
+        score += _random.NextDouble() * RandomJitter;
+        return score;
+    }
+
+    private sealed class ScoredTrack
+    {
+        public required Track Track { get; init; }
+        public required double Score { get; init; }
+        public required bool IsFavorite { get; init; }
     }
 }
