@@ -127,6 +127,49 @@ public class PlaylistsViewModel : ViewModelBase
     public ICommand DeleteSmartPlaylistCommand { get; }
     public ICommand PlaySmartPlaylistCommand { get; }
     public ICommand RefreshSmartPlaylistCommand { get; }
+    public ICommand AddTracksToPlaylistCommand { get; }
+    public ICommand SwapHoverTargetCommand { get; }
+
+    // Tier B2 (Zune 4.8 playlist drag-drop): the playlist currently highlighted as the drop target.
+    // While a track is being dragged, the playlist under the cursor sets this; releasing the
+    // drag on HoveredPlaylistId triggers AddTracksToPlaylistCommand.
+    private Playlist? _hoveredPlaylist;
+    public Playlist? HoveredPlaylist
+    {
+        get => _hoveredPlaylist;
+        private set
+        {
+            if (SetProperty(ref _hoveredPlaylist, value))
+            {
+                OnPropertyChanged(nameof(IsPlaylistHovered));
+                OnPropertyChanged(nameof(HoverSwapPlaylistName));
+            }
+        }
+    }
+
+    public bool IsPlaylistHovered => _hoveredPlaylist != null;
+
+    /// <summary>True after ~300ms dwell on a playlist — shows the hover-swap popup of alternative drop targets.</summary>
+    private bool _isHoverSwapExpanded;
+    public bool IsHoverSwapExpanded
+    {
+        get => _isHoverSwapExpanded;
+        private set
+        {
+            if (SetProperty(ref _isHoverSwapExpanded, value))
+            {
+                OnPropertyChanged(nameof(HoverSwapAlternatives));
+            }
+        }
+    }
+
+    /// <summary>Other playlists the user can land on while still hovering (Tier B2 hover-swap parity).</summary>
+    public System.Collections.Generic.IReadOnlyList<Playlist> HoverSwapAlternatives =>
+        Playlists.Where(p => p.Id != _hoveredPlaylist?.Id).ToList();
+
+    public string HoverSwapPlaylistName => _hoveredPlaylist?.Name ?? string.Empty;
+
+    private readonly System.Collections.Generic.Dictionary<Guid, Avalonia.Threading.DispatcherTimer> _hoverSwapTimers = new();
 
     public PlaylistsViewModel(
         IMediaLibraryService libraryService,
@@ -148,6 +191,13 @@ public class PlaylistsViewModel : ViewModelBase
         DeleteSmartPlaylistCommand = new AsyncRelayCommand<SmartPlaylist>(OnDeleteSmartPlaylistAsync);
         PlaySmartPlaylistCommand = new AsyncRelayCommand(OnPlaySmartPlaylistAsync);
         RefreshSmartPlaylistCommand = new AsyncRelayCommand(OnRefreshSmartPlaylistAsync);
+
+        // Tier B2: drag-drop + hover-swap commands. The parameters are tuples of
+        // (Playlist playlist, IReadOnlyList<Track> tracks) — Avalonia's drag-drop payload
+        // is deserialized on the drop site.
+        AddTracksToPlaylistCommand = new AsyncRelayCommand<(Playlist Playlist, IReadOnlyList<Track> Tracks)>(
+            async payload => await OnAddTracksAsync(payload.Playlist, payload.Tracks));
+        SwapHoverTargetCommand = new RelayCommand<Playlist>(p => HoveredPlaylist = p);
 
         _ = LoadPlaylistsAsync();
     }
@@ -361,5 +411,86 @@ public class PlaylistsViewModel : ViewModelBase
 
         var tracks = SelectedSmartPlaylistTracks.ToList();
         await _playerCoordinator.PlayTrackAsync(tracks[0], tracks);
+    }
+
+    // ----------------------------------------------------------------------
+    // Tier B2: drag-drop + hover-swap for playlists (Zune 4.8 parity)
+    // ----------------------------------------------------------------------
+
+    /// <summary>Called when a track enters a playlist's drop zone. Sets hover state and arms the swap timer.</summary>
+    public void EnterPlaylistDropZone(Playlist playlist)
+    {
+        HoveredPlaylist = playlist;
+        ArmHoverSwapTimer(playlist);
+    }
+
+    /// <summary>Called when the cursor moves between drop targets inside the same playlist (re-arms the timer).</summary>
+    public void RefreshPlaylistDropZone(Playlist playlist)
+    {
+        if (_hoveredPlaylist?.Id != playlist.Id)
+        {
+            HoveredPlaylist = playlist;
+        }
+        ArmHoverSwapTimer(playlist);
+    }
+
+    /// <summary>Called when the cursor leaves a playlist's drop zone — collapses the swap popup and clears highlight.</summary>
+    public void LeavePlaylistDropZone(Playlist playlist)
+    {
+        if (_hoveredPlaylist?.Id == playlist.Id)
+        {
+            HoveredPlaylist = null;
+            IsHoverSwapExpanded = false;
+        }
+        CancelHoverSwapTimer(playlist);
+    }
+
+    /// <summary>Called when the drop is released over a playlist — clears transient state.</summary>
+    public void ClearPlaylistHover()
+    {
+        HoveredPlaylist = null;
+        IsHoverSwapExpanded = false;
+    }
+
+    private void ArmHoverSwapTimer(Playlist playlist)
+    {
+        CancelHoverSwapTimer(playlist);
+        var timer = new Avalonia.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            if (_hoveredPlaylist?.Id == playlist.Id)
+            {
+                IsHoverSwapExpanded = true;
+            }
+        };
+        _hoverSwapTimers[playlist.Id] = timer;
+        timer.Start();
+    }
+
+    private void CancelHoverSwapTimer(Playlist playlist)
+    {
+        if (_hoverSwapTimers.TryGetValue(playlist.Id, out var timer))
+        {
+            timer.Stop();
+            _hoverSwapTimers.Remove(playlist.Id);
+        }
+    }
+
+    private async Task OnAddTracksAsync(Playlist playlist, IReadOnlyList<Track> tracks)
+    {
+        foreach (var t in tracks)
+        {
+            await _libraryService.AddTrackToPlaylistAsync(playlist.Id, t.Id);
+        }
+
+        StatusMessage = $"Added {tracks.Count} track{(tracks.Count == 1 ? string.Empty : "s")} to {playlist.Name}.";
+        if (SelectedPlaylist?.Id == playlist.Id)
+        {
+            await LoadSelectedPlaylistTracksAsync(playlist);
+        }
     }
 }
