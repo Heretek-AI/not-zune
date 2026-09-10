@@ -2,31 +2,69 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <Styles.Resources>
-    <!-- Zune Metro Palette (authentic 4.8 values: Shell.WindowColorFromRGB → #11090F / #F3EFF1) -->
+    <!-- ============================================================
+         Zune Metro Palette — dark + light token sets
+         Authentic 4.8 values from decompiled Shell.cs (WindowColorFromRGB):
+           dark  #11090F / light #F3EFF1
+         Runtime: SettingsViewModel.ApplyTheme overwrites the brush colors
+         with the matching light (or dark) variant. Token NAMES stay stable.
+         ============================================================ -->
+
+    <!-- SURFACES -->
     <Color x:Key="ZuneBackgroundColor">#11090F</Color>
     <Color x:Key="ZuneSurfaceElevatedColor">#181818</Color>
     <Color x:Key="ZuneCardColor">#202020</Color>
     <Color x:Key="ZuneCardHoverColor">#282828</Color>
     <Color x:Key="ZuneBorderColor">#252525</Color>
+    <Color x:Key="ZuneSubtleBorderColor">#2C2C2C</Color>
+    <Color x:Key="ZuneInputBackgroundColor">#1A1A1A</Color>
 
-    <!-- Signature Accent (authentic 4.8 magenta: TRANSPORT.*.ON #F10DA2, hover #FA6EC9, pressed #B9077B) -->
+    <!-- TEXT -->
+    <Color x:Key="ZuneTextActiveColor">#FFFFFF</Color>
+    <Color x:Key="ZuneTextHoverColor">#D0D0D0</Color>
+    <Color x:Key="ZuneTextSecondaryColor">#888888</Color>
+    <Color x:Key="ZuneTextDimmedColor">#555555</Color>
+    <Color x:Key="ZuneTextWatermarkColor">#1E1E1E</Color>
+
+    <!-- LIGHT-THEME VARIANT COLORS (applied by ApplyTheme("light")) -->
+    <Color x:Key="ZuneBackgroundColorLight">#F3EFF1</Color>
+    <Color x:Key="ZuneSurfaceElevatedColorLight">#FFFFFF</Color>
+    <Color x:Key="ZuneCardColorLight">#FFFFFF</Color>
+    <Color x:Key="ZuneCardHoverColorLight">#F1EAED</Color>
+    <Color x:Key="ZuneBorderColorLight">#D8CFD3</Color>
+    <Color x:Key="ZuneSubtleBorderColorLight">#E5DDE0</Color>
+    <Color x:Key="ZuneInputBackgroundColorLight">#FFFFFF</Color>
+    <Color x:Key="ZuneTextActiveColorLight">#1A1A1A</Color>
+    <Color x:Key="ZuneTextHoverColorLight">#2A2A2A</Color>
+    <Color x:Key="ZuneTextSecondaryColorLight">#6B5F66</Color>
+    <Color x:Key="ZuneTextDimmedColorLight">#A0939B</Color>
+    <Color x:Key="ZuneTextWatermarkColorLight">#E5DDE0</Color>
+
+    <!-- ACCENT (theme-independent — magenta family works on both) -->
     <Color x:Key="ZuneAccentColor">#F10DA2</Color>
     <Color x:Key="ZuneAccentHoverColor">#FA6EC9</Color>
     <Color x:Key="ZuneAccentPressedColor">#B9077B</Color>
 
-    <!-- Optional Signature Accents -->
+    <!-- OPTIONAL ACCENT COLORS -->
     <Color x:Key="ZunePinkColor">#F10DA2</Color>
     <Color x:Key="ZuneOrangeColor">#EC6922</Color>
     <Color x:Key="ZuneCyanColor">#1BA1E2</Color>
     <Color x:Key="ZuneLimeColor">#339933</Color>
     <Color x:Key="ZunePurpleColor">#A200FF</Color>
 
-    <!-- Brush Resources -->
+    <!-- BRUSHES -->
     <SolidColorBrush x:Key="ZuneBackgroundBrush" Color="{StaticResource ZuneBackgroundColor}" />
     <SolidColorBrush x:Key="ZuneSurfaceElevatedBrush" Color="{StaticResource ZuneSurfaceElevatedColor}" />
     <SolidColorBrush x:Key="ZuneCardBrush" Color="{StaticResource ZuneCardColor}" />
     <SolidColorBrush x:Key="ZuneCardHoverBrush" Color="{StaticResource ZuneCardHoverColor}" />
     <SolidColorBrush x:Key="ZuneBorderBrush" Color="{StaticResource ZuneBorderColor}" />
+    <SolidColorBrush x:Key="ZuneSubtleBorderBrush" Color="{StaticResource ZuneSubtleBorderColor}" />
+    <SolidColorBrush x:Key="ZuneInputBackgroundBrush" Color="{StaticResource ZuneInputBackgroundColor}" />
+    <SolidColorBrush x:Key="ZuneTextActiveBrush" Color="{StaticResource ZuneTextActiveColor}" />
+    <SolidColorBrush x:Key="ZuneTextHoverBrush" Color="{StaticResource ZuneTextHoverColor}" />
+    <SolidColorBrush x:Key="ZuneTextSecondaryBrush" Color="{StaticResource ZuneTextSecondaryColor}" />
+    <SolidColorBrush x:Key="ZuneTextDimmedBrush" Color="{StaticResource ZuneTextDimmedColor}" />
+    <SolidColorBrush x:Key="ZuneTextWatermarkBrush" Color="{StaticResource ZuneTextWatermarkColor}" />
     <SolidColorBrush x:Key="ZuneAccentBrush" Color="{StaticResource ZuneAccentColor}" />
     <SolidColorBrush x:Key="ZuneAccentHoverBrush" Color="{StaticResource ZuneAccentHoverColor}" />
     <SolidColorBrush x:Key="ZuneAccentPressedBrush" Color="{StaticResource ZuneAccentPressedColor}" />
@@ -34,13 +72,6 @@
     <SolidColorBrush x:Key="ZuneCyanBrush" Color="{StaticResource ZuneCyanColor}" />
     <SolidColorBrush x:Key="ZuneLimeBrush" Color="{StaticResource ZuneLimeColor}" />
     <SolidColorBrush x:Key="ZunePurpleBrush" Color="{StaticResource ZunePurpleColor}" />
-
-    <!-- Typography Brushes: Opacity establishes visual depth -->
-    <SolidColorBrush x:Key="ZuneTextActiveBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="ZuneTextHoverBrush" Color="#D0D0D0" />
-    <SolidColorBrush x:Key="ZuneTextSecondaryBrush" Color="#888888" />
-    <SolidColorBrush x:Key="ZuneTextDimmedBrush" Color="#555555" />
-    <SolidColorBrush x:Key="ZuneTextWatermarkBrush" Color="#1E1E1E" />
 
     <!-- Non-negotiable Zune Metro Invariant: Zero Corner Radius -->
     <CornerRadius x:Key="ZuneCornerRadius">0</CornerRadius>

@@ -42,7 +42,7 @@
                  Value="{Binding ProgressPercentage}" 
                  Maximum="1.0" 
                  Foreground="{DynamicResource ZuneAccentBrush}" 
-                 Background="#1E1E1E" />
+                 Background="{DynamicResource ZuneInputBackgroundBrush}" />
 
     <!-- 3. Player Content & Transport Strip -->
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Margin="12,8,12,6" VerticalAlignment="Center">

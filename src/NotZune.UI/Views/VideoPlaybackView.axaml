@@ -44,7 +44,7 @@
 
       <!-- Transport -->
       <StackPanel Spacing="6">
-        <ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressFraction, Mode=OneWay}" Height="3" CornerRadius="0" Foreground="{DynamicResource ZuneAccentBrush}" Background="#222222" />
+        <ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressFraction, Mode=OneWay}" Height="3" CornerRadius="0" Foreground="{DynamicResource ZuneAccentBrush}" Background="{DynamicResource ZuneSurfaceElevatedBrush}" />
         <Grid ColumnDefinitions="Auto,*,Auto">
           <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
             <Button Command="{Binding PlayPauseCommand}" Classes="zune-action">

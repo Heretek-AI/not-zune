@@ -367,6 +367,37 @@
 
         <!-- SUB-PANEL: DISPLAY -->
         <StackPanel Spacing="24" IsVisible="{Binding IsDisplaySubPivotActive}">
+          <!-- Theme (dark / light) -->
+          <StackPanel Spacing="12">
+            <TextBlock Text="THEME" Classes="section-header" />
+            <TextBlock Text="Zune 4.8 shipped a soft light theme by default. Switch to soft white to match authentic Zune light."
+                       Classes="caption" />
+
+            <ItemsControl ItemsSource="{Binding ThemeOptions}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="16" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:ThemeOption">
+                  <Button Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SelectThemeCommand}"
+                          CommandParameter="{Binding}"
+                          Padding="0">
+                    <StackPanel Spacing="8">
+                      <Border Width="48" Height="48"
+                              Background="{DynamicResource ZuneCardBrush}"
+                              BorderBrush="{Binding $parent[Button].((Panel)DataContext).(vm:ThemeOption)IsDark, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=True}"
+                              BorderThickness="2">
+                        <TextBlock Text="{Binding Name}" Classes="caption" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
           <!-- Accent Colors -->
           <StackPanel Spacing="12">
             <TextBlock Text="SIGNATURE ACCENT COLOR" Classes="section-header" />

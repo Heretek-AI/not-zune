@@ -71,6 +71,7 @@ public class AppSettings
     // Display
     public string SelectedAccentName { get; set; } = string.Empty;
     public string SelectedBackgroundName { get; set; } = string.Empty;
+    public string SelectedThemeName { get; set; } = string.Empty;
 
     // Onboarding
     public bool FirstLaunchCompleted { get; set; }

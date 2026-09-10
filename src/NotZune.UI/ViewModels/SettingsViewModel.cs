@@ -13,6 +13,11 @@ namespace NotZune.UI.ViewModels;
 public record AccentColorOption(string Name, string HexCode);
 public record BackgroundThemeOption(string Name, string? AssetUri);
 
+public record ThemeOption(string Name, bool IsDark)
+{
+    public override string ToString() => Name;
+}
+
 public enum SettingsTopLevelPivot
 {
     Software,
@@ -189,6 +194,26 @@ public class SettingsViewModel : ViewModelBase
         new("Zune Vivid Lime", "#339933"),
         new("Zune Deep Purple", "#A200FF")
     };
+
+    public ObservableCollection<ThemeOption> ThemeOptions { get; } = new()
+    {
+        new("Matte Black (Dark)", true),
+        new("Soft White (Light)", false)
+    };
+
+    private ThemeOption _selectedTheme = new("Matte Black (Dark)", true);
+    public ThemeOption SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (SetProperty(ref _selectedTheme, value))
+            {
+                ApplyTheme(value);
+                SaveCurrentSettings();
+            }
+        }
+    }
 
     public ObservableCollection<BackgroundThemeOption> BackgroundThemes { get; } = new()
     {
@@ -984,6 +1009,7 @@ public class SettingsViewModel : ViewModelBase
     public ICommand ClearDemoLibraryCommand { get; }
     public ICommand SelectAccentCommand { get; }
     public ICommand SelectBackgroundCommand { get; }
+    public ICommand SelectThemeCommand { get; }
     public ICommand TestSoundCommand { get; }
 
     public SettingsViewModel(
@@ -1045,6 +1071,13 @@ public class SettingsViewModel : ViewModelBase
             if (theme != null)
             {
                 SelectedBackground = theme;
+            }
+        });
+        SelectThemeCommand = new RelayCommand<ThemeOption>(theme =>
+        {
+            if (theme != null)
+            {
+                SelectedTheme = theme;
             }
         });
         TestSoundCommand = new RelayCommand(() => _soundService?.PlaySyncComplete());
@@ -1203,6 +1236,17 @@ public class SettingsViewModel : ViewModelBase
                     OnPropertyChanged(nameof(SelectedBackground));
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(settings.SelectedThemeName))
+            {
+                var theme = ThemeOptions.FirstOrDefault(t => t.Name == settings.SelectedThemeName);
+                if (theme != null)
+                {
+                    _selectedTheme = theme;
+                    ApplyTheme(theme);
+                    OnPropertyChanged(nameof(SelectedTheme));
+                }
+            }
         }
         catch (Exception)
         {
@@ -1255,6 +1299,7 @@ public class SettingsViewModel : ViewModelBase
             NetworkName = NetworkName,
             SelectedAccentName = SelectedAccent.Name,
             SelectedBackgroundName = SelectedBackground.Name,
+            SelectedThemeName = SelectedTheme.Name,
             FirstLaunchCompleted = _firstLaunchCompleted,
             WhatsNewSeenVersion = _whatsNewSeenVersion,
             PodcastKeepEpisodes = SelectedPodcastKeepEpisodes,
@@ -1374,12 +1419,67 @@ public class SettingsViewModel : ViewModelBase
                 Avalonia.Application.Current.Resources["ZuneAccentBrush"] = new Avalonia.Media.SolidColorBrush(color);
                 Avalonia.Application.Current.Resources["SystemAccentColor"] = color;
                 var hoverColor = Avalonia.Media.Color.FromArgb(
-                    255, 
-                    (byte)Math.Min(255, color.R + 25), 
-                    (byte)Math.Min(255, color.G + 25), 
+                    255,
+                    (byte)Math.Min(255, color.R + 25),
+                    (byte)Math.Min(255, color.G + 25),
                     (byte)Math.Min(255, color.B + 25));
                 Avalonia.Application.Current.Resources["ZuneAccentHoverBrush"] = new Avalonia.Media.SolidColorBrush(hoverColor);
             }
+        }
+    }
+
+    /// <summary>
+    /// Light/Dark theme swap (Zune 4.8 shipped a light theme by default for fresh installs
+    /// when the startup page was set to Collection). We rewrite the surface/text brush
+    /// colors in the application resource dictionary so DynamicResource bindings update
+    /// everywhere without restyling every view.
+    /// </summary>
+    private void ApplyTheme(ThemeOption theme)
+    {
+        if (Avalonia.Application.Current?.Resources == null)
+        {
+            return;
+        }
+
+        static void SwapBrushColor(System.Collections.Generic.KeyValuePair<object, object?> entry, string newHex)
+        {
+            if (Avalonia.Media.Color.TryParse(newHex, out var color) && entry.Value is Avalonia.Media.SolidColorBrush brush)
+            {
+                brush.Color = color;
+            }
+        }
+
+        // Dark mode = no change (the brush colors were initialised to the dark values).
+        // Light mode = overwrite the runtime brush colors with the light values.
+        if (theme.IsDark)
+        {
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneBackgroundBrush",      Avalonia.Application.Current.Resources["ZuneBackgroundBrush"]),      "#11090F");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneSurfaceElevatedBrush", Avalonia.Application.Current.Resources["ZuneSurfaceElevatedBrush"]), "#181818");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneCardBrush",           Avalonia.Application.Current.Resources["ZuneCardBrush"]),           "#202020");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneCardHoverBrush",      Avalonia.Application.Current.Resources["ZuneCardHoverBrush"]),      "#282828");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneBorderBrush",         Avalonia.Application.Current.Resources["ZuneBorderBrush"]),         "#252525");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneSubtleBorderBrush",   Avalonia.Application.Current.Resources["ZuneSubtleBorderBrush"]),   "#2C2C2C");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneInputBackgroundBrush", Avalonia.Application.Current.Resources["ZuneInputBackgroundBrush"]), "#1A1A1A");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextActiveBrush",     Avalonia.Application.Current.Resources["ZuneTextActiveBrush"]),     "#FFFFFF");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextHoverBrush",      Avalonia.Application.Current.Resources["ZuneTextHoverBrush"]),      "#D0D0D0");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextSecondaryBrush",  Avalonia.Application.Current.Resources["ZuneTextSecondaryBrush"]),  "#888888");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextDimmedBrush",     Avalonia.Application.Current.Resources["ZuneTextDimmedBrush"]),     "#555555");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextWatermarkBrush",  Avalonia.Application.Current.Resources["ZuneTextWatermarkBrush"]),  "#1E1E1E");
+        }
+        else
+        {
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneBackgroundBrush",      Avalonia.Application.Current.Resources["ZuneBackgroundBrush"]),      "#F3EFF1");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneSurfaceElevatedBrush", Avalonia.Application.Current.Resources["ZuneSurfaceElevatedBrush"]), "#FFFFFF");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneCardBrush",           Avalonia.Application.Current.Resources["ZuneCardBrush"]),           "#FFFFFF");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneCardHoverBrush",      Avalonia.Application.Current.Resources["ZuneCardHoverBrush"]),      "#F1EAED");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneBorderBrush",         Avalonia.Application.Current.Resources["ZuneBorderBrush"]),         "#D8CFD3");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneSubtleBorderBrush",   Avalonia.Application.Current.Resources["ZuneSubtleBorderBrush"]),   "#E5DDE0");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneInputBackgroundBrush", Avalonia.Application.Current.Resources["ZuneInputBackgroundBrush"]), "#FFFFFF");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextActiveBrush",     Avalonia.Application.Current.Resources["ZuneTextActiveBrush"]),     "#1A1A1A");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextHoverBrush",      Avalonia.Application.Current.Resources["ZuneTextHoverBrush"]),      "#2A2A2A");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextSecondaryBrush",  Avalonia.Application.Current.Resources["ZuneTextSecondaryBrush"]),  "#6B5F66");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextDimmedBrush",     Avalonia.Application.Current.Resources["ZuneTextDimmedBrush"]),     "#A0939B");
+            SwapBrushColor(new KeyValuePair<object, object?>("ZuneTextWatermarkBrush",  Avalonia.Application.Current.Resources["ZuneTextWatermarkBrush"]),  "#E5DDE0");
         }
     }
 }
