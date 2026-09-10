@@ -72,7 +72,6 @@ public class NavigationAndPlaybackUiTests
 
         // Ctrl+S → StopCommand halts playback
         shellVm.StopCommand.Execute(null);
-        await Task.Delay(50);
         Assert.False(shellVm.IsPlaying);
 
         // Ctrl+Right → FastForwardCommand advances ~5s (clamped to duration)

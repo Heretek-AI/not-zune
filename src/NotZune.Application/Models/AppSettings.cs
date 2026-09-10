@@ -47,6 +47,9 @@ public class AppSettings
     public bool WirelessSyncEnabled { get; set; } = true;
     public string NetworkName { get; set; } = "Home-WiFi (WPA2)";
 
+    public string PodcastKeepEpisodes { get; set; } = "All Unplayed";
+    public bool PodcastAutoDownload { get; set; } = true;
+
     // Display
     public string SelectedAccentName { get; set; } = string.Empty;
     public string SelectedBackgroundName { get; set; } = string.Empty;

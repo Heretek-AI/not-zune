@@ -44,6 +44,8 @@ public class PodcastsViewModel : ViewModelBase
     public ICommand PlayEpisodeCommand { get; }
     public ICommand SubscribeCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand MarkAllPlayedCommand { get; }
+    public ICommand MarkAllUnplayedCommand { get; }
 
     public PodcastsViewModel(IPodcastService podcastService)
     {
@@ -69,7 +71,25 @@ public class PodcastsViewModel : ViewModelBase
         });
         RefreshCommand = new AsyncRelayCommand(LoadPodcastsAsync);
 
+        // PODCASTSERIESPANEL parity: "mark all as played / unplayed" on the selected series
+        MarkAllPlayedCommand = new AsyncRelayCommand(() => MarkAllEpisodesAsync(true));
+        MarkAllUnplayedCommand = new AsyncRelayCommand(() => MarkAllEpisodesAsync(false));
+
         _ = LoadPodcastsAsync();
+    }
+
+    private async Task MarkAllEpisodesAsync(bool played)
+    {
+        if (_selectedPodcast == null)
+        {
+            return;
+        }
+
+        foreach (var episode in _selectedPodcast.Episodes)
+        {
+            episode.IsPlayed = played;
+            await _podcastService.MarkEpisodePlayedAsync(episode.Id, played);
+        }
     }
 
     public async Task LoadPodcastsAsync()

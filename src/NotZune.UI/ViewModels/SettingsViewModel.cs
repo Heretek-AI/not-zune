@@ -23,6 +23,7 @@ public enum SoftwareSubPivot
 {
     Collection,
     Playback,
+    Podcasts,
     Rip,
     Burn,
     Metadata,
@@ -94,6 +95,7 @@ public class SettingsViewModel : ViewModelBase
                 // Content panels compose top-level + sub-pivot state.
                 OnPropertyChanged(nameof(IsCollectionSubPivotActive));
                 OnPropertyChanged(nameof(IsPlaybackSubPivotActive));
+                OnPropertyChanged(nameof(IsPodcastsSubPivotActive));
                 OnPropertyChanged(nameof(IsRipSubPivotActive));
                 OnPropertyChanged(nameof(IsBurnSubPivotActive));
                 OnPropertyChanged(nameof(IsMetadataSubPivotActive));
@@ -133,6 +135,7 @@ public class SettingsViewModel : ViewModelBase
     // last sub-pivot, so without the gate two content panels would render at once.
     public bool IsCollectionSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Collection;
     public bool IsPlaybackSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Playback;
+    public bool IsPodcastsSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Podcasts;
     public bool IsRipSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Rip;
     public bool IsBurnSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Burn;
     public bool IsMetadataSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Metadata;
@@ -313,6 +316,43 @@ public class SettingsViewModel : ViewModelBase
         set
         {
             if (SetProperty(ref _compactModeAlwaysOnTop, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    // ==========================================
+    // PODCAST SETTINGS
+    // ==========================================
+    public ObservableCollection<string> PodcastKeepEpisodesOptions { get; } = new()
+    {
+        "Everything",
+        "All Unplayed",
+        "1 Newest Unplayed",
+        "Nothing"
+    };
+
+    private string _selectedPodcastKeepEpisodes = "All Unplayed";
+    public string SelectedPodcastKeepEpisodes
+    {
+        get => _selectedPodcastKeepEpisodes;
+        set
+        {
+            if (SetProperty(ref _selectedPodcastKeepEpisodes, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private bool _podcastAutoDownload = true;
+    public bool PodcastAutoDownload
+    {
+        get => _podcastAutoDownload;
+        set
+        {
+            if (SetProperty(ref _podcastAutoDownload, value))
             {
                 SaveCurrentSettings();
             }
@@ -926,6 +966,11 @@ public class SettingsViewModel : ViewModelBase
             _startupView = settings.StartupView;
             OnPropertyChanged(nameof(StartupView));
 
+            _selectedPodcastKeepEpisodes = settings.PodcastKeepEpisodes;
+            OnPropertyChanged(nameof(SelectedPodcastKeepEpisodes));
+            _podcastAutoDownload = settings.PodcastAutoDownload;
+            OnPropertyChanged(nameof(PodcastAutoDownload));
+
             _spaceReservationPercent = Math.Clamp(settings.SpaceReservationPercent, 0, 50);
             OnPropertyChanged(nameof(SpaceReservationPercent));
             OnPropertyChanged(nameof(ReservedGbText));
@@ -1021,7 +1066,9 @@ public class SettingsViewModel : ViewModelBase
             SelectedAccentName = SelectedAccent.Name,
             SelectedBackgroundName = SelectedBackground.Name,
             FirstLaunchCompleted = _firstLaunchCompleted,
-            WhatsNewSeenVersion = _whatsNewSeenVersion
+            WhatsNewSeenVersion = _whatsNewSeenVersion,
+            PodcastKeepEpisodes = SelectedPodcastKeepEpisodes,
+            PodcastAutoDownload = PodcastAutoDownload,
         });
     }
 

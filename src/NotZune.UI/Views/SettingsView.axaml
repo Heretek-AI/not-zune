@@ -36,6 +36,9 @@
       <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Playback">
         <TextBlock Text="playback" Classes="subpivot" Classes.active="{Binding IsPlaybackSubPivotActive}" />
       </Button>
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Podcasts">
+        <TextBlock Text="podcasts" Classes="subpivot" Classes.active="{Binding IsPodcastsSubPivotActive}" />
+      </Button>
       <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Rip">
         <TextBlock Text="rip" Classes="subpivot" Classes.active="{Binding IsRipSubPivotActive}" />
       </Button>
@@ -197,6 +200,31 @@
                 <TextBlock Text="TEST SYNC SOUND" Classes="caption" FontWeight="SemiBold" />
               </Button>
             </StackPanel>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: PODCASTS -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsPodcastsSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="KEEP EPISODES" Classes="section-header" />
+            <TextBlock Text="How many episodes of a subscribed podcast should be kept on this PC." Classes="caption" />
+
+            <ComboBox ItemsSource="{Binding PodcastKeepEpisodesOptions}"
+                      SelectedItem="{Binding SelectedPodcastKeepEpisodes}"
+                      HorizontalAlignment="Stretch"
+                      Padding="10,6"
+                      BorderBrush="{DynamicResource ZuneBorderBrush}"
+                      Background="{DynamicResource ZuneCardBrush}"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="AUTO-DOWNLOAD" Classes="section-header" />
+            <TextBlock Text="Automatically download new episodes of subscribed podcasts in the background." Classes="caption" />
+
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding PodcastAutoDownload}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
           </StackPanel>
         </StackPanel>
 

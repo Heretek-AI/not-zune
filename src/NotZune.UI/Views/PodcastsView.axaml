@@ -79,6 +79,15 @@
             <TextBlock Text="{Binding SelectedPodcast.Title, FallbackValue='Select a Podcast'}" Classes="mega-title" />
             <TextBlock Text="{Binding SelectedPodcast.Author}" Classes="caption" FontWeight="SemiBold" Foreground="{DynamicResource ZuneAccentBrush}" LetterSpacing="1" />
             <TextBlock Text="{Binding SelectedPodcast.Description}" Classes="body" Foreground="{DynamicResource ZuneTextSecondaryBrush}" TextWrapping="Wrap" MaxWidth="700" Margin="0,4,0,0" />
+            <!-- PODCASTSERIESPANEL parity: mark all as played / unplayed -->
+            <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,8,0,0">
+              <Button Command="{Binding MarkAllPlayedCommand}" ToolTip.Tip="Mark every episode in this series as played">
+                <TextBlock Text="MARK ALL PLAYED" Classes="mini-pivot" />
+              </Button>
+              <Button Command="{Binding MarkAllUnplayedCommand}" ToolTip.Tip="Mark every episode in this series as unplayed">
+                <TextBlock Text="MARK ALL UNPLAYED" Classes="mini-pivot" />
+              </Button>
+            </StackPanel>
           </StackPanel>
         </Border>
 
