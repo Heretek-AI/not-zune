@@ -301,6 +301,9 @@ public class MainShellViewModel : ViewModelBase
     public ICommand ToggleShuffleCommand { get; }
     public ICommand ToggleRepeatCommand { get; }
     public ICommand SeekCommand { get; }
+    public ICommand StopCommand { get; }
+    public ICommand RewindCommand { get; }
+    public ICommand FastForwardCommand { get; }
     public ICommand ToggleCompactModeCommand { get; }
     public ICommand ToggleZuneCardCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -495,6 +498,20 @@ public class MainShellViewModel : ViewModelBase
                 var target = TimeSpan.FromSeconds(progress * Duration.TotalSeconds);
                 await _playerCoordinator.SeekAsync(target);
             }
+        });
+
+        StopCommand = new AsyncRelayCommand(() => _playerCoordinator.StopAsync());
+        RewindCommand = new AsyncRelayCommand(async () =>
+        {
+            var target = CurrentPosition - TimeSpan.FromSeconds(5);
+            await _playerCoordinator.SeekAsync(target < TimeSpan.Zero ? TimeSpan.Zero : target);
+        });
+        FastForwardCommand = new AsyncRelayCommand(async () =>
+        {
+            var target = CurrentPosition + TimeSpan.FromSeconds(5);
+            if (Duration > TimeSpan.Zero && target > Duration)
+                target = Duration;
+            await _playerCoordinator.SeekAsync(target);
         });
 
         ToggleNowPlayingCommand = new RelayCommand(() =>

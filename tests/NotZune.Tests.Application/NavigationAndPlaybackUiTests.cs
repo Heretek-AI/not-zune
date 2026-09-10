@@ -60,7 +60,36 @@ public class NavigationAndPlaybackUiTests
         Assert.Equal("▶", shellVm.PlayPauseIcon);
     }
 
-    [Fact]
+    [AvaloniaFact]
+    public async Task MainShellViewModel_TransportShortcuts_StopSeekRewindForward()
+    {
+        var coordinator = new PlaybackQueueCoordinator();
+        var shellVm = new MainShellViewModel(coordinator, new DummyMediaLibraryService(), new DummyDeviceSyncService(), new SmartDJEngine());
+
+        var track = new Track { Title = "Tom Sawyer", ArtistName = "Rush", Duration = TimeSpan.FromMinutes(3) };
+        await coordinator.PlayTrackAsync(track);
+        Assert.True(shellVm.IsPlaying);
+
+        // Ctrl+S → StopCommand halts playback
+        shellVm.StopCommand.Execute(null);
+        await Task.Delay(50);
+        Assert.False(shellVm.IsPlaying);
+
+        // Ctrl+Right → FastForwardCommand advances ~5s (clamped to duration)
+        await coordinator.SeekAsync(TimeSpan.FromSeconds(3));
+        shellVm.FastForwardCommand.Execute(null);
+        Assert.InRange(shellVm.CurrentPosition.TotalSeconds, 7.5, 8.5);
+
+        // Ctrl+Left → RewindCommand retreats ~5s (clamped to zero)
+        shellVm.RewindCommand.Execute(null);
+        Assert.InRange(shellVm.CurrentPosition.TotalSeconds, 1.5, 3.5);
+        shellVm.RewindCommand.Execute(null);
+        shellVm.RewindCommand.Execute(null);
+        shellVm.RewindCommand.Execute(null);
+        Assert.Equal(TimeSpan.Zero, shellVm.CurrentPosition);
+    }
+
+    [AvaloniaFact]
     public void SettingsViewModel_SelectAccentCommand_UpdatesAccentColor()
     {
         var vm = new SettingsViewModel();

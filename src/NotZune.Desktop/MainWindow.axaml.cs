@@ -2,6 +2,7 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Input;
 using NotZune.UI.ViewModels;
+using NotZune.UI.Views;
 
 namespace NotZune.Desktop;
 
@@ -94,6 +95,18 @@ public partial class MainWindow : Window
                     vm.ActivePivot = NavigationPivot.Collection;
                     e.Handled = true;
                     return;
+                case Key.S:
+                    vm.StopCommand.Execute(null);
+                    e.Handled = true;
+                    return;
+                case Key.Left:
+                    vm.RewindCommand.Execute(null);
+                    e.Handled = true;
+                    return;
+                case Key.Right:
+                    vm.FastForwardCommand.Execute(null);
+                    e.Handled = true;
+                    return;
             }
         }
 
@@ -104,6 +117,19 @@ public partial class MainWindow : Window
             {
                 case Key.Space:
                     vm.PlayPauseCommand.Execute(null);
+                    e.Handled = true;
+                    return;
+                case Key.Oem2:
+                    // "/" — search-focus shortcut: put the caret in the header search box
+                    if (Content is MainShellView shell)
+                    {
+                        shell.FocusHeaderSearch();
+                        e.Handled = true;
+                    }
+                    return;
+                case Key.F1:
+                    vm.ActivePivot = NavigationPivot.Settings;
+                    vm.SettingsVM.SoftwarePivot = SoftwareSubPivot.About;
                     e.Handled = true;
                     return;
                 case Key.F7:

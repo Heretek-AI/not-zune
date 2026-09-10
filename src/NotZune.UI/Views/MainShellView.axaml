@@ -164,7 +164,8 @@
                       Height="26"
                       CornerRadius="0">
                 <Grid ColumnDefinitions="*,Auto">
-                <TextBox Grid.Column="0"
+                <TextBox x:Name="HeaderSearchBox"
+                         Grid.Column="0"
                          Text="{Binding HeaderSearchQuery, Mode=TwoWay}"
                          Watermark="search collection"
                          BorderThickness="0"

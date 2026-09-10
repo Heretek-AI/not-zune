@@ -30,6 +30,10 @@
     <SolidColorBrush x:Key="ZuneAccentBrush" Color="{StaticResource ZuneAccentColor}" />
     <SolidColorBrush x:Key="ZuneAccentHoverBrush" Color="{StaticResource ZuneAccentHoverColor}" />
     <SolidColorBrush x:Key="ZuneAccentPressedBrush" Color="{StaticResource ZuneAccentPressedColor}" />
+    <SolidColorBrush x:Key="ZuneOrangeBrush" Color="{StaticResource ZuneOrangeColor}" />
+    <SolidColorBrush x:Key="ZuneCyanBrush" Color="{StaticResource ZuneCyanColor}" />
+    <SolidColorBrush x:Key="ZuneLimeBrush" Color="{StaticResource ZuneLimeColor}" />
+    <SolidColorBrush x:Key="ZunePurpleBrush" Color="{StaticResource ZunePurpleColor}" />
 
     <!-- Typography Brushes: Opacity establishes visual depth -->
     <SolidColorBrush x:Key="ZuneTextActiveBrush" Color="#FFFFFF" />

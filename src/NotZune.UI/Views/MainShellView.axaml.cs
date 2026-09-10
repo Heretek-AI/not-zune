@@ -11,6 +11,15 @@ public partial class MainShellView : UserControl
         InitializeComponent();
     }
 
+    public void FocusHeaderSearch()
+    {
+        if (HeaderSearchBox.IsVisible)
+        {
+            HeaderSearchBox.Focus();
+            HeaderSearchBox.SelectAll();
+        }
+    }
+
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         var window = TopLevel.GetTopLevel(this) as Window;
