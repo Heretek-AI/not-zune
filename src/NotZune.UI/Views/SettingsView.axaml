@@ -39,6 +39,15 @@
       <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Podcasts">
         <TextBlock Text="podcasts" Classes="subpivot" Classes.active="{Binding IsPodcastsSubPivotActive}" />
       </Button>
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="FileTypes">
+        <TextBlock Text="file types" Classes="subpivot" Classes.active="{Binding IsFileTypesSubPivotActive}" />
+      </Button>
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Privacy">
+        <TextBlock Text="privacy" Classes="subpivot" Classes.active="{Binding IsPrivacySubPivotActive}" />
+      </Button>
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Photos">
+        <TextBlock Text="photos" Classes="subpivot" Classes.active="{Binding IsPhotosSubPivotActive}" />
+      </Button>
       <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Rip">
         <TextBlock Text="rip" Classes="subpivot" Classes.active="{Binding IsRipSubPivotActive}" />
       </Button>
@@ -50,6 +59,9 @@
       </Button>
       <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="Display">
         <TextBlock Text="display" Classes="subpivot" Classes.active="{Binding IsDisplaySubPivotActive}" />
+      </Button>
+      <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="General">
+        <TextBlock Text="general" Classes="subpivot" Classes.active="{Binding IsGeneralSubPivotActive}" />
       </Button>
       <Button Command="{Binding SelectSoftwarePivotCommand}" CommandParameter="About">
         <TextBlock Text="about" Classes="subpivot" Classes.active="{Binding IsAboutSubPivotActive}" />
@@ -424,6 +436,162 @@
                       Content="Always Keep Compact Mini-Player on Top of other windows" 
                       CornerRadius="0" 
                       Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: FILE TYPES -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsFileTypesSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="FILE TYPES" Classes="section-header" />
+            <TextBlock Text="Which file types the library ingest scanner should pick up. Zune's default set is shown; pick a preset or type your own comma-separated extension list."
+                       Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="INGEST EXTENSIONS" Classes="section-header" />
+            <TextBox Text="{Binding IngestExtensions, Mode=TwoWay}"
+                     Background="{DynamicResource ZuneCardBrush}"
+                     BorderBrush="{DynamicResource ZuneBorderBrush}"
+                     Foreground="{DynamicResource ZuneTextActiveBrush}"
+                     CaretBrush="{DynamicResource ZuneAccentBrush}"
+                     Padding="10,6" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="PRESETS" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding FileTypesPresets}"
+                      HorizontalAlignment="Stretch"
+                      Padding="10,6"
+                      BorderBrush="{DynamicResource ZuneBorderBrush}"
+                      Background="{DynamicResource ZuneCardBrush}"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}"
+                      SelectionChanged="OnFileTypesPresetChanged" />
+            <TextBlock Text="Note: real OS file associations (the Windows registry / Linux mimeapps) are a system-level concern and live in the deferred registry."
+                       Classes="caption" Foreground="{DynamicResource ZuneTextDimmedBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: PRIVACY -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsPrivacySubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="PRIVACY" Classes="section-header" />
+            <TextBlock Text="Zune's privacy page in 4.8 covered usage-data opt-in and update checks. Not-Zune has no telemetry subsystem, so opting in only stores your preference for the day one is built."
+                       Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding UsageDataOptIn}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+              <TextBlock Text="SHARE ANONYMOUS USAGE DATA" Classes="body" FontWeight="SemiBold" />
+              <TextBlock Text="Helps the project understand which features are most used. No personally identifiable information is collected."
+                         Classes="caption" />
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding AutoCheckForUpdates}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+              <TextBlock Text="CHECK FOR UPDATES ON STARTUP" Classes="body" FontWeight="SemiBold" />
+              <TextBlock Text="Prompt you when a newer version of Not-Zune is available."
+                         Classes="caption" />
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: PHOTOS -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsPhotosSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="PHOTOS" Classes="section-header" />
+            <TextBlock Text="Watch a folder for new photos to appear in your library. Slideshow defaults apply to every slideshow session."
+                       Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="MONITORED PHOTO FOLDER" Classes="section-header" />
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBox Grid.Column="0"
+                       Text="{Binding PhotoFolderPath, Mode=TwoWay}"
+                       Watermark="e.g. ~/Pictures"
+                       Background="{DynamicResource ZuneCardBrush}"
+                       BorderBrush="{DynamicResource ZuneBorderBrush}"
+                       Foreground="{DynamicResource ZuneTextActiveBrush}"
+                       CaretBrush="{DynamicResource ZuneAccentBrush}"
+                       Padding="10,6" />
+              <Button Grid.Column="1" Classes="zune-action" Margin="8,0,0,0"
+                      Command="{Binding PickPhotoFolderCommand}">
+                <TextBlock Text="BROWSE…" Classes="caption" FontWeight="SemiBold" />
+              </Button>
+            </Grid>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding SlideshowShuffle}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="SHUFFLE SLIDESHOW BY DEFAULT" Classes="body" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding SlideshowRepeat}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="LOOP SLIDESHOW BY DEFAULT" Classes="body" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding DeletePhotosAfterReverseSync}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+              <TextBlock Text="DELETE PHOTOS FROM DEVICE AFTER REVERSE SYNC" Classes="body" FontWeight="SemiBold" />
+              <TextBlock Text="Removes the device-side copies after they have been copied back to the PC. Reverses the reverse-sync flow."
+                         Classes="caption" />
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- SUB-PANEL: GENERAL -->
+        <StackPanel Spacing="24" IsVisible="{Binding IsGeneralSubPivotActive}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="GENERAL" Classes="section-header" />
+            <TextBlock Text="Application-wide preferences. Zune 4.8 grouped these in the 'general' software page."
+                       Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <TextBlock Text="STARTUP VIEW" Classes="section-header" />
+            <ComboBox ItemsSource="{Binding StartupViewOptions}"
+                      SelectedItem="{Binding StartupView}"
+                      HorizontalAlignment="Stretch"
+                      Padding="10,6"
+                      BorderBrush="{DynamicResource ZuneBorderBrush}"
+                      Background="{DynamicResource ZuneCardBrush}"
+                      Foreground="{DynamicResource ZuneTextActiveBrush}" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding SoundEffectsEnabled}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="PLAY SOUND EFFECTS (sync complete, rip complete, inbox)" Classes="body" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding CompactModeAlwaysOnTop}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="KEEP MINI PLAYER ABOVE OTHER WINDOWS" Classes="body" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <ToggleSwitch OnContent="ON" OffContent="OFF"
+                          IsChecked="{Binding ShowRatings}"
+                          Foreground="{DynamicResource ZuneAccentBrush}" />
+            <TextBlock Text="SHOW HEART / BROKEN HEART RATING BUTTONS" Classes="body" VerticalAlignment="Center" />
           </StackPanel>
         </StackPanel>
 

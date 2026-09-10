@@ -255,6 +255,35 @@ public class OnlineEnrichmentTests
             Assert.Equal("key-123", loaded.FanartTvApiKey);
             Assert.False(loaded.MusicBrainzEnabled);
             Assert.Equal("Zune Orange", loaded.SelectedAccentName);
+
+            // Phase 3 parity fields
+            loaded.PodcastKeepEpisodes = "Nothing";
+            loaded.PodcastAutoDownload = false;
+            loaded.IngestExtensions = "mp3,m4a";
+            loaded.UsageDataOptIn = true;
+            loaded.AutoCheckForUpdates = false;
+            loaded.PhotoFolderPath = "/home/john/Pictures";
+            loaded.SlideshowShuffle = false;
+            loaded.SlideshowRepeat = false;
+            loaded.DeletePhotosAfterReverseSync = true;
+            loaded.ShowRatings = false;
+            loaded.FirstConnectCompletedSerials.Add("ABC123");
+            loaded.FirstConnectCompletedSerials.Add("DEF456");
+
+            store.Save(loaded);
+            var reloaded = store.Load();
+
+            Assert.Equal("Nothing", reloaded.PodcastKeepEpisodes);
+            Assert.False(reloaded.PodcastAutoDownload);
+            Assert.Equal("mp3,m4a", reloaded.IngestExtensions);
+            Assert.True(reloaded.UsageDataOptIn);
+            Assert.False(reloaded.AutoCheckForUpdates);
+            Assert.Equal("/home/john/Pictures", reloaded.PhotoFolderPath);
+            Assert.False(reloaded.SlideshowShuffle);
+            Assert.False(reloaded.SlideshowRepeat);
+            Assert.True(reloaded.DeletePhotosAfterReverseSync);
+            Assert.False(reloaded.ShowRatings);
+            Assert.Equal(new[] { "ABC123", "DEF456" }, reloaded.FirstConnectCompletedSerials);
         }
         finally
         {

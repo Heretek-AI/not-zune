@@ -50,6 +50,23 @@ public class AppSettings
     public string PodcastKeepEpisodes { get; set; } = "All Unplayed";
     public bool PodcastAutoDownload { get; set; } = true;
 
+    // File Types (library ingest extensions — Zune's FILETYPES.UIX parity)
+    public string IngestExtensions { get; set; } = "mp3,m4a,m4b,wma,mp4,m4v,flac,ogg,opus,aac";
+
+    // Privacy
+    public bool UsageDataOptIn { get; set; }
+    public bool AutoCheckForUpdates { get; set; } = true;
+
+    // Photos
+    public string PhotoFolderPath { get; set; } = string.Empty;
+    public bool SlideshowShuffle { get; set; } = true;
+    public bool SlideshowRepeat { get; set; } = true;
+    public bool DeletePhotosAfterReverseSync { get; set; }
+
+    // General
+    public bool ShowRatings { get; set; } = true;
+    public List<string> FirstConnectCompletedSerials { get; set; } = new();
+
     // Display
     public string SelectedAccentName { get; set; } = string.Empty;
     public string SelectedBackgroundName { get; set; } = string.Empty;

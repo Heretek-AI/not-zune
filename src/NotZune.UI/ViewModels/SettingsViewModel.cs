@@ -24,10 +24,14 @@ public enum SoftwareSubPivot
     Collection,
     Playback,
     Podcasts,
+    FileTypes,
+    Privacy,
+    Photos,
     Rip,
     Burn,
     Metadata,
     Display,
+    General,
     About
 }
 
@@ -64,6 +68,9 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Per-serial list of devices that have completed the FirstConnect wizard.</summary>
+    public System.Collections.Generic.List<string> FirstConnectCompletedSerials { get; } = new();
+
     /// <summary>The last application version whose What's New dialog was acknowledged.</summary>
     public string WhatsNewSeenVersion
     {
@@ -96,10 +103,14 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsCollectionSubPivotActive));
                 OnPropertyChanged(nameof(IsPlaybackSubPivotActive));
                 OnPropertyChanged(nameof(IsPodcastsSubPivotActive));
+                OnPropertyChanged(nameof(IsFileTypesSubPivotActive));
+                OnPropertyChanged(nameof(IsPrivacySubPivotActive));
+                OnPropertyChanged(nameof(IsPhotosSubPivotActive));
                 OnPropertyChanged(nameof(IsRipSubPivotActive));
                 OnPropertyChanged(nameof(IsBurnSubPivotActive));
                 OnPropertyChanged(nameof(IsMetadataSubPivotActive));
                 OnPropertyChanged(nameof(IsDisplaySubPivotActive));
+                OnPropertyChanged(nameof(IsGeneralSubPivotActive));
                 OnPropertyChanged(nameof(IsAboutSubPivotActive));
                 OnPropertyChanged(nameof(IsSyncOptionsSubPivotActive));
                 OnPropertyChanged(nameof(IsSpaceReservationSubPivotActive));
@@ -136,10 +147,14 @@ public class SettingsViewModel : ViewModelBase
     public bool IsCollectionSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Collection;
     public bool IsPlaybackSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Playback;
     public bool IsPodcastsSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Podcasts;
+    public bool IsFileTypesSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.FileTypes;
+    public bool IsPrivacySubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Privacy;
+    public bool IsPhotosSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Photos;
     public bool IsRipSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Rip;
     public bool IsBurnSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Burn;
     public bool IsMetadataSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Metadata;
     public bool IsDisplaySubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.Display;
+    public bool IsGeneralSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.General;
     public bool IsAboutSubPivotActive => IsSoftwarePivotActive && SoftwarePivot == SoftwareSubPivot.About;
 
     private DeviceSubPivot _devicePivot = DeviceSubPivot.SyncOptions;
@@ -353,6 +368,140 @@ public class SettingsViewModel : ViewModelBase
         set
         {
             if (SetProperty(ref _podcastAutoDownload, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    // ==========================================
+    // FILE TYPES (library ingest extensions)
+    // ==========================================
+    public ObservableCollection<string> FileTypesPresets { get; } = new()
+    {
+        "mp3,m4a,m4b,wma,mp4,m4v,flac,ogg,opus,aac",
+        "mp3,m4a,flac,wma",
+        "mp3,m4a,wav,flac",
+        "mp3 only"
+    };
+
+    private string _ingestExtensions = "mp3,m4a,m4b,wma,mp4,m4v,flac,ogg,opus,aac";
+    public string IngestExtensions
+    {
+        get => _ingestExtensions;
+        set
+        {
+            if (SetProperty(ref _ingestExtensions, value))
+            {
+                OnPropertyChanged(nameof(IngestExtensionsList));
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    public System.Collections.Generic.List<string> IngestExtensionsList =>
+        _ingestExtensions.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    // ==========================================
+    // PRIVACY
+    // ==========================================
+    private bool _usageDataOptIn;
+    public bool UsageDataOptIn
+    {
+        get => _usageDataOptIn;
+        set
+        {
+            if (SetProperty(ref _usageDataOptIn, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private bool _autoCheckForUpdates = true;
+    public bool AutoCheckForUpdates
+    {
+        get => _autoCheckForUpdates;
+        set
+        {
+            if (SetProperty(ref _autoCheckForUpdates, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    // ==========================================
+    // PHOTOS
+    // ==========================================
+    private string _photoFolderPath = string.Empty;
+    public string PhotoFolderPath
+    {
+        get => _photoFolderPath;
+        set
+        {
+            if (SetProperty(ref _photoFolderPath, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private bool _slideshowShuffle = true;
+    public bool SlideshowShuffle
+    {
+        get => _slideshowShuffle;
+        set
+        {
+            if (SetProperty(ref _slideshowShuffle, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private bool _slideshowRepeat = true;
+    public bool SlideshowRepeat
+    {
+        get => _slideshowRepeat;
+        set
+        {
+            if (SetProperty(ref _slideshowRepeat, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    private bool _deletePhotosAfterReverseSync;
+    public bool DeletePhotosAfterReverseSync
+    {
+        get => _deletePhotosAfterReverseSync;
+        set
+        {
+            if (SetProperty(ref _deletePhotosAfterReverseSync, value))
+            {
+                SaveCurrentSettings();
+            }
+        }
+    }
+
+    // ==========================================
+    // GENERAL
+    // ==========================================
+    public ObservableCollection<string> StartupViewOptions { get; } = new()
+    {
+        "Quickplay",
+        "Collection"
+    };
+
+    private bool _showRatings = true;
+    public bool ShowRatings
+    {
+        get => _showRatings;
+        set
+        {
+            if (SetProperty(ref _showRatings, value))
             {
                 SaveCurrentSettings();
             }
@@ -824,6 +973,7 @@ public class SettingsViewModel : ViewModelBase
     public ICommand SelectDevicePivotCommand { get; }
     public ICommand SelectFolderCommand { get; }
     public ICommand RescanCommand { get; }
+    public ICommand PickPhotoFolderCommand { get; }
     public ICommand ClearDemoLibraryCommand { get; }
     public ICommand SelectAccentCommand { get; }
     public ICommand SelectBackgroundCommand { get; }
@@ -874,6 +1024,7 @@ public class SettingsViewModel : ViewModelBase
         SelectFolderCommand = new AsyncRelayCommand(OnSelectFolderAsync);
         RescanCommand = new AsyncRelayCommand(OnRescanAsync);
         ClearDemoLibraryCommand = new AsyncRelayCommand(OnClearDemoLibraryAsync);
+        PickPhotoFolderCommand = new AsyncRelayCommand(OnPickPhotoFolderAsync);
 
         SelectAccentCommand = new RelayCommand<AccentColorOption>(accent =>
         {
@@ -971,6 +1122,27 @@ public class SettingsViewModel : ViewModelBase
             _podcastAutoDownload = settings.PodcastAutoDownload;
             OnPropertyChanged(nameof(PodcastAutoDownload));
 
+            _ingestExtensions = settings.IngestExtensions;
+            OnPropertyChanged(nameof(IngestExtensions));
+            OnPropertyChanged(nameof(IngestExtensionsList));
+
+            _usageDataOptIn = settings.UsageDataOptIn;
+            OnPropertyChanged(nameof(UsageDataOptIn));
+            _autoCheckForUpdates = settings.AutoCheckForUpdates;
+            OnPropertyChanged(nameof(AutoCheckForUpdates));
+
+            _photoFolderPath = settings.PhotoFolderPath;
+            OnPropertyChanged(nameof(PhotoFolderPath));
+            _slideshowShuffle = settings.SlideshowShuffle;
+            OnPropertyChanged(nameof(SlideshowShuffle));
+            _slideshowRepeat = settings.SlideshowRepeat;
+            OnPropertyChanged(nameof(SlideshowRepeat));
+            _deletePhotosAfterReverseSync = settings.DeletePhotosAfterReverseSync;
+            OnPropertyChanged(nameof(DeletePhotosAfterReverseSync));
+
+            _showRatings = settings.ShowRatings;
+            OnPropertyChanged(nameof(ShowRatings));
+
             _spaceReservationPercent = Math.Clamp(settings.SpaceReservationPercent, 0, 50);
             OnPropertyChanged(nameof(SpaceReservationPercent));
             OnPropertyChanged(nameof(ReservedGbText));
@@ -994,6 +1166,12 @@ public class SettingsViewModel : ViewModelBase
             OnPropertyChanged(nameof(FirstLaunchCompleted));
             _whatsNewSeenVersion = settings.WhatsNewSeenVersion;
             OnPropertyChanged(nameof(WhatsNewSeenVersion));
+
+            FirstConnectCompletedSerials.Clear();
+            if (settings.FirstConnectCompletedSerials != null)
+            {
+                FirstConnectCompletedSerials.AddRange(settings.FirstConnectCompletedSerials);
+            }
 
             if (!string.IsNullOrWhiteSpace(settings.SelectedAccentName))
             {
@@ -1069,6 +1247,15 @@ public class SettingsViewModel : ViewModelBase
             WhatsNewSeenVersion = _whatsNewSeenVersion,
             PodcastKeepEpisodes = SelectedPodcastKeepEpisodes,
             PodcastAutoDownload = PodcastAutoDownload,
+            IngestExtensions = IngestExtensions,
+            UsageDataOptIn = UsageDataOptIn,
+            AutoCheckForUpdates = AutoCheckForUpdates,
+            PhotoFolderPath = PhotoFolderPath,
+            SlideshowShuffle = SlideshowShuffle,
+            SlideshowRepeat = SlideshowRepeat,
+            DeletePhotosAfterReverseSync = DeletePhotosAfterReverseSync,
+            ShowRatings = ShowRatings,
+            FirstConnectCompletedSerials = FirstConnectCompletedSerials,
         });
     }
 
@@ -1080,6 +1267,16 @@ public class SettingsViewModel : ViewModelBase
         {
             MusicFolderPath = selected;
             await ScanFolderAsync(selected);
+        }
+    }
+
+    private async Task OnPickPhotoFolderAsync()
+    {
+        if (_folderPicker == null) return;
+        var selected = await _folderPicker.PickFolderAsync("Select Photo Collection Folder");
+        if (!string.IsNullOrWhiteSpace(selected))
+        {
+            PhotoFolderPath = selected;
         }
     }
 
