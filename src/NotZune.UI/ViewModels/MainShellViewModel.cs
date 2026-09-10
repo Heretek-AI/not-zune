@@ -47,10 +47,21 @@ public class MainShellViewModel : ViewModelBase
 
     private int _equalizerFrame = 1;
     private readonly DispatcherTimer? _equalizerTimer;
+    private DispatcherTimer? _nowPlayingIdleTimer;
+    private DateTime _lastUserInputAt = DateTime.UtcNow;
     private bool _isNowPlayingButtonHovered;
     private bool _isNowPlayingButtonPressed;
     private bool _isNowPlayingPlaying;
     private string _nowPlayingIconSource = "avares://NotZune.UI/Assets/Zune/Transport/ICON.NOWPLAYING.ENTER.PNG";
+
+    // Tier A3: idle screensaver for Now Playing. _nowPlayingIdleProgress 0..1 (1 = fully idle);
+    // _nowPlayingArtRotation 0..360 degrees; both advance via the idle timer while the user is inactive
+    // in Now Playing. ResetNowPlayingIdle() is called from any user input.
+    private double _nowPlayingIdleProgress;
+    private double _nowPlayingArtRotation;
+    private const double IdleStartSeconds = 3.5;
+    private const double IdleFullSeconds = 12.0;
+    private const double ArtRotationPeriodSeconds = 90.0;
 
     public QuickplayViewModel QuickplayVM { get; }
     public CollectionViewModel CollectionVM { get; }
@@ -95,6 +106,20 @@ public class MainShellViewModel : ViewModelBase
         get => _nowPlayingIconSource;
         private set => SetProperty(ref _nowPlayingIconSource, value);
     }
+
+    /// <summary>Tier A3: 0..1 idle progress in Now Playing (1 = fully idle, controls faded).</summary>
+    public double NowPlayingIdleProgress => _nowPlayingIdleProgress;
+
+    /// <summary>Tier A3: 0..360 degree rotation for the Now Playing album art while idle.</summary>
+    public double NowPlayingArtRotation => _nowPlayingArtRotation;
+
+    /// <summary>True once the idle threshold has been crossed and the screensaver is engaged.</summary>
+    public bool IsNowPlayingIdle => _nowPlayingIdleProgress > 0.0;
+
+    /// <summary>
+    /// Code-behind hook: any user input (key, pointer, focus) resets the Now Playing idle clock.
+    /// </summary>
+    public void ResetNowPlayingIdle() => _lastUserInputAt = DateTime.UtcNow;
 
     /// <summary>Code-behind hook: pointer entered the Now Playing button.</summary>
     public void NotifyNowPlayingButtonHover(bool isHovering) => SetNowPlayingHoverState(isHovering);
@@ -277,6 +302,49 @@ public class MainShellViewModel : ViewModelBase
     public bool IsHeaderSearchVisible
         => !IsQuickplayActive && !IsNowPlayingActive && !IsSettingsActive && !IsCompactMode;
 
+    /// <summary>
+    /// The Zune 4.8 cropped-header title: the active pivot's name on landing pages,
+    /// or the current view's title on detail pages (Now Playing, Mixview, wizard overlays).
+    /// Rendered with negative left margin so the text bleeds off the viewport — the title is the
+    /// back affordance (Tier A1).
+    /// </summary>
+    public string CroppedHeaderTitle
+    {
+        get
+        {
+            if (IsFirstLaunchWizardOpen && FirstLaunchWizardVM != null) return FirstLaunchWizardVM.StepTitle;
+            if (IsFirstConnectWizardOpen && FirstConnectWizardVM != null) return FirstConnectWizardVM.StepTitle;
+            if (IsWhatsNewOpen && WhatsNewVM != null) return WhatsNewVM.Title;
+
+            return ActivePivot switch
+            {
+                NavigationPivot.Quickplay  => "QUICKPLAY",
+                NavigationPivot.Collection => "COLLECTION",
+                NavigationPivot.NowPlaying  => "NOW PLAYING",
+                NavigationPivot.Device     => "DEVICE",
+                NavigationPivot.Settings   => "SETTINGS",
+                NavigationPivot.Social     => "SOCIAL",
+                NavigationPivot.Disc       => "DISC",
+                NavigationPivot.Mixview    => "MIXVIEW",
+                _ => string.Empty,
+            };
+        }
+    }
+
+    /// <summary>
+    /// True when the cropped-header click should navigate back: true for detail pages and wizard overlays,
+    /// also true on landing pages that have history (e.g., Quickplay after leaving Now Playing).
+    /// </summary>
+    public bool IsCroppedHeaderBack => CanGoBack || IsNowPlayingActive || IsMixviewActive
+        || IsFirstLaunchWizardOpen || IsFirstConnectWizardOpen || IsWhatsNewOpen;
+
+    /// <summary>
+    /// Detail pages (Now Playing / Mixview / wizards) get the back glyph + the view title; landing pivots
+    /// get just the title (since there's no view to back out of).
+    /// </summary>
+    public bool IsCroppedHeaderDetail => IsNowPlayingActive || IsMixviewActive
+        || IsFirstLaunchWizardOpen || IsFirstConnectWizardOpen || IsWhatsNewOpen;
+
     public string QuickDockDeviceName => DeviceVM.HasDevice ? DeviceVM.DeviceName.ToUpperInvariant() : "NO DEVICE";
     public string QuickDockDeviceStatus => DeviceVM.HasDevice ? (DeviceVM.IsSyncing ? "SYNCING..." : "CONNECTED") : "CONNECT USB";
     public double QuickDockDeviceOpacity => DeviceVM.HasDevice ? 1.0 : 0.45;
@@ -308,6 +376,9 @@ public class MainShellViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsMixviewActive));
                 OnPropertyChanged(nameof(IsQuickDockVisible));
                 OnPropertyChanged(nameof(IsHeaderSearchVisible));
+                OnPropertyChanged(nameof(CroppedHeaderTitle));
+                OnPropertyChanged(nameof(IsCroppedHeaderBack));
+                OnPropertyChanged(nameof(IsCroppedHeaderDetail));
 
                 CurrentView = _activePivot switch
                 {
@@ -441,6 +512,9 @@ public class MainShellViewModel : ViewModelBase
             if (SetProperty(ref _firstLaunchWizardVM, value))
             {
                 OnPropertyChanged(nameof(IsFirstLaunchWizardOpen));
+                OnPropertyChanged(nameof(CroppedHeaderTitle));
+                OnPropertyChanged(nameof(IsCroppedHeaderBack));
+                OnPropertyChanged(nameof(IsCroppedHeaderDetail));
             }
         }
     }
@@ -456,6 +530,9 @@ public class MainShellViewModel : ViewModelBase
             if (SetProperty(ref _firstConnectWizardVM, value))
             {
                 OnPropertyChanged(nameof(IsFirstConnectWizardOpen));
+                OnPropertyChanged(nameof(CroppedHeaderTitle));
+                OnPropertyChanged(nameof(IsCroppedHeaderBack));
+                OnPropertyChanged(nameof(IsCroppedHeaderDetail));
             }
         }
     }
@@ -471,6 +548,9 @@ public class MainShellViewModel : ViewModelBase
             if (SetProperty(ref _whatsNewVM, value))
             {
                 OnPropertyChanged(nameof(IsWhatsNewOpen));
+                OnPropertyChanged(nameof(CroppedHeaderTitle));
+                OnPropertyChanged(nameof(IsCroppedHeaderBack));
+                OnPropertyChanged(nameof(IsCroppedHeaderDetail));
             }
         }
     }
@@ -527,6 +607,10 @@ public class MainShellViewModel : ViewModelBase
             {
                 FirstLaunchWizardVM = null;
                 MaybeShowWhatsNew(settingsStore);
+            };
+            FirstLaunchWizardVM.PropertyChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(CroppedHeaderTitle));
             };
         }
         else
@@ -657,9 +741,14 @@ public class MainShellViewModel : ViewModelBase
 
         ToggleNowPlayingCommand = new RelayCommand(() =>
         {
-            ActivePivot = ActivePivot == NavigationPivot.NowPlaying 
-                ? NavigationPivot.Collection 
+            ActivePivot = ActivePivot == NavigationPivot.NowPlaying
+                ? NavigationPivot.Collection
                 : NavigationPivot.NowPlaying;
+            // Entering Now Playing: reset the idle clock so the screensaver doesn't engage instantly.
+            if (ActivePivot == NavigationPivot.NowPlaying)
+            {
+                ResetNowPlayingIdle();
+            }
         });
 
         // Initialize Now Playing equalizer animation timer
@@ -674,6 +763,58 @@ public class MainShellViewModel : ViewModelBase
                 _equalizerFrame = (_equalizerFrame % 10) + 1;
                 RefreshNowPlayingIcon();
             };
+
+            // Tier A3: idle screensaver for Now Playing. Ticks at 60fps when in Now Playing and
+            // advances _nowPlayingIdleProgress (0..1 over IdleFullSeconds-IdleStartSeconds) plus
+            // _nowPlayingArtRotation (one revolution every ArtRotationPeriodSeconds). Reset by user input.
+            _nowPlayingIdleTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(16)
+            };
+            _nowPlayingIdleTimer.Tick += (_, _) =>
+            {
+                if (ActivePivot != NavigationPivot.NowPlaying)
+                {
+                    if (_nowPlayingIdleProgress > 0)
+                    {
+                        _nowPlayingIdleProgress = 0;
+                        OnPropertyChanged(nameof(NowPlayingIdleProgress));
+                        OnPropertyChanged(nameof(IsNowPlayingIdle));
+                    }
+                    return;
+                }
+
+                var idleSeconds = (DateTime.UtcNow - _lastUserInputAt).TotalSeconds;
+                if (idleSeconds < IdleStartSeconds)
+                {
+                    if (_nowPlayingIdleProgress > 0)
+                    {
+                        _nowPlayingIdleProgress = 0;
+                        _nowPlayingArtRotation = 0;
+                        OnPropertyChanged(nameof(NowPlayingIdleProgress));
+                        OnPropertyChanged(nameof(NowPlayingArtRotation));
+                        OnPropertyChanged(nameof(IsNowPlayingIdle));
+                    }
+                    return;
+                }
+
+                var range = Math.Max(IdleFullSeconds - IdleStartSeconds, 0.1);
+                var raw = (idleSeconds - IdleStartSeconds) / range;
+                var progress = Math.Clamp(raw, 0.0, 1.0);
+
+                var rotationSeconds = idleSeconds - IdleStartSeconds;
+                _nowPlayingArtRotation = (rotationSeconds * 360.0 / ArtRotationPeriodSeconds) % 360.0;
+
+                if (Math.Abs(progress - _nowPlayingIdleProgress) > 0.001)
+                {
+                    _nowPlayingIdleProgress = progress;
+                    OnPropertyChanged(nameof(NowPlayingIdleProgress));
+                    OnPropertyChanged(nameof(IsNowPlayingIdle));
+                }
+
+                OnPropertyChanged(nameof(NowPlayingArtRotation));
+            };
+
             BeginFirstConnectOnAlreadyConnected();
         }
         catch
@@ -729,6 +870,7 @@ public class MainShellViewModel : ViewModelBase
                 SettingsVM.Persist();
             }
         };
+        vm.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CroppedHeaderTitle));
         FirstConnectWizardVM = vm;
     }
 
@@ -832,11 +974,19 @@ public class MainShellViewModel : ViewModelBase
         {
             _isNowPlayingPlaying = true;
             _equalizerTimer?.Start();
+            _nowPlayingIdleTimer?.Start();
         }
         else
         {
             _isNowPlayingPlaying = false;
             _equalizerTimer?.Stop();
+            _nowPlayingIdleTimer?.Stop();
+            if (_nowPlayingIdleProgress > 0)
+            {
+                _nowPlayingIdleProgress = 0;
+                OnPropertyChanged(nameof(NowPlayingIdleProgress));
+                OnPropertyChanged(nameof(IsNowPlayingIdle));
+            }
             RefreshNowPlayingIcon();
         }
     }

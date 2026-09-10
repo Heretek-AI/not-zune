@@ -5,6 +5,7 @@
              xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
              xmlns:models="clr-namespace:NotZune.Domain.Models;assembly=NotZune.Domain"
              xmlns:views="clr-namespace:NotZune.UI.Views;assembly=NotZune.UI"
+             xmlns:conv="clr-namespace:NotZune.UI.Converters;assembly=NotZune.UI"
              mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
              x:Class="NotZune.UI.Views.NowPlayingView"
              x:DataType="vm:NowPlayingViewModel">
@@ -40,17 +41,30 @@
         </Border>
       </Grid>
 
-      <!-- Giant Ambient Typographic Watermark -->
-      <TextBlock Text="{Binding ArtistName}" 
-                 FontSize="140" 
-                 FontWeight="Bold" 
+      <!-- Giant Ambient Typographic Watermark (Tier A3: slow 3D Y-axis rotation while idle) -->
+      <TextBlock Text="{Binding ArtistName}"
+                 FontSize="140"
+                 FontWeight="Bold"
                  Foreground="{DynamicResource ZuneTextWatermarkBrush}"
-                 HorizontalAlignment="Right" 
-                 VerticalAlignment="Bottom" 
-                 Margin="0,0,-20,-20" />
+                 HorizontalAlignment="Right"
+                 VerticalAlignment="Bottom"
+                 Margin="0,0,-20,-20"
+                 Opacity="{Binding IsNowPlayingIdle, Converter={x:Static conv:IdleOpacityConverter.Instance}}">
+        <TextBlock.RenderTransform>
+          <Rotate3DTransform AngleX="0"
+                              AngleY="{Binding NowPlayingArtRotation}"
+                              AngleZ="0"
+                              CenterX="700"
+                              CenterY="0" />
+        </TextBlock.RenderTransform>
+      </TextBlock>
 
-      <!-- Iconic Zune Big Typography Overlay -->
-      <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="64,0,0,120" Spacing="8" MaxWidth="700">
+      <!-- Iconic Zune Big Typography Overlay (Tier A3: drifts left off-screen while idle) -->
+      <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="64,0,0,120" Spacing="8" MaxWidth="700"
+                  Opacity="{Binding IsNowPlayingIdle, Converter={x:Static conv:IdleOpacityConverter.Instance}}">
+        <StackPanel.RenderTransform>
+          <TranslateTransform X="{Binding NowPlayingIdleProgress, Converter={x:Static conv:IdleDriftConverter.Instance}}" />
+        </StackPanel.RenderTransform>
         <TextBlock Text="{Binding TrackTitle}" 
                    FontSize="60" 
                    FontWeight="Light" 
@@ -95,14 +109,18 @@
       </ItemsControl>
 
       <!-- Slide-out Drawer: Lyrics & Artist Biography -->
-      <Border HorizontalAlignment="Right" 
-              Width="340" 
-              Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+      <Border HorizontalAlignment="Right"
+              Width="340"
+              Background="{DynamicResource ZuneSurfaceElevatedBrush}"
               BorderBrush="{DynamicResource ZuneBorderBrush}"
               BorderThickness="1,0,0,0"
               CornerRadius="0"
-              IsVisible="{Binding IsBioDrawerOpen}"
-              Padding="24">
+              IsHitTestVisible="{Binding IsBioDrawerOpen}"
+              Padding="24"
+              Opacity="{Binding BioDrawerOpacity}">
+            <Border.RenderTransform>
+              <TranslateTransform X="{Binding BioDrawerOffsetX}" />
+            </Border.RenderTransform>
         <ScrollViewer>
           <StackPanel Spacing="24">
             <!-- Biography Section -->
@@ -122,14 +140,18 @@
       </Border>
 
       <!-- Slide-out Drawer: Showlist (Upcoming Queue) -->
-      <Border HorizontalAlignment="Right" 
-              Width="360" 
-              Background="{DynamicResource ZuneSurfaceElevatedBrush}" 
+      <Border HorizontalAlignment="Right"
+              Width="360"
+              Background="{DynamicResource ZuneSurfaceElevatedBrush}"
               BorderBrush="{DynamicResource ZuneBorderBrush}"
               BorderThickness="1,0,0,0"
               CornerRadius="0"
-              IsVisible="{Binding IsShowlistOpen}"
-              Padding="24">
+              IsHitTestVisible="{Binding IsShowlistOpen}"
+              Padding="24"
+              Opacity="{Binding ShowlistDrawerOpacity}">
+        <Border.RenderTransform>
+          <TranslateTransform X="{Binding ShowlistDrawerOffsetX}" />
+        </Border.RenderTransform>
         <Grid RowDefinitions="Auto,*">
           <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
             <StackPanel Grid.Column="0">

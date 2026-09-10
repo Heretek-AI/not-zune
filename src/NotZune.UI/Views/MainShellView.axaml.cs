@@ -51,6 +51,46 @@ public partial class MainShellView : UserControl
         e.Handled = true;
     }
 
+    /// <summary>
+    /// Tier A1: the Zune 4.8 cropped-header back affordance. Clicking the cropped title
+    /// on a detail page (Now Playing / Mixview) pops back to the parent pivot; on a wizard
+    /// overlay it dismisses the wizard.
+    /// </summary>
+    private void OnCroppedHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is not ViewModels.MainShellViewModel vm)
+            return;
+
+        e.Handled = true; // Suppress the title-bar drag handler so the click doesn't move the window.
+
+        if (vm.IsFirstLaunchWizardOpen)
+        {
+            vm.FirstLaunchWizardVM = null;
+            return;
+        }
+        if (vm.IsFirstConnectWizardOpen)
+        {
+            vm.FirstConnectWizardVM = null;
+            return;
+        }
+        if (vm.IsWhatsNewOpen)
+        {
+            vm.WhatsNewVM = null;
+            return;
+        }
+
+        if (vm.IsNowPlayingActive || vm.IsMixviewActive)
+        {
+            vm.GoBack();
+            return;
+        }
+
+        if (vm.CanGoBack)
+        {
+            vm.GoBack();
+        }
+    }
+
     private void OnMinimizeClicked(object? sender, RoutedEventArgs e)
     {
         var window = TopLevel.GetTopLevel(this) as Window;

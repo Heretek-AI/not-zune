@@ -17,5 +17,11 @@ public partial class NowPlayingView : UserControl
         {
             vm.TriggerHudActivity();
         }
+
+        // Tier A3: any pointer movement resets the idle screensaver clock.
+        if (this.VisualRoot is Views.MainShellView shell && shell.DataContext is ViewModels.MainShellViewModel shellVm)
+        {
+            shellVm.ResetNowPlayingIdle();
+        }
     }
 }

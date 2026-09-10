@@ -4,6 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:NotZune.UI.ViewModels;assembly=NotZune.UI"
              xmlns:views="clr-namespace:NotZune.UI.Views;assembly=NotZune.UI"
+             xmlns:animations="clr-namespace:NotZune.UI.Animations;assembly=NotZune.UI"
+             xmlns:conv="clr-namespace:NotZune.UI.Converters;assembly=NotZune.UI"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="780"
              x:Class="NotZune.UI.Views.MainShellView"
              x:DataType="vm:MainShellViewModel"
@@ -65,14 +67,38 @@
             RowDefinitions="36,60"
             Margin="24,8,8,0">
         
-        <!-- Topmost System Row: Mini Brand Wordmark & Minimal Window Controls -->
+        <!-- Topmost System Row: Cropped Header Title (back affordance) + Brand Wordmark + Minimal Window Controls -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
-          <!-- Zune Brand Wordmark -->
-          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <!-- Zune 4.8 cropped-title back affordance (bleeds off the left edge; click → GoBack) -->
+          <Panel Grid.Column="0" Grid.ColumnSpan="3" HorizontalAlignment="Left" VerticalAlignment="Center"
+                 Margin="-32,0,0,0" IsHitTestVisible="True"
+                 PointerPressed="OnCroppedHeaderPointerPressed"
+                 Cursor="Hand">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+              <TextBlock Text="&#x2190;"
+                         IsVisible="{Binding IsCroppedHeaderBack}"
+                         FontFamily="{StaticResource ZunePivotFontFamily}"
+                         FontSize="18"
+                         Foreground="{DynamicResource ZuneAccentBrush}"
+                         VerticalAlignment="Center" />
+              <TextBlock Text="{Binding CroppedHeaderTitle}"
+                         Classes="hero"
+                         FontSize="34"
+                         FontWeight="Light"
+                         Foreground="{DynamicResource ZuneTextActiveBrush}"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis"
+                         MaxWidth="260" />
+            </StackPanel>
+          </Panel>
+
+          <!-- Zune Brand Wordmark (hidden when the cropped-header title is in detail mode) -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                      IsVisible="{Binding !IsCroppedHeaderDetail}">
             <Image Source="avares://NotZune.UI/Assets/Zune/Branding/ZUNECOLORLOGO.PNG" Width="18" Height="19" VerticalAlignment="Center" />
-            <TextBlock Text="ZUNE" 
-                       FontFamily="{StaticResource ZunePivotFontFamily}" 
-                       FontSize="12" 
+            <TextBlock Text="ZUNE"
+                       FontFamily="{StaticResource ZunePivotFontFamily}"
+                       FontSize="12"
                        FontWeight="Bold" 
                        LetterSpacing="3" 
                        Foreground="{DynamicResource ZuneTextDimmedBrush}" 
@@ -249,7 +275,12 @@
 
       <!-- 2. Main Dynamic Content View Area with Persistent Bottom-Left Quick Dock -->
       <Grid Grid.Row="1" Margin="0,4,0,0">
-        <TransitioningContentControl Content="{Binding CurrentView}" />
+        <!-- Tier A2: parallax 3D slide between pivots (Zune 4.8 "left and rear" feel) -->
+        <TransitioningContentControl Content="{Binding CurrentView}">
+          <TransitioningContentControl.PageTransition>
+            <animations:PivotParallaxTransition />
+          </TransitioningContentControl.PageTransition>
+        </TransitioningContentControl>
 
         <!-- Authentic Zune Bottom-Left Quick Dock -->
         <Border HorizontalAlignment="Left" 
@@ -432,9 +463,9 @@
         </Grid>
       </Border>
 
-      <!-- Sync Instruction Toast (SYNCANIMATION / SYNCINSTRUCTIONTOAST parity) -->
+      <!-- Sync Instruction Toast (SYNCANIMATION / SYNCINSTRUCTIONTOAST parity + Tier A4 slide) -->
       <Border Grid.Row="0" Grid.RowSpan="3"
-              IsVisible="{Binding DeviceVM.HasSyncToast}"
+              IsHitTestVisible="{Binding DeviceVM.HasSyncToast}"
               VerticalAlignment="Bottom"
               HorizontalAlignment="Right"
               Margin="0,0,24,88"
@@ -443,7 +474,11 @@
               BorderThickness="1"
               CornerRadius="0"
               Padding="16,12"
-              ZIndex="90">
+              ZIndex="90"
+              Opacity="{Binding DeviceVM.HasSyncToast, Converter={x:Static conv:SyncToastOpacityConverter.Instance}}">
+        <Border.RenderTransform>
+          <TranslateTransform Y="{Binding DeviceVM.HasSyncToast, Converter={x:Static conv:SyncToastSlideConverter.Instance}}" />
+        </Border.RenderTransform>
         <StackPanel Orientation="Horizontal" Spacing="12">
           <Image Source="avares://NotZune.UI/Assets/Zune/Sync/SYNC.ACTIVELYSYNCING.PNG" Width="24" Height="24" VerticalAlignment="Center" />
           <StackPanel Spacing="4" VerticalAlignment="Center">

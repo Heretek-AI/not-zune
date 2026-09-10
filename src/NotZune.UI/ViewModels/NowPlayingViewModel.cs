@@ -205,6 +205,43 @@ public class NowPlayingViewModel : ViewModelBase
         set => SetProperty(ref _isShowlistOpen, value);
     }
 
+    // Tier A4: drawer slide-in / fade. Targets are set by the toggle commands; the animation
+    // dispatcher interpolates the current values toward the targets at ~60fps, then stops.
+    private double _bioDrawerOffsetX = -400;
+    private double _bioDrawerOpacity;
+    private double _showlistDrawerOffsetX = 400;
+    private double _showlistDrawerOpacity;
+
+    public double BioDrawerOffsetX
+    {
+        get => _bioDrawerOffsetX;
+        private set => SetProperty(ref _bioDrawerOffsetX, value);
+    }
+
+    public double BioDrawerOpacity
+    {
+        get => _bioDrawerOpacity;
+        private set => SetProperty(ref _bioDrawerOpacity, value);
+    }
+
+    public double ShowlistDrawerOffsetX
+    {
+        get => _showlistDrawerOffsetX;
+        private set => SetProperty(ref _showlistDrawerOffsetX, value);
+    }
+
+    public double ShowlistDrawerOpacity
+    {
+        get => _showlistDrawerOpacity;
+        private set => SetProperty(ref _showlistDrawerOpacity, value);
+    }
+
+    private double _bioTargetOffset;
+    private double _bioTargetOpacity;
+    private double _showlistTargetOffset;
+    private double _showlistTargetOpacity;
+    private Avalonia.Threading.DispatcherTimer? _drawerAnimTimer;
+
     public int UpcomingQueueCount => UpcomingQueue.Count;
 
     public Track? CurrentTrack => _playerCoordinator.CurrentTrack;
@@ -364,6 +401,7 @@ public class NowPlayingViewModel : ViewModelBase
             IsBioDrawerOpen = !IsBioDrawerOpen;
             if (IsBioDrawerOpen) IsShowlistOpen = false;
             TriggerHudActivity();
+            UpdateDrawerTargets();
         });
 
         ToggleShowlistCommand = new RelayCommand(() =>
@@ -375,6 +413,7 @@ public class NowPlayingViewModel : ViewModelBase
                 UpdateUpcomingQueue();
             }
             TriggerHudActivity();
+            UpdateDrawerTargets();
         });
 
         PlayQueueTrackCommand = new AsyncRelayCommand<Track>(async track =>
@@ -637,5 +676,63 @@ public class NowPlayingViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsFavorite));
         OnPropertyChanged(nameof(IsDisliked));
+    }
+
+    // Tier A4: drawer slide-in / fade targets. When a drawer opens, target = (0, 1);
+    // when it closes, target = (-400 or 400, 0). A 60fps timer lerps the live values.
+    private void UpdateDrawerTargets()
+    {
+        _bioTargetOffset = IsBioDrawerOpen ? 0.0 : -400.0;
+        _bioTargetOpacity = IsBioDrawerOpen ? 1.0 : 0.0;
+        _showlistTargetOffset = IsShowlistOpen ? 0.0 : 400.0;
+        _showlistTargetOpacity = IsShowlistOpen ? 1.0 : 0.0;
+
+        _drawerAnimTimer ??= new Avalonia.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(16)
+        };
+        if (_drawerAnimTimer.IsEnabled)
+        {
+            return;
+        }
+        _drawerAnimTimer.Tick -= OnDrawerAnimTick;
+        _drawerAnimTimer.Tick += OnDrawerAnimTick;
+        _drawerAnimTimer.Start();
+    }
+
+    private void OnDrawerAnimTick(object? sender, EventArgs e)
+    {
+        var step = 0.18; // ~280ms full traversal at 60fps
+        var done = true;
+
+        done = StepToward(ref _bioDrawerOffsetX, _bioTargetOffset, step) && done;
+        done = StepToward(ref _bioDrawerOpacity, _bioTargetOpacity, step) && done;
+        done = StepToward(ref _showlistDrawerOffsetX, _showlistTargetOffset, step) && done;
+        done = StepToward(ref _showlistDrawerOpacity, _showlistTargetOpacity, step) && done;
+
+        OnPropertyChanged(nameof(BioDrawerOffsetX));
+        OnPropertyChanged(nameof(BioDrawerOpacity));
+        OnPropertyChanged(nameof(ShowlistDrawerOffsetX));
+        OnPropertyChanged(nameof(ShowlistDrawerOpacity));
+
+        if (done)
+        {
+            _drawerAnimTimer?.Stop();
+        }
+    }
+
+    private static bool StepToward(ref double current, double target, double step)
+    {
+        if (Math.Abs(current - target) <= step)
+        {
+            if (current != target)
+            {
+                current = target;
+                return false; // caller will still report a change on the next OnPropertyChanged
+            }
+            return true;
+        }
+        current += Math.Sign(target - current) * step;
+        return false;
     }
 }
